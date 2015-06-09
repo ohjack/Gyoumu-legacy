@@ -1,0 +1,207 @@
+AD|Andorra
+AE|U.A.E.
+AF|Afghanistan
+AG|Antigua & Barbuda
+AI|Anguilla
+AL|Albania
+AM|Armenia
+AN|NL. Antilles
+AO|Angola
+AR|Argentina
+AS|American Samoa
+AT|Austria
+AU|Australia
+AW|Aruba
+AZ|Azerbaijan
+BA|Bosnia
+BB|Barbados
+BD|Bangladesh
+BE|Belgium
+BF|Burkino Faso
+BG|Bulgaria
+BH|Bahrain
+BI|Burundi
+BJ|Benin
+BM|Bermuda
+BN|Brunei
+BO|Bolivia
+BR|Brazil
+BS|Bahamas
+BT|Bhutan
+BW|Botswana
+BY|Belarus
+BZ|Belize
+CA|Canada
+CD|Democratic Republic Of Congo
+CG|Congo
+CH|Switzerland
+CI|Ivory Coast
+CK|Cook Islands
+CL|Chile
+CM|Cameroon
+CN|China
+CO|Colombia
+CR|Costa Rica
+CS|Serbia-Montenegro
+CV|Cape Verde
+CY|Cyprus
+CZ|Czech Republic
+DE|Germany
+DJ|Djibouti
+DK|Denmark
+DM|Dominica
+DO|Dominican Republic
+DZ|Algeria
+EC|Ecuador
+EE|Estonia
+EG|Egypt
+ER|Eritrea
+ES|Spain
+ET|Ethiopia
+FI|Finland
+FJ|Fiji
+FM|Micronesia
+FO|Faroe Islands
+FR|France
+GA|Gabon
+GB|United Kingdom
+GD|Grenada
+GE|Republic Of Georgia
+GF|French Guiana
+GH|Ghana
+GI|Gibraltar
+GL|Greenland
+GM|Gambia
+GN|Guinea
+GP|Guadeloupe
+GQ|Equatoral Guinea
+GR|Greece
+GT|Guatemala
+GU|Guam
+GY|Guyana
+HK|Hong Kong
+HN|Honduras
+HR|Croatia
+HT|Haiti
+HU|Hungary
+ID|Indonesia
+IE|Ireland
+IL|Israel
+IN|India
+IQ|Iraq Republic
+IS|Iceland
+IT|Italy
+JM|Jamaica
+JO|Jordan
+JP|Japan
+KE|Kenya
+KG|Kyrgyzstan
+KH|Cambodia
+KM|Comoros Island
+KN|St Kitts & Nevis
+KR|South Korea
+KW|Kuwait
+KY|Cayman Islands
+KZ|Kazakhstan
+LA|Laos
+LB|Lebanon
+LC|St. Lucia
+LI|Liechtenstein
+LK|Sri Lanka
+LR|Liberia
+LS|Lesotho
+LT|Lithuania
+LU|Luxembourg
+LV|Latvia
+MA|Morocco
+MC|Monaco
+MD|Moldova
+MG|Madagascar
+MH|Marshall Islands
+MK|Macedonia
+ML|Mali
+MN|Mongolia
+MO|Macau
+MP|Saipan
+MQ|Martinique
+MR|Mauritania
+MS|Montserrat
+MT|Malta
+MU|Mauritius
+MV|Maldives
+MW|Malawi
+MX|Mexico
+MY|Malaysia
+MZ|Mozambique
+NA|Namibia
+NC|New Caledonia
+NE|Niger
+NG|Nigeria
+NI|Nicaragua
+NL|Netherlands
+NO|Norway
+NP|Nepal
+NR|Nauru
+NZ|New Zealand
+OM|Oman
+PA|Panama
+PE|Peru
+PF|French Polynesia
+PG|Papua New Guinea
+PH|Philippines
+PK|Pakistan
+PL|Poland
+PS|Palestine Authority
+PT|Portugal
+PW|Palau
+PY|Paraguay
+QA|Qatar
+RE|Reunion Island
+RO|Romania
+RU|Russia
+RW|Rwanda
+SA|Saudi Arabia
+SC|Seychelles
+SD|Sudan
+SE|Sweden
+SG|Singapore
+SI|Slovenia
+SK|Slovak Republic
+SN|Senegal
+SR|Suriname
+ST|Sao Tome & Principe Island
+SU|C.I.S.
+SV|El Salvador
+SY|Syria
+SZ|Swaziland
+TC|Turks & Caicos Is.
+TD|Chad
+TG|Togo
+TH|Thailand
+TL|Easttimor
+TM|Turkmenistan
+TN|Tunisia
+TR|Turkey
+TT|Trinidad & Tobag
+TW|Taiwan
+TZ|Tanzania
+UA|Ukraine
+UG|Uganda
+US|U.S.A.
+UY|Uruguay
+UZ|Uzbekistan
+VA|Vatican City
+VC|St. Vincent
+VE|Venezuela
+VG|British Virgin Is.
+VI|Virgin Islands
+VN|Vietnam
+VU|Vanuatu
+WF|Wallis & Futuna
+WS|Samoa
+YE|Yemen
+ZA|South Africa
+ZM|Zambia
+ZR|Zaire
+ZW|Zimbabwe
+XX|Multiple Country of Manufacturer

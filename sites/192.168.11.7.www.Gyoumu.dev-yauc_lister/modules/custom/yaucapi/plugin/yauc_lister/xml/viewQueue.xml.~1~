@@ -1,0 +1,25 @@
+<tree>
+  <param name="type">select-many</param>
+  
+  <field name="status" string="Status"/>
+  <field name="msg" string="Msg."/>
+  <field name="clabel" string="SKU"/>
+  <field name="title" string="Title"/>
+  <field name="format" string="Format"/>
+  <field name="qty" string="Qty."/>
+  <field name="buynow_price" string="Fix.Price"/>
+  <field name="shipping_fee" string="Sh.Fee"/>
+  <field name="shipping_term" string="Sh.Term"/>
+  <field name="carrier" string="Carrier"/>
+  <field name="relist" string="Relist"/>
+
+  <translate>
+    <func>
+      <src name="cmd:Yauc\Lister\Cmd\ValueMapping"/>
+      <fld>status</fld>
+      <fld>format</fld>
+      <fld>shipping_term</fld>
+      <fld></fld>
+    </func>
+  </translate>
+</tree>

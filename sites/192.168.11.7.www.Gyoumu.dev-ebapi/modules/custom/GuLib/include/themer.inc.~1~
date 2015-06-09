@@ -1,0 +1,53 @@
+<?php
+namespace Gulei;
+
+interface InterfaceThemeable
+{
+  public function theme();
+}
+
+class ThemerTable implements InterfaceThemeable
+{
+  private $procHds;
+  private $procRecs;
+
+  public function __construct(\Gulei\Processor\Basic $procHds, \Gulei\Processor\Basic $procRecs)
+  {
+    $this->procHds = $procHds;
+    $this->procRecs = $procRecs;
+  }
+
+  public function getProcHds()
+  {
+    return $this->procHds;
+  }
+
+  public function getProcRecs()
+  {
+    return $this->procRecs;
+  }
+
+  public function theme()
+  {
+    $procHds = clone $this->getProcHds();
+    $procHds->addModifier(new ModTagize());
+
+    $procRecs = clone $this->getProcRecs();
+    $procRecs->addModifier(new ModTagize());
+
+    return \theme('table', $procHds->getOutput(), $procRecs->getOutput());
+  }
+}
+
+//class IncluderTable implements \Gulei\Includer\_Interface
+//{
+//  function includeCss()
+//  {
+//    drupal_add_css(drupal_get_path('module', 'GuLib') . '/css/table.css');
+//  }
+//
+//  function includeJs()
+//  {
+//    drupal_add_js(drupal_get_path('module', 'GuLib') . '/js/GuTable.js');
+//  }
+//}

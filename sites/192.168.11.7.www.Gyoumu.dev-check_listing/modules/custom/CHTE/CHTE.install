@@ -1,0 +1,84 @@
+<?php
+
+function CHTE_install()
+{
+  $field = array(
+    'label' => 'HTML mapping',
+    'field_name' => 'field_chte_htmlmapping',
+    'type' => 'text',
+    'widget_type' => 'text_textfield',
+    'change' => 'Change basic information',
+    'weight' => '-2',
+    'rows' => 5,
+    'size' => '60',
+    'description' => '',
+    'default_value' =>
+    array(
+      0 =>
+      array(
+        'value' => '',
+        '_error_element' => 'default_value_widget][field_chte_htmlmapping][0][value',
+      ),
+    ),
+    'default_value_php' => '',
+    'default_value_widget' => NULL,
+    'required' => 0,
+    'multiple' => '0',
+    'text_processing' => '0',
+    'max_length' => '',
+    'allowed_values' => '',
+    'allowed_values_php' => '',
+    'op' => 'Save field settings',
+    'module' => 'text',
+    'widget_module' => 'text',
+    'columns' =>
+    array(
+      'value' =>
+      array(
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => false,
+        'sortable' => true,
+        'views' => true,
+      ),
+    ),
+    'display_settings' =>
+    array(
+      'weight' => '-2',
+      'parent' => '',
+      'label' =>
+      array(
+        'format' => 'inline',
+      ),
+      'teaser' =>
+      array(
+        'format' => 'default',
+        'exclude' => 0,
+      ),
+      'full' =>
+      array(
+        'format' => 'default',
+        'exclude' => 0,
+      ),
+      4 =>
+      array(
+        'format' => 'default',
+        'exclude' => 0,
+      ),
+    )
+  );
+
+  module_load_include('inc', 'content', 'includes/content.crud');
+  $field['type_name'] = 'chte_csv';
+  content_field_instance_create($field);
+}
+
+function CHTE_uninstall()
+{
+  module_load_include('inc', 'content', 'includes/content.crud');
+  content_field_instance_delete('field_chte_htmlmapping', 'chte_csv');
+
+  db_query('DELETE FROM {node} WHERE type IN ("%s","%s")',
+    'chte_theme', 'chte_csv'
+  );
+}

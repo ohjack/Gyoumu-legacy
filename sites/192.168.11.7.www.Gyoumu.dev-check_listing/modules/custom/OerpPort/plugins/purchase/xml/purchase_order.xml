@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<tree name="view" string="Purchase Orders">
+  <param name="oerp:model">purchase.order</param>
+
+  <field name="name" string="Ref"/>
+  <field name="origin" string="Origin"/>
+  <field name="state" string="Status"/>
+  <field name="date_order" string="Created"/>
+  <field name="minimum_planned_date" string="Planned"/>
+  <field name="partner_id" string="Supplier"/>
+  <field name="pricelist_id">
+    <field name="currency_id" string="Crry"/>
+  </field>
+  <field name="amount_total" string="Total"/>
+  <field name="order_line">
+    <field name="product_id">
+      <field name="state" string="P.Status"/>
+      <field name="code" string="SKU"/>
+    </field>
+    <field name="product_qty" string="Qty"/>
+    <field name="product_uom" string="UoM"/>
+  </field>
+
+  <translate>
+    <func>
+      <src name="func:explode">
+        <arg> </arg>
+        <arg>0</arg>
+      </src>
+      <fld>minimum_planned_date</fld>
+    </func>
+
+    <func>
+      <src>
+        <![CDATA[
+        if($rec[$name] == 'In Development'){
+          return "<span class='notice'>$rec[$name]</span>";
+        }
+        return false;
+        ]]>
+      </src>
+      <fld>order_line.product_id.state</fld>
+    </func>
+  </translate>
+</tree>

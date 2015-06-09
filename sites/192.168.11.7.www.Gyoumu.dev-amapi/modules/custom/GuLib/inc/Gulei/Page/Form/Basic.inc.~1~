@@ -1,0 +1,64 @@
+<?php
+namespace Gulei\Page\Form;
+
+class Basic extends \Gulei\Page\_Abstract
+{
+  public function hook_form_submit($form, &$form_state)
+  {
+    $btn = $this->getClickedButton();
+    $this->{$btn->method_name}($form, &$form_state);
+  }
+
+    return $btn;
+  }
+
+  protected function getSelection($array_parents = array())
+  {
+    $sels = array();
+    foreach($this->getStateValues($array_parents) as $name => $val){
+      preg_match('/^sel-(.*)/', $name, $m);
+
+      if($m[1] && $val){
+        $sels[] = $m[1];
+      }
+    }
+    return $sels;
+  }
+
+  protected function goBack($reset = true, $anchors = array())
+  {
+    $vals = $reset ? array() : $this->getStateValues($anchors, true);
+    drupal_goto($_GET['q'], $vals);
+  }
+
+  protected function getClickedButtonArrayParents($upLevel = 0, $downLevel = null)
+  {
+    $btn = $this->getClickedButton();
+    $array_parents = $btn->element['#array_parents'];
+
+    for($c = 1; $c <= $upLevel; $c++){
+      array_pop($array_parents);
+    }
+
+    if(!is_null($downLevel)){
+      $downs = is_string($downLevel)
+          ? array($downLevel) : $downLevel;
+
+      foreach($downs as $down){
+        $array_parents[] = $down;
+      }
+    }
+    return $array_parents;
+  }
+
+  protected function getValues()
+  {
+    return $this->form_state['values'];
+  }
+
+  protected function getDefaultValue($name, $default = '')
+  {
+    $vals = $this->form_state['values'];
+    return isset($vals[$name]) ? $vals[$name] : $default;
+  }
+}

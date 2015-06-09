@@ -1,0 +1,203 @@
+<?php
+
+module_load_include('inc', 'GuLib', 'autoload');
+\Gulei\Autoloader::register(__DIR__);
+
+function oerp_delivery_menu(){
+  $items = array();
+  
+  $items['oerp/delivery/controlpanel'] = \Gulei\Page\Helper::createEntry(
+    "Oerp\\Delivery\\Page\\ControlPanel"
+  );
+
+  $items['oerp/delivery/list'] = \Gulei\Page\Helper::createEntry(
+    "Oerp\\Delivery\\Page\\Ready",
+    array(
+      'title' => 'Ready',
+      'type' => MENU_CALLBACK,
+      'weight' => 1,
+    )
+  );
+  
+  $items['oerp/delivery/list/ready'] = array(
+    'title' => 'Ready',
+    'access callback' => true,
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 0,
+  );
+
+  $items['oerp/delivery/list/draft'] = \Gulei\Page\Helper::createEntry(
+    "Oerp\\Delivery\\Page\\Draft",
+    array(
+      'title' => 'Draft',
+      'type' => MENU_LOCAL_TASK,
+      'weight' => 2,
+    )
+  );
+
+  $items['oerp/delivery/list/draft/process'] = array(
+    'title' => 'Process',
+    'access callback' => true,
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 1,
+  );
+
+  $items['oerp/delivery/list/draft/combine'] = \Gulei\Page\Helper::createEntry(
+    "Oerp\\Delivery\\Page\\Combine",
+    array(
+      'title' => 'Combine',
+      'type' => MENU_LOCAL_TASK,
+      'weight' => 2,
+    )
+  );
+
+  $items['oerp/delivery/list/oos'] = \Gulei\Page\Helper::createEntry(
+    "Oerp\\Delivery\\Page\\OoS",
+    array(
+      'title' => 'OoS',
+      'type' => MENU_LOCAL_TASK,
+      'weight' => 3,
+    )
+  );
+
+  $items['oerp/delivery/list/sent'] = \Gulei\Page\Helper::createEntry(
+    "Oerp\\Delivery\\Page\\Sent",
+    array(
+      'title' => 'Sent',
+      'type' => MENU_LOCAL_TASK,
+      'weight' => 4,
+    )
+  );
+
+  $items['oerp/delivery/list/cancel'] = \Gulei\Page\Helper::createEntry(
+    "Oerp\\Delivery\\Page\\Cancel",
+    array(
+      'title' => 'Cancel',
+      'type' => MENU_LOCAL_TASK,
+      'weight' => 5,
+    )
+  );
+
+  $items['oerp/delivery/order/upload'] = array(
+    'title' => 'Upload orders',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_delivery_DeliveryOrderUpload_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['oerp/delivery/order'] = \Gulei\Page\Helper::createEntry(
+    "Oerp\\Delivery\\Page\\Order"
+  );
+
+  $items['oerp/delivery/combine/%'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_delivery_DeliveryCombine_form', 3),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['oerp/delivery/country_ref'] = array(
+    'page callback' => 'oerp_delivery_DeliveryCountryRef',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['oerp/delivery/backup'] = array(
+    'page callback' => 'OerpDeliveryBackup',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['oerp/delivery/cargo_receipt/%/%'] = array(
+    'page callback' => 'oerp_delivery_cargo_receipt',
+    'page arguments' => array(3, 4),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+function oerp_delivery_block($op = 'list', $delta = 0, $edit = array()) {
+  switch ($op) {
+    case 'list':
+      $blocks[0]['info'] = t('Delivery Mngn');
+      return $blocks;
+
+    case 'view':
+      $items = array(
+        array(
+          'data' => l('Control Panel', 'oerp/delivery/controlpanel'),
+        ),
+        array(
+          'data' => l('Orders', 'oerp/delivery/list'),
+          'children' => array(
+            array(l('Draft', 'oerp/delivery/list/draft')),
+            array(l('Ready', 'oerp/delivery/list')),
+            array(l('OoS', 'oerp/delivery/list/oos')),
+            array(l('Sent', 'oerp/delivery/list/sent')),
+          ),
+        ),
+        array(
+          'data' => 'Reports',
+          'children' => array(
+            \Oerp\Delivery\Page\ReportPrint::getMenuEntry('Picking_List'),
+            \Oerp\Delivery\Page\ReportPrint::getMenuEntry('Packing_List'),
+            \Oerp\Delivery\Page\ReportPrint::getMenuEntry('Cargo_Receipt'),
+          ),
+        ),
+        array(
+          'data' => l('Upload New Orders',
+            'gulib/csv_import/Oerp:Delivery:Importer:NewOrder'
+          ),
+        ),
+        array(
+          'data' => l(
+            'Update Tracking #',
+            'gulib/csv_import/Oerp:Delivery:Importer:UpdateTracking'
+          ),
+        ),
+        array(
+          'data' => l('Country Code Ref.', 'oerp/delivery/country_ref'),
+        )
+      );
+
+      $block['subject'] = t('Delivery Mngn');
+      $block['content'] = theme('item_list', $items, null, 'ul', array('class' => 'menu'));
+      return $block;
+  }
+}
+
+function oerp_delivery_DeliveryCountryRef(){
+  $arch = file_get_contents(
+    drupal_get_path('module', 'oerp_delivery') . '/xml/CountryCodeRef.xml');
+
+  $t = new \Oerp\Table\Basic($arch, array(
+    'attrs' => array('style' => 'width: 250px;'),
+  ));
+  return $t->theme();
+}
+
+function OerpDeliveryBackup(){
+  $m = new \Oerp\Page\DeliveryList('*');
+  
+  $ts = time();
+  
+  $to = new DateTime('@' . $ts  );
+  $from = new DateTime('@' . ($ts - 60 * 60 * 24 * 7));
+  
+  $cri = array(
+    array('date', '<=', $to->format('Y-m-d')),
+    array('date', '>=', $from->format('Y-m-d')),
+  );
+  
+  $src = $m->backupAll('*', array('criteria' => json_encode($cri)));
+  return $src;
+}
+
+function oerp_delivery_cargo_receipt($carrs, $time)
+{
+  $ctrl = new \Oerp\Delivery\Page\CargoReceipt\SPack(func_get_args());
+  return $ctrl->theme();
+}

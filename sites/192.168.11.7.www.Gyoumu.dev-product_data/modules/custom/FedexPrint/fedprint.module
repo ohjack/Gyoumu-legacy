@@ -1,0 +1,810 @@
+<?php
+
+module_load_include('inc', 'GuLib', 'autoload');
+\Gulei\Autoloader::register(__DIR__);
+
+module_load_include('inc', 'fedprint', 'include/fedprint');
+
+function fedprint_menu(){
+  $items = array();
+  
+  $items['admin/settings/fedprint'] = array(
+    'title' => 'FedDex Print Settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fedprint_settings'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['fedprint/record/create/%'] = array(
+    'title' => 'Print Fedex Lable & Invoices',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fedprint_RecordCreate_form', 3),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['fedprint/record/delete/%'] = array(
+    'page callback' => 'fedprint_RecordDelete',
+    'page arguments' => array(3),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['fedprint/record/batch'] = array(
+    'title' => 'Fedex Batch Printing',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fedprint_RecordBatch_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['fedprint/csv_template/create'] = array(
+    'page callback' => 'fedprint_CsvTemplate_create',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['fedprint/overview/record'] = array(
+    'page callback' => 'fedprint_OverviewRecord',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['fedprint/overview/record_test'] = array(
+    'page callback' => 'fedprint_OverviewRecordTest',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );  
+  
+  $items['fedprint/test'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fedprint_test_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  return $items;
+}
+
+function fedprint_settings(&$form_state){
+  $form = array();
+  $form['country_codes'] = array(
+    '#title' => 'Country Codes',
+    '#type' => 'textarea',
+    '#default_value' => variable_get('fedprint_ctrycodes', ''),
+  );
+  
+  $form['currency_codes'] = array(
+    '#title' => 'Currency Codes',
+    '#type' => 'textarea',
+    '#default_value' => variable_get('fedprint_crrcodes', ''),
+  );
+  
+  $form['path'] = array(
+    '#title' => 'File Path',
+    '#type' => 'textfield',
+    '#default_value' => variable_get('fedprint_path', ''),
+  );
+  
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Submit',
+  );
+  
+  return $form;
+}
+
+function fedprint_settings_submit($form, &$form_state){
+  $vals = $form_state['values'];
+  variable_set('fedprint_ctrycodes', $vals['country_codes']);
+  variable_set('fedprint_crrcodes', $vals['currency_codes']);
+  variable_set('fedprint_path', $vals['path']);
+}
+
+function fedprint_RecordCreate_form(&$form_state, $rid){
+  $form = array();
+
+  if($rid > 0){
+    $rec = _fedprint_getRec($rid);
+    $vals = unserialize($rec->src);
+    unset($rec);
+
+    $chk = new FedprintCheckPrint($rid);
+    $status = $chk->getResp();
+
+    if(!$status['success']){
+      drupal_set_message($status['msg'], 'error');
+    }
+  }
+
+  $form['rid'] = array(
+    '#type' => 'value',
+    '#value' => $rid,
+  );
+  
+  $form['send_email'] = array(
+    '#title' => 'Sender E-mail Address',
+    '#type' => 'textfield',
+    '#maxlength' => 60,
+    '#default_value' => isset($vals['send_email'])
+                          ? $vals['send_email']
+                          : 'export.lt@maolung.com',
+    '#required' => true,
+  );
+  
+  $form['tid'] = array(
+    '#title' => 'Transaction ID',
+    '#description' => 'Unique Transaction Identifier, defined by the customer.',
+    '#type' => 'textfield',
+    '#required' => true,
+    '#maxlength' => 30,
+    '#default_value' => isset($vals['tid'])
+                          ? $vals['tid']
+                          : '',
+  );
+  
+  $form['ref_note'] = array(
+    '#title' => 'Reference Note',
+    '#description' => 'Put SKU here.',
+    '#type' => 'textfield',
+    '#maxlength' => 35,
+    '#default_value' => isset($vals['ref_note'])
+                          ? $vals['ref_note']
+                          : '',
+  );
+  
+  $form['sale_term'] = array(
+    '#title' => 'Terms of Sale',
+    '#type' => 'select',
+    '#options' => array(
+      '1' => 'FOB/FCA',
+      '2' => 'CIF/CIP',
+      '3' => 'C&F/CPT',
+      '4' => 'EXW',
+      '5' => 'DDU',
+      '6' => 'DDP',
+    ),
+    '#default_value' => isset($vals['sale_term'])
+                          ? $vals['sale_term']
+                          : '5',
+  );
+  
+  $form['pay_type_trans'] = array(
+    '#title' => 'Transportation Payment Type',
+    '#description' => 'Method of payment for transportation chages.',
+    '#type' => 'select',
+    '#options' => array(
+      '1' => 'Bill Sender',
+      '2' => 'Bill Recipient',
+      '3' => 'Bill Third Party',
+    ),
+    '#default_value' => isset($vals['pay_type_trans'])
+                          ? $vals['pay_type_trans']
+                          : '1',
+  );
+  
+  $form['pay_type_tax'] = array(
+    '#title' => 'Duty/Tax Payment Type',
+    '#description' => 'Payment type for duties and taxes.',
+    '#type' => 'select',
+    '#options' => array(
+      '1' => 'Bill Sender',
+      '2' => 'Bill Recipient',
+      '3' => 'Bill Third Party',
+    ),
+    '#default_value' => isset($vals['pay_type_tax'])
+                          ? $vals['pay_type_tax']
+                          : '2',
+  );
+
+//recp group  
+  $form['recp'] = array(
+    '#title' => 'Recipient Information',
+    '#type' => 'fieldset',
+    '#collapsible' => true,
+  );
+  
+  $form['recp']['recp_company'] = array(
+    '#title' => 'Recipient Company Name',
+    '#type' => 'textfield',
+    '#maxlength' => 35,
+    '#default_value' => isset($vals['recp_company'])
+                          ? $vals['recp_company']
+                          : '',
+  ); 
+
+  $form['recp']['recp_contact'] = array(
+    '#title' => 'Recipient Contact Name',
+    '#type' => 'textfield',
+    '#required' => true,
+    '#maxlength' => 35,
+    '#default_value' => isset($vals['recp_contact'])
+                          ? $vals['recp_contact']
+                          : '', 
+  ); 
+  
+  $form['recp']['recp_email'] = array(
+    '#title' => 'Recipient E-mail Address',
+    '#type' => 'textfield',
+    '#maxlength' => 60,
+    '#default_value' => isset($vals['recp_email'])
+                          ? $vals['recp_email']
+                          : '',
+  ); 
+
+  $form['recp']['recp_phone'] = array(
+    '#title' => 'Recipient Phone Number',
+    '#type' => 'textfield',
+    '#required' => true,
+    '#maxlength' => 15,
+    '#default_value' => isset($vals['recp_phone'])
+                          ? $vals['recp_phone']
+                          : '',
+  ); 
+  
+  $form['recp']['recp_country_code'] = array(
+    '#title' => 'Recipient Country',
+    '#description' => 'Countries with a star (*) represent countries that are currently not served by
+FedEx Express',
+    '#type' => 'select',
+    '#options' => _fedprint_getCountryCodeOpts(),
+    '#required' => true,
+    '#default_value' => isset($vals['recp_country_code'])
+                          ? $vals['recp_country_code']
+                          : '0',
+  );
+  
+  $form['recp']['recp_addr1'] = array(
+    '#title' => 'Recipient Address 1',
+    '#type' => 'textfield',
+    '#required' => true,
+    '#maxlength' => 35,
+    '#default_value' => isset($vals['recp_addr1'])
+                          ? $vals['recp_addr1']
+                          : '',
+  ); 
+
+  $form['recp']['recp_addr2'] = array(
+    '#title' => 'Recipient Address 2',
+    '#type' => 'textfield',
+    '#maxlength' => 35,
+    '#default_value' => isset($vals['recp_addr2'])
+                          ? $vals['recp_addr2']
+                          : '',
+  ); 
+
+  $form['recp']['recp_city'] = array(
+    '#title' => 'Recipient  City',
+    '#type' => 'textfield',
+    '#required' => true,
+    '#maxlength' => 35,
+    '#default_value' => isset($vals['recp_city'])
+                          ? $vals['recp_city']
+                          : '',
+  );
+
+  $form['recp']['recp_state'] = array(
+    '#title' => 'Recipient State/Province',
+    '#type' => 'textfield',
+    '#maxlength' => 32,
+    '#default_value' => isset($vals['recp_state'])
+                          ? $vals['recp_state']
+                          : '',
+  ); 
+
+  $form['recp']['recp_post_code'] = array(
+    '#title' => 'Recipient Postal Code',
+    '#type' => 'textfield',
+    '#required' => true,
+    '#maxlength' => 10,
+    '#default_value' => isset($vals['recp_post_code'])
+                          ? $vals['recp_post_code']
+                          : '',
+  );
+  
+//commodity group  
+  $form['com'] = array(
+    '#title' => 'Commodity Information',
+    '#type' => 'fieldset',
+    '#collapsible' => true,
+    '#collapsed' => true,
+  );
+  
+  $form['com']['pkg_type'] = array(
+    '#title' => 'Packaging',
+    '#type' => 'select',
+    '#options' => array(
+      '01' => 'Customer packaging',
+      '02' => 'FedEx Pak',
+      '03' => 'FedEx Box',
+      '04' => 'FedEx Tube',
+      '06' => 'FedEx Envelope',
+      '15' => 'FedEx 10KG Box',
+      '25' => 'FedEx 25KG Box',
+    ),
+    '#default_value' => isset($vals['pkg_type'])
+                          ? $vals['pkg_type']
+                          : '01',
+  );
+
+  $form['com']['adm_pkg_type'] = array(
+    '#title' => 'Admissibility Packaging type',
+    '#type' => 'select',
+    '#options' => array(
+      'PCS' => 'Pieces',
+      'BOX' => 'Box',
+      'TBE' => 'Tube',
+    ),
+    '#default_value' => isset($vals['adm_pkg_type'])
+                          ? $vals['adm_pkg_type']
+                          : 'PCS',
+  );
+
+  $form['com']['weight_type'] = array(
+    '#title' => 'Weight Type',
+    '#type' => 'select',
+    '#options' => array(
+      'KGS' => 'kilogram',
+      'LBS' => 'pound',
+    ),
+    '#default_value' => isset($vals['weight_type'])
+                          ? $vals['weight_type']
+                          : 'KGS',
+    '#required' => true,
+  );
+
+  $form['com']['currency'] = array(
+    '#title' => 'Currency',
+    '#type' => 'select',
+    '#options' => _fedprint_getCurrencyOpts(),
+    '#default_value' => isset($vals['currency'])
+                          ? $vals['currency']
+                          : 'USD',
+    '#required' => true,
+  );
+  
+  $form['com']['com_mfr_country'] = array(
+    '#title' => 'Country of Commodity Manufacture',
+    '#type' => 'select',
+    '#options' => _fedprint_getCountryCodeOpts(),
+    '#default_value' => isset($vals['com_mfr_country'])
+                          ? $vals['com_mfr_country']
+                          : 'TW',
+  );
+
+  $form['com']['pkg_num'] = array(
+    '#title' => 'Number of Packages',
+    '#type' => 'textfield',
+    '#default_value' => isset($vals['pkg_num'])
+                          ? $vals['pkg_num']
+                          : '1',
+  );
+  
+  $form['com']['pkg_weight'] = array(
+    '#title' => 'Package Weight',
+    '#type' => 'textfield',
+    '#default_value' => isset($vals['pkg_weight'])
+                          ? (float)$vals['pkg_weight'] / 10
+                          :'0.5',
+  );
+  
+  $form['com']['carriage_value'] = array(
+    '#title' => 'Carriage/Declared Value',
+    '#type' => 'textfield',
+    '#default_value' => isset($vals['carriage_value'])
+                          ? $vals['carriage_value']
+                          : '0',
+  );
+  
+  $form['com']['customs_value'] = array(
+    '#title' => 'Total Customs Value',
+    '#type' => 'textfield',
+    '#default_value' => isset($vals['customs_value'])
+                          ? (float)$vals['customs_value'] / 100
+                          : '20',
+  );
+  
+  $form['com']['com_desc1'] = array(
+    '#title' => 'Commodity Description 1',
+    '#type' => 'textarea',
+    '#maxlength' => '148',
+    '#default_value' => isset($vals['com_desc1'])
+                          ? $vals['com_desc1']
+                          : 'CAR SPOILER',
+  );
+
+  $form['com']['com_desc2'] = array(
+    '#title' => 'Commodity Description 2',
+    '#type' => 'textarea',
+    '#maxlength' => '148',
+    '#default_value' => isset($vals['com_desc2'])
+                          ? $vals['com_desc2']
+                          : '',
+  );
+  
+  $form['com']['comment'] = array(
+    '#title' => 'CI Comment Line',
+    '#type' => 'textarea',
+    '#maxlength' => '74',
+    '#default_value' => isset($vals['comment'])
+                          ? $vals['comment']
+                          : '02 G5 NO BRAND 
+Contact 03-4801776 Miss Hsu if you have any questions.',
+  );
+  
+  $form['service_type'] = array(
+    '#title' => 'Service Type',
+    '#type' => 'select',
+    '#options' => array(
+      '1' => 'International Priority',
+      '3' => 'International Economy',
+      '6' => 'FedEx Intl First',
+      '17' => 'Intl Economy Distribution',
+      '18' => 'Intl Priority Distribution',
+      '57' => 'FedEx Europe First',
+      '70' => 'Intl Priority Freight',
+      '84' => 'Intl Priority Distribution Freight',
+      '86' => 'Intl Economy Freight',
+    ),
+    '#default_value' => isset($vals['service_type'])
+                          ? $vals['service_type']
+                          : '3',
+    '#required' => true,
+  );
+    
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Print',
+  );
+  
+  $form['#redirect'] = 'fedprint/overview/record';  
+  return $form;
+}
+
+function fedprint_RecordCreate_form_validate($form, &$form_state){
+  array_walk($form_state['values'], 'trim');
+}
+
+function fedprint_RecordCreate_form_submit($form, &$form_state){
+  $vals = $form_state['values'];
+  
+//handle implied decimal place  
+  $vals['pkg_weight'] = (string)(int)((float)$vals['pkg_weight'] * 10);
+  $vals['customs_value'] = (string)(int)((float)$vals['customs_value'] * 100);
+  
+//handle state outside US & CA
+  if(!in_array($vals['recp_country_code'], array('US', 'CA'))
+    && $vals['recp_state']){
+
+    $city = explode(',', $vals['recp_city']);
+    $city[] = $vals['recp_state'];
+    $city = implode(',', $city);
+    
+    if(strlen($city) <= 35){
+      $vals['recp_city'] = $city;
+    }
+    
+    $vals['recp_state'] = '';
+  }  
+
+  fedprint_print($vals, $vals['rid']);
+}
+
+function fedprint_RecordBatch_form(&$form_state){
+  $c = new \Gulei\Csv\Buffer('
+    <tree name="csv_file">
+      <field name="tid"/>
+      <field name="ref_note"/>
+      <field name="recp_company" string="com"/>
+      <field name="recp_contact" string="buyer"/>
+      <field name="recp_email" string="email"/>
+      <field name="recp_phone" string="phone"/>
+      <field name="recp_addr1" string="addr1"/>
+      <field name="recp_addr2" string="addr2"/>
+      <field name="recp_city" string="city"/>
+      <field name="recp_state" string="state"/>
+      <field name="recp_country_code" string="cntry"/>
+      <field name="recp_post_code" string="zip"/>
+      
+      <validate>
+        <function>
+          <source><![CDATA[
+            return strlen($rec[$name]) <= 35;
+          ]]></source>
+          
+          <field>recp_addr1</field>
+          <field>recp_addr2</field>
+        </function>
+        
+        <function>
+          <source><![CDATA[
+            return strlen($rec[$name]) <= 2;
+          ]]></source>
+          
+          <field>recp_country_code</field>
+        </function>
+      </validate>      
+    </tree>
+    ',
+    $form_state,
+    array(
+      'count' => true,
+    )
+  );
+  
+  $form = $c->getFormEntry($form_state);
+  $form['#redirect'] = 'fedprint/overview/record';
+  $form['#attributes']['enctype'] = 'multipart/form-data';
+  
+  return $form;
+}
+
+function fedprint_RecordBatch_form_validate($form, &$form_state){
+  $buffer = $form['csv_file']['#obj'];
+  $buffer->renew();
+  $buffer->validateForm($form_state);
+  return;
+}
+
+function fedprint_RecordBatch_form_submit($form, &$form_state){
+//  $c = $form_state['values']['GuCsvBuffer'];
+  $buffer = $form['csv_file']['#obj'];
+  $buffer->renew();
+  $recs = $buffer->getRecords();
+  
+  $defaults = array();
+  _fedprint_flattenForm(
+    $defaults, fedprint_RecordCreate_form($form_state, 0), '#default_value');
+
+  foreach($recs as $rec){
+    $rec = array_filter($rec, create_function('$i', 'return !empty($i);'));
+    $rec = array_merge($defaults, $rec);
+    
+//  handle empty recp_phone
+    if(empty($rec['recp_phone'])){
+      $rec['recp_phone'] = '00';
+    }
+    
+//  handle linebreak & length in addr1
+    $LENGTH_MAX = 35;
+    
+    $rec['recp_addr1'] = str_replace("\n", ', ', $rec['recp_addr1']);
+    $rec['recp_addr1'] = preg_replace('/\s+/', ' ', $rec['recp_addr1']);
+    
+    if(strlen($rec['recp_addr1']) > $LENGTH_MAX && empty($rec['recp_addr2'])){
+      $tok = explode(',', $rec['recp_addr1']);
+      
+      for($i = count($tok) - 1; $i >= 1; $i--){
+        $addr1 = implode(',', array_slice($tok, 0, $i));
+        if(strlen($addr1) <= $LENGTH_MAX){
+          $rec['recp_addr1'] = $addr1;
+          $rec['recp_addr2'] = trim(implode(',', array_slice($tok, $i)));
+          break;
+        }
+      }
+    }
+    $form_state = array();
+    $form_state['values'] = $rec;
+
+    $form_id = 'fedprint_RecordCreate_form';
+    drupal_execute($form_id, $form_state, 0);
+  }
+}
+
+function fedprint_RecordDelete($rid){
+  $rec = _fedprint_getRec($rid);
+  $rec->status = -1;
+  drupal_write_record('fedprint_recs', $rec, 'rid');
+  drupal_goto('fedprint/overview/record');
+}
+
+function fedprint_CsvTemplate_create(){
+  $form = fedprint_RecordCreate_form($form_state, 0);
+  
+//get required attr
+  $req = array();
+  _fedprint_flattenForm($req, $form, '#required');
+  $req = array_map(create_function('$i', 'return ($i)?"required":"";'), $req);
+
+//get default values  
+  $defaults = array();
+  _fedprint_flattenForm($defaults, $form, '#default_value');
+  
+//get field names
+  $hds = array_keys($defaults);
+  
+//get field title
+  $titles = array();
+  _fedprint_flattenForm($titles, $form, '#title');  
+  
+//get options  
+  $opts = array();
+  _fedprint_flattenForm($opts, $form, '#options');
+
+  $send = _fedprint_toCsv(array($hds, $titles, $req, $opts, $defaults));
+  $resp = file_put_contents(file_directory_path() . '/fedprint/fedprint_tpl.csv', $send);
+
+  if($resp){
+    drupal_set_message('Fedex Print: Sample CSV created successfully.');
+  }
+  else{
+    drupal_set_message('Fedex Print: Failed to create CSV template.', 'error');
+  }
+  return '';
+}
+
+function _fedprint_flattenForm(&$flatted, $src, $target){
+  foreach($src as $key => $fld){
+    if(strpos($key, '#') !== 0){
+      switch($fld['#type']){
+        case 'submit':
+        case 'value':
+        case 'markup':
+          break;
+        case 'fieldset':
+          _fedprint_flattenForm($flatted, $fld, $target);
+          break;
+        default:
+          $val = $fld[$target];
+          
+          if(is_null($val)){
+            $val = '';
+          }
+          
+          if(is_array($val)){
+            $val = '';
+            foreach($fld[$target] as $key_in => $val_in){
+              $val .= $key_in . '|' . $val_in . "\n";
+            }
+          }
+          
+          $flatted[$key] = $val;
+          break;
+      }
+    }
+  }
+}
+
+function fedprint_OverviewRecord(){
+  $o = new FedPrintOverview();
+
+  $output = '<h1>Fedex Record Overview</h1>';
+  $output .= l('Print a new record', 'fedprint/record/create/0') . '<br/><br/>';
+  $output .= $o->theme();
+  return $output;
+}
+
+function fedprint_test_form(){
+  $form = array();
+  return $form;
+}
+
+function fedprint_test_form_submit($form, &$form_state){
+  $rid = fedprint_print($form_state['values']);
+  _gecho(fedprint_check_print($rid));
+  die;
+}
+
+function fedprint_print($vals, $rid = null){
+  $tpl = file_get_contents(drupal_get_path('module', 'fedprint') . '/sample.in');
+  $send = _CHTE_simple_replace($tpl, $vals);
+
+  $rec = new stdClass();
+  $rec->src = serialize($vals);
+  
+  if($rid){
+    $rec->rid = $rid;
+    $rec->status = 0;
+
+    drupal_write_record('fedprint_recs', $rec, 'rid');
+        
+    unset($rec->rid);
+    $rec->status = 1;    
+    drupal_write_record('fedprint_recs', $rec);
+  }
+  else{
+    $rec->status = 1;
+    drupal_write_record('fedprint_recs', $rec);
+  }
+
+  $path = variable_get('fedprint_path', '');
+  if(!$path){
+    drupal_set_message('FedPrint: File path error.', 'error');
+    return false;
+  }
+
+  file_put_contents(
+    sprintf('%s/in/gyoumu_batch-%s.in', $path, $rec->rid), $send
+  );
+
+  return $rec->rid;
+}
+
+function _fedprint_getRec($val, $fld='rid'){
+  switch($fld){
+    case 'rid':
+      return db_fetch_object(
+        db_query('SELECT * FROM {fedprint_recs} WHERE rid=%d AND status > 0',
+          $val)
+      );
+        
+    default:
+      return db_fetch_object(
+        db_query('
+          SELECT * FROM {fedprint_recs}
+          WHERE %s="%s" AND status > 0
+          ORDER BY rid DESC
+          ', $fld, $val)
+      );
+  }
+}
+
+function _fedprint_delRec($val, $fld='rid'){
+  switch($fld){
+    case 'rid':
+      return db_query('DELETE FROM {fedprint_recs} WHERE rid=%d', $val);
+        
+    default:
+      return db_query('
+        DELETE FROM {fedprint_recs}
+        WHERE %s="%s"
+      ', $fld, $val);
+  }
+}
+
+function _fedprint_getCurrencyOpts(){
+  $codes = _fedprint_parse_pair(variable_get('fedprint_crrcodes', ''));
+  
+  asort($codes);  
+  return $codes;
+}
+
+function _fedprint_getCountryCodeOpts(){
+  $codes = _fedprint_parse_pair(variable_get('fedprint_ctrycodes', ''));
+  
+  asort($codes);  
+  $codes = array('0' => '') + $codes;  
+  return $codes;
+}
+
+function _fedprint_toCsv($src){
+  $send = '';
+  foreach($src as $row){
+    $pointer = 0;
+    foreach($row as $cell){
+      if($pointer > 0){
+        $send .= ',';
+      }
+
+      $cell = str_replace("\r", '', $cell);
+//      $cell = str_replace("\n", "\r\n", $cell);
+      
+      if(strstr($cell, '"') !== false ||
+         strstr($cell, "\n") !== false ||
+         strstr($cell, ",") !== false){
+           
+        $cell = str_replace('"', '""', $cell);
+      }
+      
+      $send .= '"' . $cell . '"';      
+      $pointer++;
+    }
+    $send .= "\r\n";
+  }
+  return $send;  
+}
+
+function _fedprint_parse_pair($src){
+  $vars = explode("\n", $src);
+  
+  $pairs = array();
+  foreach($vars as $var){
+    if($var){
+      $tok = explode('|', $var);
+      $pairs[$tok[0]] = trim($tok[1]);
+    }
+  }
+  
+  return $pairs;
+}

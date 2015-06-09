@@ -1,0 +1,13 @@
+<?php
+
+function oerp_purchase_install()
+{
+  $prefix = "Oerp\\Purchase\\Installer\\";
+  $insts = array(
+    "Form\\PurchaseOrder",
+    "Form\\PurchaseOrderLine",
+  );
+
+  $Inst = new Gulei\Installer\Serial($insts, $prefix);
+  $Inst->exe();
+}

@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<form model="stock.picking" string="Delivery Order Details">
+  <param name="action">send</param>
+
+  <field name="origin" string="Order ID"/>
+  <field name="name" string="Pack ID"/>
+  <field name="date"/>
+  <field name="date_done"/>
+
+  <separator string="Buyer Information"/>
+  <field name="address_id" colspan="4" col="6">
+    <field name="name"/>
+    <field name="email"/>
+    <field name="phone"/>
+    <field name="zip"/>
+    <field name="street"/>
+    <field name="street2"/>
+    <field name="city"/>
+    <field name="state_id" colspan="4">
+      <field name="name" string="State"/>
+      <field name="country_id" col="2">
+        <field name="name" string="Country"/>
+      </field>
+    </field>
+  </field>
+
+  <separator string="Product"/>
+
+  <tree name="move_lines" colspan="4" type="oerp_treeview">
+    <field name="product_id" string="Name"/>
+    <field name="product_qty" string="Qty"/>
+    <field name="note" string="Remark"/>
+  </tree>
+
+  <separator string="Delivery Information"/>
+
+  <group colspan="4" col="3">
+    <field name="carrier_id" colspan="1" col="1">
+      <field name="name" colspan="1"/>
+    </field>
+    <field name="weight" colspan="1"/>
+    <field name="x_cust_val" colspan="1"/>
+    <field name="note" colspan="3"/>
+  </group>
+</form>

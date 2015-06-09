@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tree>
+  <param name="items_per_page">200</param>
+
+  <field name="eval:status" string="Status"/>
+  <field name="auc_id" string="A.ID"/>
+  <field name="sku" string="SKU"/>
+  <field name="title" string="Title"/>
+  <field name="cur_price" string="Cur.Price"/>
+  <field name="shipping_fee" string="Sh.Fee"/>
+  <field name="time_end" string="End in Day(s)"/>
+
+  <translate>
+    <func>
+      <src name="func:getSku"/>
+      <fld>sku</fld>
+    </func>
+
+    <func>
+      <src><![CDATA[
+        return sprintf('<a href="%s" target="_blank">%s</a>',
+          $rec['auc_url'], $rec[$name]);
+      ]]></src>
+      <fld>auc_id</fld>
+    </func>
+    
+    <func>
+      <src name="func:getRemainDays"/>
+      <fld>time_end</fld>
+    </func>
+  </translate>
+</tree>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tree>
+  <tal:block tal:repeat="col cols">
+    <field tal:attributes="name col"/>
+  </tal:block>
+</tree>

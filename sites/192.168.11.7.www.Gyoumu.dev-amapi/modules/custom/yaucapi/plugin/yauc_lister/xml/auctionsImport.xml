@@ -1,0 +1,23 @@
+<tree>
+  <field name="clabel"/>
+  <field name="menu_lv1"/>
+  <field name="menu_lv2"/>
+  <field name="title"/>
+  <field name="format"/>
+  <field name="qty"/>
+  <field name="buynow_price"/>
+  <field name="shipping_fee"/>
+  <field name="carrier"/>
+  <field name="shipping_term"/>
+  <field name="relist"/>
+
+  <validate>
+    <func>
+      <src name="func:isUnique"/>
+      <fld>title</fld>
+      <msg>
+        Duplicate title.
+      </msg>
+    </func>
+  </validate>
+</tree>

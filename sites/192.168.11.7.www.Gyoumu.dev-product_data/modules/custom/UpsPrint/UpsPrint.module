@@ -1,0 +1,4 @@
+<?php
+
+module_load_include('inc', 'GuLib', 'autoload');
+\Gulei\Autoloader::register(__DIR__);

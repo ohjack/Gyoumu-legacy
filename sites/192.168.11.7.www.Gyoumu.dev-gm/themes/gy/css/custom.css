@@ -1,0 +1,35 @@
+@CHARSET "UTF-8";
+
+#logo {
+  float: right;
+}
+
+div.block.ui-widget div.ui-widget-content a:hover {
+  color: #09f;
+}
+
+div.block.ui-widget div.ui-widget-header {
+  font-size: 85%;
+}
+
+div.block div.ui-widget-content {
+  font-size: 85%;
+}
+
+div.fieldset-wrapper {
+  width: 600px;
+  border: 1px solid silver;
+  padding: 1em;
+}
+
+input[type="submit"] {
+  margin: 0.5em 0;
+}
+
+div.print-content table.multicolumncheckboxesradios-table {
+  display: none;
+}
+
+table.multicolumncheckboxesradios-table *{
+  border-width: 0;
+}

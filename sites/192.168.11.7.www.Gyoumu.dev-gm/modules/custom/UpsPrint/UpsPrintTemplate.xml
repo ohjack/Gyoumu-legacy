@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenShipments xmlns="x-schema:OpenShipments.xdr">
+  <OpenShipment ShipmentOption="" ProcessStatus="">
+    <ShipTo>
+      <CompanyOrName>${param/recp_contact}</CompanyOrName>
+      <Attention>${param/recp_contact}</Attention>
+      <Address1>${param/recp_addr1}</Address1>
+      <Address2>${param/recp_addr2}</Address2>
+      <Address3></Address3>
+      <CountryTerritory>${param/recp_country_code}</CountryTerritory>
+      <PostalCode>${param/recp_post_code}</PostalCode>
+      <CityOrTown>${param/recp_city}</CityOrTown>
+      <StateProvinceCounty>${param/recp_state}</StateProvinceCounty>
+      <Telephone>${param/recp_phone}</Telephone>
+    </ShipTo>
+    <ShipmentInformation>
+      <ServiceType></ServiceType>
+      <PackageType></PackageType>
+      <NumberOfPackages>1</NumberOfPackages>
+      <ShipmentActualWeight>${param/pkg_weight}</ShipmentActualWeight>
+      <ShipmentDimensionalWeight>${param/pkg_weight}</ShipmentDimensionalWeight>
+      <DescriptionOfGoods>${param/com_desc1}</DescriptionOfGoods>
+      <Reference1>${param/tid}</Reference1>
+      <Reference2>G5 02 no brand</Reference2>
+      <Reference3>${param/ref_note}</Reference3>
+      <BillingOption></BillingOption>
+    </ShipmentInformation>
+    <InternationalDocumentation>
+      <InvoiceReasonForExport>02</InvoiceReasonForExport>
+      <InvoiceCurrencyCode>USD</InvoiceCurrencyCode>
+      <InvoiceLineTotal>1</InvoiceLineTotal>
+      <InvoiceAdditionalComments>G5 02 no brand</InvoiceAdditionalComments>
+    </InternationalDocumentation>
+    <Goods>
+      <PartNumber></PartNumber>
+      <DescriptionOfGood>${param/com_desc1}</DescriptionOfGood>
+      <Inv-NAFTA-TariffCode></Inv-NAFTA-TariffCode>
+      <Inv-NAFTA-CO-CountryTerritoryOfOrigin>TW</Inv-NAFTA-CO-CountryTerritoryOfOrigin>
+      <InvoiceUnits>1</InvoiceUnits>
+      <InvoiceUnitOfMeasure>EA</InvoiceUnitOfMeasure>
+      <Invoice-SED-UnitPrice>${param/custom_value}</Invoice-SED-UnitPrice>
+      <InvoiceCurrencyCode>USD</InvoiceCurrencyCode>
+      <InvoiceNetWeight></InvoiceNetWeight>
+    </Goods>
+  </OpenShipment>
+</OpenShipments>

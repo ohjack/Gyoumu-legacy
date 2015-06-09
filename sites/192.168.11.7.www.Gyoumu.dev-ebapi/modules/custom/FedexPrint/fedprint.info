@@ -1,0 +1,5 @@
+name = Printer
+description = Helper for printing Fedex labels & invoices.
+package = Fedex
+core = 6.x
+dependencies[] = GuLib

@@ -1,0 +1,28 @@
+<tree>
+  <field name="SKU"/>
+  <field name="L"/>
+  <field name="W"/>
+  <field name="H"/>
+  <field name="Weight"/>
+  <field name="Packing"/>
+
+  <validate>
+    <func>
+      <src name="cmd:Oerp\Command\existValue">
+        <arg>product.ul</arg>
+        <arg></arg>
+        <arg>name</arg>
+      </src>
+      <fld>Packing</fld>
+    </func>
+
+    <func>
+      <src name="cmd:Oerp\Command\existValue">
+        <arg>product.product</arg>
+        <arg></arg>
+        <arg>default_code</arg>
+      </src>
+      <fld>SKU</fld>
+    </func>
+  </validate>
+</tree>

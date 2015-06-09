@@ -1,0 +1,21 @@
+<?php
+
+module_load_include('module', 'oerp_product');
+
+function oerp_product_install()
+{
+  $prefix = "Oerp\\Product\\Installer\\";
+  $insts = array(
+    "Tree\\Product",
+    "Form\\Product",
+    "Model\\PackageType",
+    "Tree\\PackageType",
+    "Form\\PackageType",
+    "Model\\Address",
+    "Model\\Partner",
+    "Form\\Partner",
+  );
+
+  $Inst = new Gulei\Installer\Serial($insts, $prefix);
+  $Inst->exe();
+}

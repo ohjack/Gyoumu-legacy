@@ -1,0 +1,97 @@
+<tree name="view">
+  <param name="oerp:model">stock.picking</param>
+
+  <field name="id">
+    <param name="hide">1</param>
+  </field>
+
+  <field name="x_seller" string="Seller">
+    <param name="filter">1</param>
+  </field>
+  <field name="name" string="Ref."/>
+
+  <field name="date" string="O.Date"/>
+
+  <field name="origin" string="O.ID"/>
+  <field name="move_lines">
+    <field name="product_id">
+      <field name="state">
+        <param name="hide">1</param>
+      </field>
+
+      <field name="purchase_ok">
+        <param name="hide">1</param>
+      </field>
+
+      <field name="product_manager" string="Mgr"/>
+      <field name="func:real_state" string="Status"/>
+      <field name="qty_available" string="Stk"/>
+      <field name="default_code" string="SKU"/>
+    </field>
+    <field name="product_qty" string="Qty"/>
+    <field name="func:po" string="PO"/>
+    <field name="func:plan_date" string="Plan.Date"/>
+    <field name="note" string="Rmrk"/>
+  </field>
+  <field name="address_id" select="1">
+    <field name="name" string="Buyer"/>
+  </field>
+
+  <field name="carrier_id" string="Carrier">
+    <param name="filter">1</param>
+  </field>
+
+  <validate>
+    <func>
+      <src>
+        <![CDATA[
+            if ($rec[$name] == 'N/A') {
+              return TRUE;
+            }
+
+            if (strcmp($rec[$name], date('Y-m-d')) <= 0) {
+              return FALSE;
+            }
+            return TRUE;
+            ]]>
+      </src>
+      <fld><fld>move_lines.func:plan_date</fld></fld>
+      <msg>Due date.</msg>
+    </func>
+
+    <func type="sep">
+      <src name="cmd:Oerp\Command\isBeforeCloseTime"/>
+      <fld>date</fld>
+      <msg>Out of close time</msg>
+    </func>
+  </validate>
+
+  <translate>
+    <func>
+      <src name="cmd:Oerp\Command\appendChkCode"/>
+      <src><![CDATA[
+          return sprintf(
+            '<a href="?q=oerp/delivery/order/detail&id=%s"><span class="gu_value">%s</span></a>',
+            $rec['id'], $rec[$name]
+          );
+        ]]></src>
+
+      <fld>name</fld>
+    </func>
+
+    <func>
+      <src name="cmd:Oerp\Product\Command\toRealState"/>
+      <fld>move_lines.product_id.func:real_state</fld>
+    </func>
+
+    <func>
+      <src name="cmd:Oerp\Purchase\Command\FindNearestOrder"/>
+      <fld>move_lines.func:po</fld>
+    </func>
+
+    <func>
+      <src name="cmd:Oerp\Purchase\Command\FindNearestPoPlanDate"/>
+      <fld>move_lines.func:plan_date</fld>
+    </func>
+  </translate>
+</tree>

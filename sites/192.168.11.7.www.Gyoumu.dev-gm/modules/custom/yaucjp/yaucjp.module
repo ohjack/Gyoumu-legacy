@@ -1,0 +1,183 @@
+<?php
+
+include_once('yaucjp.inc');
+
+function yaucjp_menu(){
+  $item = array();
+  $item['yaucjp/%/contact_form'] = array(
+    'title' => 'YAHOOオークションでご落札の方',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('yaucjp_contactForm_form', 1),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $item['yaucjp/contact_form/js'] = array(
+    'page callback' => 'yaucjp_contactForm_js',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,  
+  );
+  
+  $item['yaucjp/overview'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('yaucjp_overview_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  return $item;
+}
+
+function yaucjp_theme(){
+  return array(
+    'yaucjp_contactForm_form' => array(
+      'arguments' => array(),
+    ),
+  );
+}
+
+function yaucjp_contactForm_form(&$form_state, $sellerId){
+  $m = new YaucJpModel();
+  
+  if($form_state['storage']['step']){
+    return $m->getConfirmFormEles($form_state, $sellerId);
+  }
+  else{
+    $form_state['storage']['step'] = 'form';
+    if(isset($form_state['storage']['vals'])){
+      $form_state['values']['contact_form'] = $form_state['storage']['vals']; 
+    }
+    
+    $m->inc();    
+    $eles = $m->getContactFormEles($form_state, $sellerId);
+    return $eles;
+  }
+}
+
+function yaucjp_contactForm_form_validate($form, &$form_state){
+  $step = $form_state['storage']['step'];
+  
+  if($step == 'form'){
+    $vals = $form_state['values']['contact_form'];
+    
+    foreach($vals as $key => $val){
+      switch($key){
+        case 'price_bid':
+        case 'price_ship':
+        case 'addr_choume':
+        case 'addr_banchi':
+        case 'addr_gou':
+          if($val != (int)intval($val)){
+            form_set_error("contact_form][$key",
+              sprintf('Field  %s should be a number.', $form['contact_form'][$key]['#title'])
+            );
+          }          
+          break;
+          
+        case 'name_kana_last':
+        case 'name_kana_first':
+        case 'addr_todoufuken':
+        case 'addr_sichouson':
+        case 'addr_chouiki':
+        case 'addr_house':
+          $h = new GuTextHelper();
+          if(!$h->isAllKana($val)){
+            form_set_error("contact_form][$key",
+              sprintf('Field %s can only contains Kanas.', $form['contact_form'][$key]['#title'])
+            );
+          }
+          break;
+      }
+    }
+  }
+}
+
+function yaucjp_contactForm_form_submit($form, &$form_state){
+  $step = $form_state['storage']['step'];
+
+  if($step != 'submit'){
+    return;
+  }
+  
+  $btn = $form_state['clicked_button']['#name'];
+  if($btn == 'back'){
+    unset($form_state['storage']['step']);
+    return;
+  }
+  
+  $m = new YaucJpModel();
+  $m->submitOrder($form_state);
+  unset($form_state['storage']);
+}
+
+function theme_yaucjp_contactForm_form($form){
+  $m = new YaucJpModel();
+  return $m->themeContactForm($form);
+}
+
+function yaucjp_contactForm_js(){
+  $q = new JpZipQuery();
+  $h = new GuTextHelper();
+  $zip = $h->normalizeNum($_POST['contact_form']['zip']);
+  
+  $sug_addr = '';
+  foreach($q->query($zip) as $each){
+    $sug_addr .= sprintf('
+      <div><a class="sug_addr" href="">
+        %s %s %s
+        <span>%s</span> <span>%s</span> <span>%s</span>
+      </a></div>
+      ',
+      $each['kanji1'], $each['kanji2'], $each['kanji3'],
+      $each['kana1'], $each['kana2'], $each['kana3']
+    );
+  }
+  
+  if(!empty($sug_addr)){
+    $sug_addr = sprintf('
+      <div id="sug_addr-content">
+        <div><strong>該当するものをクリックして下さい。</strong></div>
+        %s
+      </div>', $sug_addr);
+          
+    $defaults['sug_addr'] = $sug_addr;
+  }
+  
+  $resp = array(
+    'status' => true,
+    'data' => $sug_addr,
+  );
+  
+  drupal_json($resp);
+}
+
+function yaucjp_overview_form(&$form_state){
+  if($dest = $form_state['storage']['redirect']){
+    header('Location: ' . $dest);
+    return;
+  }
+  
+  $form = array();
+  
+  $arch = file_get_contents(drupal_get_path('module', 'yaucjp') . '/overview.xml');
+  
+  $t = new YaucjpTable($arch);
+  
+  $form['overview'] = array(
+    '#type' => 'markup',
+    '#value' => $t->theme(null),
+    '#obj' => $t->save(),
+  );
+  
+  $form['download'] = array(
+    '#type' => 'submit',
+    '#value' => 'Download CSV',
+  );
+
+  return $form;
+}
+
+function yaucjp_overview_form_validate($form, &$form_state){
+  $obj = $form['overview']['#obj']->renew();  
+  $form_state['storage']['redirect'] = $obj->getCsvFile(null, 'YahooFormOrder');
+}

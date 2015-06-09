@@ -1,0 +1,50 @@
+<?php
+namespace Gulei\Modifier;
+
+class CopyDuplicate extends _Abstract
+{
+  protected function isModApplicable($RefVars, $ref)
+  {
+    $method = $ref->val('_param', 'copy_method');
+    if($$method == 'duplicate' || $method == 'copy')
+      return true;
+  }
+
+  protected function isCellApplicable($RefVals, $ref)
+  {
+    return true;
+  }
+
+  protected function modifyRows($RefVars, $ref)
+  {
+    $rows_send = array();
+    $rows = &$RefVars->refVar('rows');
+    $keys = array_keys($rows[0]);
+
+    foreach($rows as $ind => $row){
+      $row_send = array();
+
+      foreach($keys as $key) {
+        if (!isset($row[$key])) {
+          for ($i = $ind; $i >= 0; $i--) {
+            if (isset($rows[$i][$key])) {
+              $fld = $rows[$i][$key];
+              break;
+            }
+          }
+        }
+        else {
+          $fld = $row[$key];
+        }
+        $row_send[$key] = $fld;
+      }
+      $rows_send[] = $row_send;
+    }
+    $rows = $rows_send;
+  }
+
+  protected function modify($RefVars, $ref)
+  {
+    return null;
+  }
+}

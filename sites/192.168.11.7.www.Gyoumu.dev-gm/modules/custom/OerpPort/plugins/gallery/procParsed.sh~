@@ -1,0 +1,51 @@
+#! /bin/sh
+
+BASEDIR=$(dirname $(readlink -f $0))/$1
+PRCDIR=$BASEDIR/.manipulating
+TARDIR=$BASEDIR/publish
+
+# manipulate
+for img in $(ls $PRCDIR/*.jpg 2> /dev/null)
+do
+  target=$(echo $img | sed 's:.*/(.*)\(.*\)$:\1:')
+  tag=$(echo $img | sed 's:.*/(\(.*\)).*\.jpg$:\1:')
+  wm=$(ls $BASEDIR/watermark/$tag*.png 2> /dev/null)
+
+  if [ $? -eq 0 ];	then
+  	wm=$(echo $wm | head -n 1)
+  	tok='\([^-]*\)-\?'
+  	pat=$tok$tok$tok$tok
+
+  	acc=$(echo $wm | sed 's:.*/'$pat'.png$:\1:')
+
+  	mrg=$(echo $wm | sed 's:.*/'$pat'.png$:\3:')
+  	mrg=$(echo ${mrg:-over})
+  	
+  	dim=$(echo $wm | sed 's:.*/'$pat'.png$:\4:')
+  	dim=$(echo ${dim:-800x600})
+
+  	ls -d $TARDIR/$acc 1> /dev/null 2>&1
+  
+  	if [ $? != 0 ]; then
+	    mkdir -m 777 $TARDIR/$acc
+  	fi
+
+  	convert $img -resize $dim^ -gravity center -extent $dim -compose $mrg $wm -composite $img
+   	mv $img $TARDIR/$acc/$target
+  	echo $TARDIR/$acc/$target
+  
+  else
+    echo $img | grep '.*/(.*-_del_)'
+    if [ $? -eq 0 ]; then
+      acc=$(echo $img | sed 's:.*/(\(.*\)-_del_).*:\1:')
+    	ls -d $TARDIR/$acc 1> /dev/null 2>&1
+  
+    	if [ $? != 0 ]; then
+  	    mkdir -m 777 $TARDIR/$acc
+    	fi
+
+      cp $BASEDIR/blank.jpg $TARDIR/$acc/$target
+      rm $img
+    fi
+  fi
+done

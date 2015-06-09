@@ -1,0 +1,232 @@
+<form model="stock.picking"
+  tal:attributes="model param/model">
+  
+  <group colspan="4" type="toolbar">
+    <tal:block tal:condition="state:done">
+      <field type="textfield" name="search-GE:date_done" string="Date done from" colspan="1">
+        <param name="default" tal:condition="exists:param/search-val" tal:content="param/search-val/date_done-GE"/>
+        <param name="attrs">{"widget":"datepicker"}</param>
+      </field>
+      <field type="textfield" name="search-LE:date_done" string="to" colspan="1">
+        <param name="default" tal:condition="exists:param/search-val" tal:content="param/search-val/date_done-LE"/>
+        <param name="attrs">{"widget":"datepicker"}</param>
+      </field>
+      
+      <field type="textfield" name="search-ilike:x_seller" string="Seller" colspan="1">
+        <param name="default" tal:condition="exists:param/search-val" tal:content="param/search-val/x_seller-ilike"/>
+      </field>
+      
+      <field type="textfield" name="search-ilike:origin" string="O.ID" colspan="1">
+        <param name="default" tal:condition="exists:param/search-val" tal:content="param/search-val/origin-ilike"/>
+      </field>
+      
+      <field type="textfield" name="search-EQ:x_tnum" string="Track #" colspan="1">
+        <param name="default" tal:condition="exists:param/search-val" tal:content="param/search-val/x_tnum-EQ"/>
+      </field>
+      
+      <newline/>
+      <field type="submit" name="func:search" string="Search" colspan="1"/>
+    </tal:block>
+  </group>
+
+  <tree name="select:order_id"
+    tal:attributes="model param/model">
+    
+    <param name="type" tal:content="param/type"/>
+    <param name="action">select</param>
+    <param name="merge">1</param>
+<!-- 
+    <tal:block tal:condition="state:done">
+      <param name="pager">1</param>
+      <param name="items_per_page" tal:content="param/items_per_page"/>
+      <param name="page" tal:content="param/page"/>
+    </tal:block>
+-->
+    <tal:block tal:condition="state:cancel">
+      <param name="pager">1</param>
+      <param name="items_per_page" tal:content="param/items_per_page"/>
+      <param name="page" tal:content="param/page"/>
+    </tal:block>
+
+    <param name="oerp:model" tal:content="param/model"/>
+    
+    <param name="oerp:criteria" tal:condition="state:draft">[["type", "=", "delivery"],["state","=","draft"]]</param>
+    <param name="oerp:criteria" tal:condition="state:assigned">[["type", "=", "delivery"],["state","=","assigned"]]</param>
+    <param name="oerp:criteria" tal:condition="state:confirmed">[["type", "=", "delivery"],["state","=","confirmed"]]</param>
+    <param name="oerp:criteria" tal:condition="state:cancel">[["type", "=", "delivery"],["state","=","cancel"]]</param>
+    <param name="oerp:criteria" tal:condition="exists:param/criteria" tal:content="param/criteria"/>
+    
+    <param name="oerp:ids" tal:content="param/ids"/>
+    <param name="oerp:limit" tal:condition="state:done"></param>
+
+    <field name="id">
+      <param name="hide">1</param>
+    </field>
+    
+    <field name="x_seller" string="Seller">
+      <param name="filter">1</param>
+    </field>
+    <field name="name" string="Ref."/>
+    <field name="state" string="Status"/>
+    
+    <field name="date" string="O.Date"/>
+    <field name="date_done" string="Date Done"
+      tal:condition="param/showDateDone"/>
+        
+    <field name="origin" string="O.ID"/>
+    <field name="move_lines">
+      <field name="product_id">
+        <field name="default_code" string="SKU"/>
+      </field>
+      <field name="product_qty" string="Qty"/>
+      <field name="note" string="Rmrk"/>
+
+    </field>
+    <field name="address_id" select="1">
+      <field name="name" string="Buyer"/>
+      
+      <tal:block tal:condition="param/showFullAddr">
+      <field name="phone" string="Phone"/>
+      <field name="zip" string="Zip"/>
+      <field name="street" string="Addr1"/>
+      <field name="street2" string="Addr2"/>
+      <field name="city" string="City"/>
+      </tal:block>
+      
+      <field name="state_id">
+        <field name="name" string="State"
+          tal:condition="param/showFullAddr"/>
+          
+        <field name="country_id" string="Country"/>
+      </field>
+    </field>
+
+    <field name="x_cust_val" string="C.Value"/>
+    <field name="carrier_id" string="Carrier">
+      <param name="filter">1</param>
+    </field>
+
+    <field name="x_tnum" string="Track #"
+      tal:condition="param/showTrackNum"/>
+      
+    <field name="note" string="Notes"
+      tal:condition="param/showNote"/>
+
+    <translate>
+      <function>
+        <source name="cmd:Oerp\Command\getFedexTrack">
+          <arg>carrier_id</arg>
+        </source>
+        <src name="cmd:Oerp\Command\getUpsTrack"/>
+
+        <field>x_tnum</field>
+      </function>
+
+      <function>
+        <source name="cmd:Gulei\Command\explode">
+          <arg> </arg>
+          <arg>0</arg>
+        </source>
+        
+        <field>date_done</field>
+      </function>
+
+      <function>
+        <source name="cmd:Oerp\Command\appendChkCode"/>
+        <src><![CDATA[
+          return sprintf(
+            '<a href="%s"><span class="gu_value">%s</span></a>',
+            '?q=oerpport/delivery/order/' . $rec['id'] . '/detail', $rec[$name]
+          );
+        ]]></src>
+        
+        <field>name</field>
+      </function>
+             
+      <func>
+        <src><![CDATA[
+          return preg_replace(
+            array("@Confirmed@", "@Available@"),
+            array("OoS", "Ready"),
+            $rec[$name]
+          );
+        ]]></src>
+        
+        <fld>state</fld>
+        <fld>move_lines.state</fld>
+      </func>
+
+    </translate>
+
+    <validate>
+      <func tal:condition="state:assigned" type="sep">
+        <src name="cmd:Oerp\Command\isBeforeCloseTime"/>
+        <fld>date</fld>
+        <msg>Out of close time</msg>
+      </func>
+    </validate>
+
+    <filter>
+      <func tal:condition="state:fedex">
+        <src name="func:isCarrierFedex"/>
+        <fld>carrier_id</fld>
+      </func>
+    </filter>
+  </tree>
+
+  <group colspan="4" type="toolbar">
+
+    <tal:block tal:condition="state:draft">
+      <field type="submit" name="func:assign" string="Mark as READY" colspan="1">
+        <param name="confirm">1</param>
+      </field>
+      
+      <field type="submit" name="func:combine" string="Combine" colspan="1"/>
+      <field type="submit" name="func:delete" string="Delete" colspan="1">
+        <param name="confirm">1</param>
+      </field>
+    </tal:block>
+
+    <tal:block tal:condition="state:assigned">
+      <field type="submit" name="func:download-notrack" string="Download No-track" colspan="1"/>      
+      <field type="submit" name="func:printFedex" string="Print Fedex" colspan="1"/>
+      <field type="submit" name="func:printUps" string="Print UPS" colspan="1"/>
+      <field type="submit" name="func:send" string="Mark as SENT" colspan="1">
+        <param name="confirm">1</param>
+      </field>
+      
+      <field type="submit" name="func:cancelAvail" string="Mark as OoS" colspan="1">
+        <param name="confirm">1</param>
+      </field>            
+      
+      <field type="submit" name="func:cancel" string="Mark as CANCEL" colspan="1"/>
+    </tal:block>
+
+    <tal:block tal:condition="state:done">
+      <field type="submit" name="func:download-notrack" string="Download No-track" colspan="1"/>
+      <field type="submit" name="func:download-japan" string="Download Japan" colspan="1"/>
+      <field type="submit" name="func:download-these" string="Download These" colspan="1"/>
+    </tal:block>
+    
+    <tal:block tal:condition="state:confirmed">
+      <field type="submit" name="func:assign" string="Mark as READY" colspan="1">
+        <param name="confirm">1</param>
+      </field>
+                
+      <field type="submit" name="func:cancel" string="Mark as CANCEL" colspan="1"/>
+    </tal:block>
+
+    <tal:block tal:condition="state:combine">
+      <field type="submit" name="func:combine" string="Combine to this order" colspan="1"/>
+      <field type="submit" name="func:cancel" string="Cancel" colspan="1"/>          
+    </tal:block>
+    
+    <tal:block tal:condition="state:canceling">
+      <field name="func:note" type="textarea" string="Cancel Note" colspan="6"/>
+      <newline/>
+      <field type="submit" name="func:confirm" string="Confirm" colspan="1"/>
+      <field type="submit" name="func:cancel" string="Cancel" colspan="1"/>
+    </tal:block>
+  </group>
+  
+</form>

@@ -1,0 +1,46 @@
+<?php
+namespace Oerp\Delivery\Themer;
+
+class StatisticsTable implements \Gulei\Themer\_Interface {
+  protected $year;
+  protected $month;
+  protected $day;
+  protected $Iterator;
+
+  public function setStarttime($year, $month, $day) {
+    $this->year = $year;
+    $this->month = $month;
+    $this->day = $day;
+
+    $this->Iterator = new \Oerp\Delivery\Iterator\Seasonly(
+      $this->year, $this->month, $this->day);
+  }
+
+  protected function getQtySum() {
+    $sql = 'SELECT SUM(qty) AS qty_sum FROM {oerp_delivery_output} WHERE %s';
+    $where = $this->Iterator->getWhere();
+
+    $rs = db_query($sql , implode(' AND ', $where));
+    $data = db_fetch_object($rs);
+    return $data->qty_sum;
+  }
+
+  protected function getStatistics() {
+    $stat = array();
+
+    while ($this->Iterator->next()) {
+      $qty_sum = $this->getQtySum();
+      $col_name = $this->Iterator->getColumnName();
+      $stat[$col_name] = $qty_sum ? $qty_sum : 0;
+    }
+    return $stat;
+  }
+
+  public function theme() {
+    $stat = $this->getStatistics();
+    $hds = array_keys($stat);
+    $hds = array_combine($hds, $hds);
+    $Tb = new \Gulei\Table\Simple($hds, array($stat));
+    return $Tb->theme();
+  }
+}

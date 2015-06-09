@@ -1,0 +1,76 @@
+<?php
+
+module_load_include('inc', 'GuLib', 'autoload');
+Gulei\Autoloader::register(__DIR__);
+
+function RakutenHelper_menu(){
+  $items = array();
+
+  $items['rakuten/theme/leftnavi'] = array(
+    'page callback' => 'RakutenHelper_ThemeLeftNavi',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $classname = "Rakuten\\Importer\\TrackingPostProc";
+  $items['rakuten/tracking_postproc']
+      = \Gulei\Importer\_Abstract::createMenuEntry($classname);
+
+  return $items;
+}
+
+function RakutenHelper_theme(){
+  return array(
+    'tts_navi_left' => array(
+      'arguments' => array(
+        'items' => array(),
+      ),
+      'template' => 'tts-navi_left'
+    )
+  );
+}
+
+function RakutenHelper_ThemeLeftNavi(){
+//  $src = GuFile::getPathContent('module', 'RakutenHelper', '/rtSampleCategory.html');
+  $src = file_get_contents('http://item.rakuten.co.jp/titosoy/c/');
+  $src = iconv('EUC-JP', 'UTF-8', $src);
+
+  $pat = '@<tr valign="top">.*<td class="sdlayout"><a.*</td></tr>@U';
+  preg_match_all($pat, $src, $trs);
+  $trs = $trs[0];
+
+  $items = array();
+
+  foreach($trs as $tr){
+//    dpr($tr);
+    $item = array();
+    preg_match('@<a href="(.*)">(.*)</a>@U', $tr, $m);
+    $item['lv'] = substr_count($tr, 'sdline');
+    $item['href'] = $m[1];
+    $item['name'] = $m[2];
+
+    $style = array();
+    $style[] = 'padding-left:' . $item['lv'] * 10 . 'px;';
+    $style[] = 'font-size:' . (100 - $item['lv'] * 10) . '%;';
+    $style[] = 'padding-top:' . (1 - $item['lv'] * 0.1) . 'em;';
+    $item['style'] = implode('', $style);
+
+    $items[] = $item;
+  }
+
+  $html = GuTextHelper::compressHtml(theme('tts_navi_left', $items));
+
+  $output = '';
+
+  $form = array(
+    'html' => array(
+      '#title' => 'HTML',
+      '#type' => 'textarea',
+      '#value' => $html,
+    )
+  );
+
+  $output .= drupal_render($form);
+  $output .= $html;
+  return $output;
+}

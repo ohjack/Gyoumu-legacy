@@ -1,0 +1,10 @@
+<tree act="write" model="res.partner" dict_key="name">
+  <field name="name" from="Supplier"/>
+  <field
+      name="property_product_pricelist"
+      cri='[["type", "=", "sale"],["currency_id", "ilike", "${Currency}"]]'/>
+
+  <field
+      name="property_product_pricelist_purchase"
+      cri='[["type", "=", "purchase"],["currency_id", "ilike", "${Currency}"]]'/>
+</tree>

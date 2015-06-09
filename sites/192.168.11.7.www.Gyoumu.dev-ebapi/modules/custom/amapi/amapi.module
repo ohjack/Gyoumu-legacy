@@ -1,0 +1,38 @@
+<?php
+
+module_load_include('inc', 'GuLib', 'autoload');
+Gulei\Autoloader::register(__DIR__);
+
+require_once __DIR__ . '/lib/autoload.inc';
+
+function amapi_menu()
+{
+  $items = array();
+
+  $items['amapi/test'] = array(
+    'page callback' => 'amapi_test',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+function amapi_test() {
+  /*
+  $Call = new \Amapi\API\GetFeedSubmissionResult();
+  $rs = $Call->getResponse();
+  dpr($rs);
+  return '';
+  //*/
+
+//  /*
+  $Call = new \Amapi\API\SubmitFeed();
+  $rs = $Call->getResponse();
+  dpr($rs);
+  return '';
+  //*/
+
+  $Call = new \Amapi\API\GetFeedSubmissionList();
+  dpr($Call->getResponse());
+  return '';
+}

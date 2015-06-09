@@ -1,0 +1,288 @@
+<?php
+use Ebapi as E;
+
+module_load_include('inc', 'GuLib', 'autoload');
+\Gulei\Autoloader::register(__DIR__);
+
+require_once __DIR__ . '/inc/Services_Ebay/Ebay.php';
+
+function ebapi_menu()
+{
+  $items = array();
+
+  $items['ebapi/test'] = array(
+    'page callback' => 'ebapi_test',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['admin/settings/ebapi'] = array(
+    'title' => 'eBapi Settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('ebapi_settings_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['ebapi/account/register/%/%/%'] = array(
+    'title' => 'eBapi Account Registration',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('ebapi_account_register_form', 3, 4, 5),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['ebapi/%/myebay/selling'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('ebapi_myebaySelling_form', 1),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['ebapi/myebay/selling/js'] = array(
+    'page callback' => 'ebapi_myebaySelling_js',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['ebapi/item/%/%'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('ebapi_item_form', 2, 3),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+function ebapi_block($op = 'list', $delta = 0, $edit = array())
+{
+  switch($op){
+    case 'list':
+      $blocks[0]['info'] = t('eBay Helper');
+      return $blocks;
+
+    case 'view':
+      $items = array();
+
+      $setting_link = 'admin/settings/ebapi';
+
+      $items['setting_page'] = array(
+        'data' => l('Setting Page', $setting_link),
+      );
+
+      $items['sellers'] = array(
+        'data' => 'Compatibility editor',
+        'children' => array(),
+      );
+
+      foreach(\Ebapi\Account\Helper::getAccounts() as $seller){
+        $sellerId = $seller['account'];
+        $items['sellers']['children'][] = array(
+          'data' => l($sellerId, "ebapi/$sellerId/fitment/edit")
+        );
+      }
+
+      $block['subject'] = t('eBay Helper');
+      $block['content'] = theme('item_list', $items, null, 'ul', array('class' => 'menu'));
+      return $block;
+  }
+}
+
+function ebapi_myebaySelling_form(&$form_state, $accnt)
+{
+  $p = new E\PageMySelling($form_state);
+  return $p->hook_form($form_state, $accnt);
+}
+
+function ebapi_myebaySelling_form_submit($form, &$form_state)
+{
+  $p = new E\PageMySelling($form_state);
+  $p->hook_form_submit($form, $form_state);
+}
+
+function ebapi_myebaySelling_js()
+{
+  $p = new E\PageMySelling(null);
+  return $p->hook_form_js('ebapi_myebaySelling_form');
+}
+
+function ebapi_item_form(&$form_state, $seller, $ItemID)
+{
+  $p = new E\PageItem($form_state);
+  return $p->hook_form($form_state, $seller, $ItemID);
+}
+
+function ebapi_item_form_submit($form, &$form_state)
+{
+  $p = new E\PageItem($form_state);
+  return $p->hook_form_submit($form, $form_state);
+}
+
+function ebapi_test()
+{
+  $ids = array(
+//    '110092839463',
+    '110092893615'
+  );
+
+  foreach($ids as $ItemID){
+    $item = Services_Ebay::loadModel('Item', $ItemID, \Ebapi\API\Helper::getSession());
+    $item->Get();
+    $item->SKU = 'TEST-00002';
+    /*
+    $item->Title = 'Test Title Changed 3';
+
+    $item->ItemCompatibilityList = array(
+      'Compatibility' => array(
+        'NameValueList' => array(
+          array(
+            'Name' => 'Year',
+            'Value' => '2006',
+          ),
+          array(
+            'Name' => 'Make',
+            'Value' => 'Acura'
+          ),
+          array(
+            'Name' => 'Model',
+            'Value' => 'TL'
+          )
+        )
+      )
+    );
+    */
+
+    $item->Revise();
+    break;
+  }
+  return '';
+}
+
+function ebapi_settings_form(&$form_state)
+{
+  $form = array();
+
+  $list_src = sprintf(
+    '<div style="padding: 0.5em; width: 400px;">%s</div>', \Ebapi\Account\Helper::getListSource()
+  );
+
+  $form['list'] = array(
+    '#type' => 'markup',
+    '#value' => $list_src,
+  );
+
+  $form['new_account'] = array(
+    '#type' => 'textfield',
+    '#title' => 'New Account',
+    '#description' => 'Enter new account here.',
+  );
+
+  $form['account_type'] = array(
+    '#title' => 'Type',
+    '#type' => 'select',
+    '#options' => array(
+      \Ebapi\Account\Helper::TYPE_PRODUCTION => 'Production',
+      \Ebapi\Account\Helper::TYPE_SANDBOX => 'Sandbox',
+    ),
+  );
+
+  $form['add-account'] = array(
+    '#type' => 'submit',
+    '#value' => 'Add',
+    '#name' => 'add-account',
+  );
+
+  return $form;
+}
+
+function ebapi_settings_form_submit($form, &$form_state)
+{
+  $vals = $form_state['values'];
+
+  $isSandbox = $vals['account_type'] == \Ebapi\Account\Helper::TYPE_SANDBOX;
+  $apiHelper = new \Ebapi\API\Helper($isSandbox);
+  $resp = $apiHelper->getSessionID();
+
+  if(!$resp){
+    drupal_set_message('Failed to proceed account registeration. Please wait a minute and try again.', 'error');
+    $form_state['rebuild'] = true;
+  }
+  else {
+    $form_state['redirect'] = sprintf(
+      'ebapi/account/register/%s/%s/%s',
+      $vals['new_account'], $resp['SessionID'], $vals['account_type']
+    );
+  }
+}
+
+function ebapi_account_register_form(&$form_state, $accnt, $sid, $accnt_type)
+{
+  $form = array();
+
+  $form['accnt'] = array(
+    '#type' => 'value',
+    '#value' => $accnt
+  );
+
+  $form['sid'] = array(
+    '#type' => 'value',
+    '#value' => $sid,
+  );
+
+  $form['accnt_type'] = array(
+    '#type' => 'value',
+    '#value' => $accnt_type,
+  );
+
+  $isSandbox = $accnt_type == \Ebapi\Account\Helper::TYPE_SANDBOX;
+  $helper = new \Ebapi\API\Helper($isSandbox);
+
+  $form['helper'] = array(
+    '#type' => 'value',
+    '#value' => $helper,
+  );
+
+  $link_src = l(
+    'this link', $helper->getSignLink($sid),
+    array('attributes' => array('target' => '_blank'))
+  );
+
+  $form['link'] = array(
+    '#type' => 'markup',
+    '#value' => "Access $link_src and follow the instruction to proceed account registration."
+  );
+
+  $form['confirm'] = array(
+    '#type' => 'submit',
+    '#value' => 'Confirm',
+    '#prefix' => '<div>',
+    '#suffix' => '<em>Press this button after consenting on eBay site.</em></div>',
+  );
+
+  $form['#redirect'] = 'admin/settings/ebapi';
+  return $form;
+}
+
+function ebapi_account_register_form_submit($form, &$form_state)
+{
+  $vals = $form_state['values'];
+
+  sleep(5);
+
+  $helper = $form['helper']['#value'];
+  $resp = $helper->FetchToken($vals['sid']);
+
+  if($resp){
+    $ctrl = new \Ebapi\Account\Helper($vals['accnt']);
+    $success = $ctrl->updateUserToken($resp['eBayAuthToken'], $vals['accnt_type']);
+
+    if($success){
+      drupal_set_message(sprintf('Account %s added successfully.', $vals['accnt']));
+    }
+    else{
+      drupal_set_message(sprintf('Failed to add account %s. Try again 5 seconds later.'), 'error');
+      $form_state['rebuild'] = true;
+    }
+  }
+}

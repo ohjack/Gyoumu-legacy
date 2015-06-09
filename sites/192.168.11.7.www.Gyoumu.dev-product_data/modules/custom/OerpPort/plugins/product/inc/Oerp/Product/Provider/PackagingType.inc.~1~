@@ -1,0 +1,62 @@
+<?php
+namespace Oerp\Product\Provider;
+
+class PackagingType implements \Gulei\Provider\_Interface
+{
+  private $prov;
+
+  public function __construct()
+  {
+    $this->prov = $this->getProvider();
+  }
+
+  public function getArch()
+  {
+    $arch = \Gulei\File\Helper::getPathContent('module', 'oerp_product', '/xml/packaging.xml');
+    return $arch;
+  }
+
+  private function getProvider()
+  {
+    $param = array(
+      'arch' => $this->getArch(),
+      'pager' => true,
+      'items_per_page' => 10,
+      'page' => 0,
+    );
+
+    $prov = new \Oerp\Provider\TreeRecords($param);
+    return $prov;
+  }
+
+
+  public function getData()
+  {
+    $proc = new \Gulei\Processor\Basic();
+    $proc->setDataProvider($this->prov);
+
+    $bool_flds = array(
+      'product_tmpl_id.purchase_ok',
+      'product_tmpl_id.sale_ok',
+    );
+
+    $proc->addModifiers(
+      array(
+           new \Oerp\Product\Modifier\BestPrice(),
+           new \Gulei\Modifier\VisualizeBoolean(null, null, $bool_flds)
+      )
+    );
+
+    return \Gulei\_Array::lambda($proc->getOutput(), "Oerp\\Product\\_Array\\Command\\sortSKU");
+  }
+
+  public function getReference()
+  {
+    return $this->prov->getReference();
+  }
+
+  public function count()
+  {
+    return $this->prov->count();
+  }
+}

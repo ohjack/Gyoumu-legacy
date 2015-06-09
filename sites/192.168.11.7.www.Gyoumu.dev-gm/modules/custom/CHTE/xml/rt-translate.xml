@@ -1,0 +1,46 @@
+<translate>
+  <func>
+    <src name="trim"/>
+    <src name="strtolower"/>
+    <fld>SKU</fld>
+  </func>
+
+  <func>
+    <src>
+      <![CDATA[
+      $sku_token = explode('-', $rec['SKU']);
+      $ceil = ((int)$sku_token[1] - 1) / 500;
+      $ceil = ((int)$ceil + 1) * 500;
+
+      $links = array();
+      for($c = 1; $c <= 3; $c++){
+        $links[] = sprintf(
+          "http://image.rakuten.co.jp/titosoy/cabinet/items%s/%s-%s.jpg",
+          $ceil, $rec["SKU"], $c
+        );
+      }
+      return implode(" ", $links);
+    ]]>
+    </src>
+    <fld>Links</fld>
+  </func>
+
+  <func>
+    <src name="func:phptal">
+      <arg><![CDATA[%XML_PC%]]></arg>
+      <arg>Src1</arg>
+      <arg>Src2</arg>
+    </src>
+    <fld>PC</fld>
+  </func>
+
+  <func>
+    <src name="func:phptal">
+      <arg><![CDATA[%XML_MB%]]></arg>
+      <arg>Src1</arg>
+      <arg>Src2</arg>
+    </src>
+    <src name="html_entity_decode"/>
+    <fld>MB</fld>
+  </func>
+</translate>

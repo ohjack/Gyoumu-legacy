@@ -1,0 +1,581 @@
+<?php
+
+module_load_include('inc', 'GuLib', 'autoload');
+\Gulei\Autoloader::register(__DIR__);
+
+function oerp_delivery_menu(){
+  $items = array();
+  
+  $items['oerpport/delivery/overview'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_delivery_DeliveryOverview_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['oerpport/delivery/list'] = array(
+    'title' => 'Delivery Orders',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_delivery_DeliveryList_form', 'assigned'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['oerpport/delivery/list/ready'] = array(
+    'title' => 'Ready',
+    'access callback' => true,
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 0,
+  );
+
+  $items['oerpport/delivery/list/draft'] = array(
+    'title' => 'Draft',
+    'access callback' => true,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_delivery_DeliveryList_form', 'draft'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 1,
+  );
+  
+  $items['oerpport/delivery/list/pack'] = array(
+    'title' => 'Packing List',
+    'access callback' => true,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_delivery_DeliveryListPack_form'),
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['oerpport/delivery/list/filter/%'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_delivery_DeliveryListFilter_form', 4),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['oerpport/delivery/list/confirmed'] = array(
+    'title' => 'OoS',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_delivery_DeliveryList_form', 'confirmed'),
+    'access callback' => true,
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 2,
+  );
+  
+  $items['oerpport/delivery/list/sent'] = array(
+    'title' => 'Sent',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_delivery_DeliveryList_form', 'done'),
+    'access callback' => true,
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 3,
+  );  
+  
+  $items['oerpport/delivery/list/cancel'] = array(
+    'title' => 'Cancelled',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_delivery_DeliveryList_form', 'cancel'),
+    'access callback' => true,
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 4,
+  );
+  
+  $items['oerpport/delivery/order/create'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_delivery_DeliveryOrderCreate_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['oerpport/delivery/order/upload'] = array(
+    'title' => 'Upload orders',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_delivery_DeliveryOrderUpload_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['oerpport/delivery/tracking/update'] = array(
+    'title' => 'Update Tracking #',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_delivery_DeliveryTrackingUpdate_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['oerpport/delivery/order/%/detail'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_delivery_DeliveryOrderDetail_form', 3),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['oerpport/delivery/combine/%'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_delivery_DeliveryCombine_form', 3),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['oerpport/delivery/country_ref'] = array(
+    'page callback' => 'oerp_delivery_DeliveryCountryRef',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['oerpport/delivery/backup'] = array(
+    'page callback' => 'OerpDeliveryBackup',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  ); 
+  
+  return $items;
+}
+
+function oerp_delivery_DeliveryList_form(&$form_state, $state){
+  if($dir = $form_state['storage']['redirect']){
+    header('Location: ' . $dir);
+    return;
+  }
+  else if($search = $form_state['storage']['search']){
+    $f = new \Oerp\Page\DeliveryList($state, null, array('search' => $search));
+  }
+  else if($sels = $form_state['storage']['combine']){
+    $f = new \Oerp\Page\DeliveryList('combine', $sels);
+  }
+  else if($sels = $form_state['storage']['cancel']){
+    $f = new \Oerp\Page\DeliveryList('canceling', $sels);
+  }
+  else if($stored_state = $form_state['storage']['state']){
+    $f = new \Oerp\Page\DeliveryList($stored_state, $form_state['storage']['ids']);
+  }
+  else{
+    $f = new \Oerp\Page\DeliveryList($state);
+  }
+  
+  $form = $f->getFormEntry('order_list');
+  return $form;
+}
+
+function oerp_delivery_DeliveryList_form_validate($form, &$form_state){
+  $btn = $form_state['clicked_button']['#name'];
+
+  if($btn == 'func:search'){
+    $search = array();
+
+    foreach($form_state['values']['order_list'] as $name => $val){
+      if(strpos($name, 'search-') === 0){
+        $search[$name] = $val;
+      }
+    }
+    $form_state['storage']['search'] = $search;
+  }
+}
+
+function oerp_delivery_DeliveryList_form_submit($form, &$form_state){
+  $obj = $form['order_list']['#obj']->renew();
+  $obj->process($form_state, $form);
+}
+
+
+function oerp_delivery_PrintFedex($rids){
+  foreach($rids as $rid){
+    $arch = <<<EOS
+<?xml version="1.0"?>
+<tree model="stock.picking" string="Deliver Order" criteria='[["id","=","$rid"]]'>
+  <field name="origin" to="tid" string="Order ID" colspan="4"/>
+  <field name="address_id" colspan="4" col="6">
+    <field name="email"/>
+    <field name="name"/>
+    <field name="phone"/>
+    <field name="street"/>
+    <field name="street2"/>
+    <field name="city"/>
+    <field name="zip"/>
+    <field name="state_id">
+      <field name="name"/>
+      <field name="country_id">
+        <field name="code"/>
+      </field>
+    </field>
+  </field>
+  <field name="move_lines" colspan="4">
+    <field name="product_id">
+      <field name="default_code"/>
+    </field>
+  </field>
+  <field name="weight" to="pkg_weight"/>
+</tree>
+EOS;
+
+    $mapping = <<<EOS
+      <mapping>
+        <field name="tid" from="origin"/>
+        <field name="recp_email" from="address_id.email"/>
+        <field name="recp_contact" from="address_id.name"/>
+        <field name="recp_phone" from="address_id.phone"/>
+        <field name="recp_addr1" from="address_id.street"/>
+        <field name="recp_addr2" from="address_id.street2"/>
+        <field name="recp_city" from="address_id.city"/>
+        <field name="recp_post_code" from="address_id.zip"/>
+        <field name="recp_state" from="state_id.name"/>
+        <field name="recp_country_code" from="country_id.code"/>
+        <field name="ref_note" from="product_id.default_code"/>
+        <field name="pkg_weight" from="weight"/>
+      </mapping>
+EOS;
+
+    $q = new \Oerp\Table\Basic($arch);
+    $recs = $q->mapRecords($mapping);
+    foreach($recs as $rec){
+      $form_state = array('values' => $rec);
+      drupal_execute(
+        'fedprint_RecordCreate_form', $form_state, 0);
+    }
+  }
+}
+
+function oerp_delivery_DeliveryListFilter_form(&$form_state, $xml){
+  $regex = $_GET['regex'];
+
+  $form = array();
+  
+  if(empty($regex)){
+    $q = new \Oerp\Query\Basic('delivery.carrier', null, array('name'));
+    $cr_names = (array)$q->raw()->promote('id', true);
+
+    $form['title'] = array(
+      '#type' => 'markup',
+      '#value' => '<h1>' . $xml . '</h1>',
+    );
+
+    if($xml != 'Cargo Receipt'){
+      $form['close_time'] = array(
+        '#title' => 'Items',
+        '#type' => 'radios',
+        '#options' => array(
+          'before' => 'Before close time',
+          'after' => 'After close time',
+        ),
+        '#default_value' => 'before',
+      );
+    }
+    else{
+      $form['close_time'] = array(
+        '#type' => 'value',
+        '#value' => 'before',
+      );
+    }
+
+    $form['carrier'] = array(
+      '#title' => 'Carrier',
+      '#type' => 'checkboxes',
+      '#options' => array_combine($cr_names, $cr_names),
+      '#checkall' => true,
+    );
+
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => 'Search',
+    );
+  }
+  else{
+    $arch = file_get_contents(
+      drupal_get_path('module', 'OerpDelivery') . '/xml/' . $xml . '.xml');
+
+    $tpl = new \Gulei\Arch\Template(
+      $arch, null,
+      array(
+           'regex' => '/' . str_replace('/', '\/', $regex) . '/',
+           'after' => $_GET['after'] ? '1' : '0'
+      )
+    );
+      
+    $t = new \Oerp\Table\Basic($tpl->getArch(), array('sticky_header' => false));
+    $src = $t->theme(null);
+    
+    if($t->getParam('extra_info')){
+      $src = sprintf('
+        <h1 style="display:inline;">貿隆有限公司</h1>
+        325桃園龍潭鄉烏林村中豐路779巷10號
+        
+        <p>
+          <div>
+            <strong>電話</strong> 03-4801776, 03-4801778</p>
+            <strong>傳真</strong> 03-4700828</p>
+          </div>
+          <div style="text-align:right">
+            <strong>日期</strong> ' . date('Y-m-d') . '
+          </div>
+        </p>
+        %s
+        <div style="text-align: right;"><strong>件數：</strong> %d</div>
+      ', $src, $t->getRowCount());
+    }
+  
+    $form['list'] = array(
+      '#type' => 'markup',
+      '#value' => $src,
+    );
+    
+    $form['#prefix'] = '<div style="width: 700px;>';
+    $form['#suffix'] = '</div>';
+  
+    OerpUtil::addCss();
+  }
+  
+  return $form;
+}
+
+function oerp_delivery_DeliveryListFilter_form_validate($form, &$form_state){
+  $crs = $form_state['values']['carrier'];
+  $regex = implode('|', array_filter($crs));
+
+  if(!empty($regex)){
+    drupal_goto(
+      '',
+      sprintf(
+        'q=print/%s%s%s',
+        $_GET['q'], '&regex=' . $regex,
+        '&after=' . (int)($form_state['values']['close_time'] == 'after')
+      )
+    );
+  }
+}
+
+function oerp_delivery_DeliveryOrderCreate_form(&$form_state){
+  $model = new OerpDeliveryModel();
+  
+  $form = array();
+  $form['new_order'] = $model->getEles_DeliveryOrderCreate();
+  $form['new_order']['#width'] = 'large';
+  return $form;
+}
+
+function oerp_delivery_DeliveryOrderCreate_form_submit($form, &$form_state){
+  $obj = $form['new_order']['#obj'];
+  $obj->send($form_state['values']['new_order']);
+}
+
+
+function oerp_delivery_DeliveryOrderUpload_form(&$form_state){
+  $arch = file_get_contents(
+    drupal_get_path('module', 'OerpDelivery') . '/xml/DeliveryOrderUpload.xml');
+    
+  $c = new OerpCsvBuffer($arch, $form_state);
+  
+  $form = $c->getFormEntry($form_state);
+  $form['#attributes']['enctype'] = 'multipart/form-data';
+  $form['#redirect'] = 'oerpport/delivery/list/draft';
+  return $form;
+}
+
+function oerp_delivery_DeliveryOrderUpload_form_validate($form, &$form_state){
+  $buf = $form['csv_file']['#obj']->renew();
+  $buf->validateForm($form_state);
+}
+
+function oerp_delivery_DeliveryOrderUpload_form_submit($form, &$form_state){
+  $buf = $form['csv_file']['#obj']->renew();
+  
+  $mapping = <<<EOS
+    <mapping>
+      <field name="x_seller" from="seller"/>
+      <field name="origin" from="tid"/>
+      <field name="x_cust_val" from="value"/>
+      <field name="carrier_id" from="carrier"/>
+      <field name="address_id">
+        <field name="email" from="email"/>
+        <field name="name" from="buyer"/>
+        <field name="phone" from="phone"/>
+        <field name="street" from="addr1"/>
+        <field name="street2" from="addr2"/>
+        <field name="city" from="city"/>
+        <field name="zip" from="zip"/>
+        <field name="state_id">
+          <field name="name" from="state"/>
+          <field name="country_id" from="country"/>
+        </field>
+      </field>
+      <field name="move_lines">
+        <field name="product_qty" from="qty"/>
+        <field name="product_id" from="sku"/>
+        <field name="note" from="remark"/>
+      </field>
+    </mapping>
+EOS;
+
+  $queryProduct = new \Oerp\Query\Basic('product.product', null, array('default_code'));
+  $refProducts = $queryProduct->raw()->promote('default_code');
+
+  $queryCountry = new \Oerp\Query\Basic('res.country', null, array('code'));
+  $refCountry = $queryCountry->raw()->promote('code');
+
+  $queryCarrier = new \Oerp\Query\Basic('delivery.carrier', null, array('name'));
+  $refCarrier = $queryCarrier->raw()->promote('name');
+
+  $queryState = new \Oerp\Query\Basic('res.country.state', null, array('name', 'country_id'));
+
+  $refState = array();
+  foreach($queryState->raw() as $state){
+    $refState[$state['country_id'][0] . '-' . $state['name']] = $state['id'];
+  }
+
+  $recs = new GuArray($buf->getRecordsAltered(array('no_validate' => true)));
+  $recs = $recs->mapping($mapping);
+
+  $date = date('Y-m-d H:i:s');
+
+  $Rec = new \Oerp\Query\Record(GuFile::getPathContent(
+      'module', 'OerpDelivery', '/xml/DeliveryOrderUploadSend.xml'));
+
+  foreach($recs as $rec){
+    $sku = $rec['move_lines']['product_id'];
+    $country = $rec['address_id']['state_id']['country_id'];
+    $carrier = $rec['carrier_id'];
+
+    if(!isset($refProducts[$sku])){
+      $q = new \Oerp\Query\Basic('product.product', array(array('default_code', '=', $sku)), array('id'));
+      $resp = $q->create(
+        array(
+             'default_code' => $sku,
+             'name' => '_UNCONFIRMED_',
+        )
+      );
+
+      $refProducts[$sku]['id'] = $resp;
+    }
+
+    $rec['type'] = 'delivery';
+    $rec['date'] = $date;
+    $rec['address_id']['partner_id'] = 1;
+
+    $state_id = $refState[$refCountry[$country]['id'] . '-' . $rec['address_id']['state_id']['name']];
+
+    if($state_id){
+      $rec['address_id']['state_id'] = (int)$state_id;
+    }
+    else{
+      $rec['address_id']['state_id']['code'] = 0;
+      $rec['address_id']['state_id']['country_id'] = $refCountry[$country]['id'];
+    }
+
+    $rec['move_lines']['name'] = $sku;
+    $rec['move_lines']['product_uom'] = 1;
+    $rec['move_lines']['location_id'] = 11;
+    $rec['move_lines']['location_dest_id'] = 8;
+    $rec['move_lines']['product_id'] = $refProducts[$sku]['id'];
+    $rec['carrier_id'] = $refCarrier[$carrier]['id'];
+    $rec['weight'] = ($rec['weight']) ? $rec['weight'] : 0.5;
+
+    $rec['move_lines'] = array($rec['move_lines']);
+    $Rec->send($rec);
+  }
+
+  $errs = form_get_errors();
+  $warns = drupal_get_messages('warning', false);
+  
+  if(empty($errs) && empty($warns)){
+    drupal_set_message(count($recs) . ' records submitted.');
+  }
+}
+
+function oerp_delivery_DeliveryTrackingUpdate_form(&$form_state){
+  $buf = new GuCsvBuffer('
+    <tree name="csv_file">
+      <field name="ID"/>
+      <field name="Ref."/>
+      <field name="O.ID"/>
+      <field name="Track #"/>
+      
+      <validate>
+        <function>
+          <source name="func:isUnique"/>
+          <field>Track #</field>
+          <message>Duplicate Track #</message>
+        </function>
+      </validate>
+    </tree>
+    ',
+    $form_state,
+    array(
+      'count' => true,
+    )
+  );
+  
+  $form = $buf->getFormEntry($form_state);
+  $form['#attributes']['enctype'] = 'multipart/form-data';
+  return $form;
+}
+
+function Oerpdelivery_DeliveryTrackingUpdate_form_validate($form, &$form_state){
+  $buf = $form['csv_file']['#obj']->renew();
+  $buf->validateForm($form_state);
+}
+
+function oerp_delivery_DeliveryTrackingUpdate_form_submit($form, &$form_state){
+  $obj = $form['csv_file']['#obj']->renew();
+  $q = new \Oerp\Query\Basic('stock.picking');
+  
+  foreach($obj->getRecords() as $rec){
+//    $q = new \Oerp\Query\Basic('stock.picking', null, null, $rec['ID']);
+    $q->setIds($rec['ID']);
+    
+    if(!empty($rec['Track #'])){
+      $q->write(array('x_tnum' => $rec['Track #']));
+    }
+  }
+  drupal_goto('oerpport/delivery/list/sent');
+}
+
+function oerp_delivery_DeliveryOrderDetail_form(&$form_state, $oid){
+  $arch = file_get_contents(drupal_get_path('module', 'OerpDelivery') . '/xml/DeliveryOrderDetail.xml');
+  $Rec = new \Oerp\Page\DeliveryOrderRecord($arch, '', array('oerp:ids' => '[' . $oid . ']'));
+  
+  return $Rec->getFormEntry();
+}
+
+function oerp_delivery_DeliveryOrderDetail_form_submit($form, &$form_state){
+  $Rec = $form['RecObj']['#value']->renew();
+  $btn = $form_state['clicked_button']['#name'];
+
+  switch($btn){
+    case 'submit:save':
+    case 'submit:save_printUps':
+      $val = $form_state['values']['details'];
+      $Rec->send($val);
+
+    case 'submit:save_printUps':
+      $ids = json_decode($Rec->getParam('oerp:ids'));
+      OerpDeliveryList::printUps($ids);
+      drupal_goto('oerpport/delivery/list');
+      break;
+  }
+
+}
+
+function oerp_delivery_DeliveryCountryRef(){
+  $arch = file_get_contents(
+    drupal_get_path('module', 'OerpDelivery') . '/xml/CountryCodeRef.xml');
+
+  $t = new \Oerp\Table\Basic($arch, array(
+    'attrs' => array('style' => 'width: 250px;'),
+  ));
+  return $t->theme();
+}
+
+function OerpDeliveryBackup(){
+  $m = new \Oerp\Page\DeliveryList('*');
+  
+  $ts = time();
+  
+  $to = new DateTime('@' . $ts  );
+  $from = new DateTime('@' . ($ts - 60 * 60 * 24 * 7));
+  
+  $cri = array(
+    array('date', '<=', $to->format('Y-m-d')),
+    array('date', '>=', $from->format('Y-m-d')),
+  );
+  
+  $src = $m->backupAll('*', array('criteria' => json_encode($cri)));
+  return $src;
+}

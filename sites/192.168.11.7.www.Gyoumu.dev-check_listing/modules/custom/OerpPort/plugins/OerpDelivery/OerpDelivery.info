@@ -1,0 +1,8 @@
+name = Delivery Management
+description = Customized delivery management using OpenERP.
+package = OpenERP
+dependencies[] = GuLib
+dependencies[] = oerp
+dependencies[] = fedprint
+dependencies[] = UpsPrint
+core = 6.x

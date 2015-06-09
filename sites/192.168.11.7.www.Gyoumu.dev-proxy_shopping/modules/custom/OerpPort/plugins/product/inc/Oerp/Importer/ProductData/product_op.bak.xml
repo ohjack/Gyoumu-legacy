@@ -1,0 +1,52 @@
+<tree act="create" dict_key="default_code" model="product.product">
+  <field name="default_code" from="SKU" eval="1"><![CDATA[
+    return $rec['SKU'] . '-%SEQ%';
+  ]]></field>
+  <field name="name" from="Name"/>
+  <field name="seller_ids" act="write">
+    <field name="name" from="Supplier" dict_key="name" fallback="create" create_mask='{"supplier":true, "customer":false}'/>
+    <field name="product_code" from="P/N"/>
+    <field name="pricelist_ids">
+      <field name="min_quantity" from="Main Moq"/>
+      <field name="price" from="Main Cost"/>
+    </field>
+  </field>
+  <field name="product_manager" from="Owner" dict_key="login"/>
+  <field name="description" from="Note Link"/>
+
+  <field name="state" eval="1"><![CDATA[
+    switch($rec['Status']){
+      case 'Ready':
+      case 'Close':
+        return 'sellable';
+
+      case 'EoL':
+        return 'end';
+
+      case '開發中':
+        return 'draft';
+    }
+  ]]></field>
+
+  <field name="purchase_ok" eval="1"><![CDATA[
+    switch($rec['Status']){
+      case 'Ready':
+      case 'EoL':
+      case '開發中':
+        return true;
+
+      case 'Close':
+        return false;
+    }
+  ]]></field>
+
+  <field name="sale_ok" eval="1"><![CDATA[
+    switch($rec['Status']){
+      case 'Ready':
+      case 'EoL':
+      case 'Close':
+      case '開發中':
+        return true;
+    }
+  ]]></field>
+</tree>

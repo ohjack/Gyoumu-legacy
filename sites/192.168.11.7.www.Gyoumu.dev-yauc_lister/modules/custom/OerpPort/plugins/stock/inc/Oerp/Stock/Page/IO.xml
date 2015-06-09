@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<tree color="red:state=='cancel'" string="Input / Output">
+  <param name="oerp:model">stock.picking</param>
+  <param name="oerp:op-type">CUX</param>
+
+  <field name="type" string="Type"/>
+  <field name="name" string="Ref."/>
+  <field name="origin" string="Origin"/>
+  <field name="address_id">
+    <field name="partner_id">
+      <field name="name" string="Partner"/>
+    </field>
+  </field>
+  <field name="move_lines">
+    <field name="product_id">
+      <field name="default_code" string="SKU"/>
+    </field>
+    <field name="product_qty" string="Qty"/>
+  </field>
+  <field name="min_date" string="Planned Date"/>
+  <field name="state" string="Status"/>
+</tree>

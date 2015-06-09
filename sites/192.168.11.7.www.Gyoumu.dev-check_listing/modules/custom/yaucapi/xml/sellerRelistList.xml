@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tree>
+  <field name="auc_id" string="A.ID"/>
+  <field name="sku" string="SKU"/>
+  <field name="title" string="Title"/>
+  <field name="auc_url" string="Link"/>
+  <field name="init_price" string="Start $"/>
+  <field name="cur_price" string="End $"/>
+  <field name="shipping_fee" string="S.Fee"/>
+  <field name="time_end" string="End Time(TW)"/>
+
+  <translate>
+    <func>
+      <src name="func:getSku"/>
+      <fld>sku</fld>
+    </func>
+    
+    <func>
+      <src><![CDATA[
+        return sprintf('<a href="%s" target="_blank">%s</a>',
+          $rec['auc_url'], $rec[$name]);
+      ]]></src>
+      <fld>auc_id</fld>
+    </func>
+    
+    <func>
+      <src><![CDATA[
+        $url = parse_url($rec[$name]);
+        preg_match('@jp/auction/(.*)@', $url['path'], $m);
+        $link = sprintf('<a href="http://%s/jp/show/resubmit?aID=%s" target="_blank">Relist</a>',
+          $url['host'], $m[1]);
+          
+        return $link;
+      ]]></src>
+      <fld>auc_url</fld>
+    </func>
+    
+    <func>
+      <src name="func:getTwTime"/>
+      <fld>time_end</fld>
+    </func>
+  </translate>
+</tree>

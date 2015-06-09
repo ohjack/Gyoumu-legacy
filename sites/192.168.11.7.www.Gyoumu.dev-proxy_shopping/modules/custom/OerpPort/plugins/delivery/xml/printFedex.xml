@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tree model="stock.picking" string="Deliver Order">
+  
+  <param name="copy_method">merge</param>
+  
+  <field name="name"/>
+  <field name="origin" to="tid" string="Order ID" colspan="4"/>
+  <field name="carrier_id"/>
+  <field name="address_id" colspan="4" col="6">
+    <field name="email"/>
+    <field name="name"/>
+    <field name="phone"/>
+    <field name="street"/>
+    <field name="street2"/>
+    <field name="city"/>
+    <field name="zip"/>
+    <field name="state_id">
+      <field name="name"/>
+      <field name="country_id">
+        <field name="code"/>
+      </field>
+    </field>
+  </field>
+  <field name="x_cust_val"/>
+  <field name="move_lines" colspan="4">
+    <field name="product_id">
+      <field name="default_code"/>
+    </field>
+    <field name="product_qty"/>
+  </field>
+  <field name="weight" to="pkg_weight"/>
+  <field name="func:pkg_type"/>
+  <field name="func:adm_pkg_type"/>
+  <field name="func:com_desc1"/>
+
+  <translate>
+    <func>
+      <src name="cmd:Oerp\Command\getFedexPackageType"/>
+      <fld>func:pkg_type</fld>
+      <fld>func:adm_pkg_type</fld>
+    </func>
+
+    <func>
+      <src name="cmd:Oerp\Command\getFedexPrintDesc"/>
+      <fld>func:com_desc1</fld>
+    </func>
+  </translate>
+</tree>

@@ -1,0 +1,21 @@
+div.item-list ul.oerp-delivery-filter li {
+  list-style: none;
+  /*font-size: 123.1%;*/
+  float: left; }
+  div.item-list ul.oerp-delivery-filter li a {
+    color: #900; }
+
+table.summary {
+  width: auto; }
+  table.summary th, table.summary td {
+    width: 30px; }
+
+div.axis-wrapper div.form-checkall {
+  max-height: 200px;
+  overflow: auto; }
+  div.axis-wrapper div.form-checkall div.form-item {
+    float: left;
+    width: 20%; }
+
+div.print-content table.sticky-header {
+  display: none; }

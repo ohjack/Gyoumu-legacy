@@ -1,0 +1,47 @@
+<?php
+
+function ebapi_schema()
+{
+  $schema = array();
+
+  $schema['ebapi_account'] = array(
+    'fields' => array(
+      'account' => array(
+        'type' => 'varchar',
+        'length' => 60,
+        'not null' => true,
+      ),
+      'type' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => true,
+        'not null' => true,
+      ),
+      'session_id' => array(
+        'type' => 'char',
+        'length' => 40,
+      ),
+      'user_token' => array(
+        'type' => 'text'
+      ),
+      'status' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => true,
+        'unsigned' => true,
+      )
+    ),
+    'primary key' => array('account'),
+  );
+
+  return $schema;
+}
+
+
+function ebapi_install(){
+  drupal_install_schema('ebapi');
+}
+
+function ebapi_uninstall(){
+  drupal_uninstall_schema('ebapi');
+}

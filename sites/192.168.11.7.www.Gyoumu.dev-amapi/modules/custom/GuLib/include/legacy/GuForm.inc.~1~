@@ -1,0 +1,127 @@
+<?php 
+
+module_load_include('inc', 'GuLib', 'include/GuTable');
+
+class FormEleTextarea extends AbstractFormElement
+{
+  public function getEntry()
+  {
+    return $this->getEntryTemplate();
+  }
+}
+
+class FormEleTextfield extends AbstractFormElement
+{
+  public function getEntry()
+  {
+    $tpl = $this->getEntryTemplate();
+    if (!isset($this->param['size'])) {
+      $tpl['#size'] = '';
+    }
+    return $tpl;
+  }
+}
+
+class FormEleFile extends AbstractFormElement
+{
+  public function getEntry()
+  {
+    $tpl = $this->getEntryTemplate();
+    $tpl['#size'] = '';
+    return $tpl;
+  }
+}
+
+class FormEleHidden extends AbstractFormElement
+{
+  public function getEntry()
+  {
+    $attr = $this->getArchAttributes();
+    $tpl = $this->getEntryTemplate();
+    $tpl['#value'] = $attr['value'];
+    return $tpl;
+  }
+}
+
+class FormEleMarkup extends AbstractFormElement
+{
+  public function getEntry()
+  {
+    $tpl = $this->getEntryTemplate();
+    $val = $this->xp('./value[1]')->item(0);
+    $nodeVal = $val ? $val->nodeValue : '';
+
+    $tpl['#value'] = is_null($default_val = $tpl['#default_value'])
+        ? $nodeVal : $default_val;
+
+    return $tpl;
+  }
+}
+
+class FormEleButton extends AbstractFormElementButtonLike
+{
+  public function getEntry()
+  {
+    return $this->getEntryTemplate();
+  }
+}
+
+abstract class AbstractFormElementWithOption extends AbstractFormElement
+{
+  protected function getParamDefault()
+  {
+    $paramDefault = parent::getParamDefault();
+    
+    if($paramDefault){
+      return (array)json_decode($paramDefault);
+    }
+    else{
+      return null;
+    }
+  }
+
+  protected function getEntryTemplate()
+  {
+    $tpl = parent::getEntryTemplate();
+    $opts = array();
+    
+    foreach ($this->xp('./option') as $ndOpt) {
+      $attOpt = $ndOpt->attributes;
+      $opts[$attOpt->getNamedItem('value')->value] = $ndOpt->nodeValue;
+    }
+
+    $tpl['#options'] = $opts;
+
+    if ($tpl['#attributes']['readonly']) {
+      $tpl['#attributes']['disabled'] = 'disabled';
+      unset($tpl['#attributes']['readonly']);
+    }
+    return $tpl;
+  }
+}
+
+class FormEleSelect extends AbstractFormElementWithOption
+{
+  public function getEntry()
+  {
+    return $this->getEntryTemplate();
+  }
+}
+
+class FormEleCheckboxes extends AbstractFormElementWithOption
+{
+  public function getEntry()
+  {
+    return $this->getEntryTemplate();
+  }
+}
+
+class FormEleGuCsv extends AbstractFormElement
+{
+  public function getEntry()
+  {
+    $tpl = $this->getEntryTemplate();
+    $tpl['#arch'] = $this->nodeValue;
+    return $tpl;
+  }
+}

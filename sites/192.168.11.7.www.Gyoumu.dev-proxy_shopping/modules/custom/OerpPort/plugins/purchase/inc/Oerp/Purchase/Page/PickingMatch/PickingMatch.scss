@@ -1,0 +1,37 @@
+div.wrapper-line {
+  clear: left;
+  margin: 10px 0 0;
+  padding: 0 0 10px;
+  border: 0 dashed silver;
+  border-width: 0 0 1px;
+
+  h2 {
+    margin: 0.5em 0;
+
+    span.prod_name {
+      font-size: small;
+      font-weight: normal;
+    }
+  }
+
+  div.form-item {
+    float: left;
+    width: 180px;
+    margin: 0 6px 0 0;
+    padding: 0 0 0 10px;
+  }
+
+  div.qty_hint {
+    clear: both;
+    margin: 18px 0 0 15px;
+  }
+}
+
+div.move-history {
+  display: none;
+  border: 1px solid #666;
+
+  table {
+    margin: 0;
+  }
+}

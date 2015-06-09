@@ -1,0 +1,8 @@
+<?php
+namespace Oerp\Delivery\Page\Callee;
+
+class download_querying extends \Oerp\Delivery\Page\Callee\Download_Sent\Abstract_fromView {
+  protected function getClassname() {
+    return __CLASS__;
+  }
+}

@@ -1,0 +1,140 @@
+<?php
+
+require_once __DIR__ . '/autoload.inc';
+require_once __DIR__ . '/inc/hook.inc';
+drupal_add_js(drupal_get_path('module', 'GuLib') . '/js/GuLib.js');
+
+function GuLib_menu()
+{
+  $items = array();
+
+  $items['gulib/csv_import/%'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('gulib_csv_import_form', 2),
+    'access callback' => true,
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  return $items;
+}
+
+function GuLib_hookForm_form(&$form_state, $classname, $arg_json)
+{
+  $p = new $classname($form_state);
+  return $p->hook_form($form_state, $arg_json);
+}
+
+function GuLib_hookFormJs($classname)
+{
+  $p = new $classname(null);
+  return $p->hook_form_js();
+}
+
+function GuLib_elements(){
+  return array(
+    'GuForm' => array(
+      '#input' => true,
+      '#process' => array('GuLib_GuForm_process'),
+    ),
+    
+    'GuSelectTable' => array(
+      '#input' => true,
+      '#process' => array('GuLib_GuSelectTable_process'),
+    ),
+    
+    '\Gulei\Csv\Model' => array(
+      '#input' => true,
+      '#process' => array('GuLib_GuCsv_process'),
+      '#element_validate' => array('GuLib_GuCsv_validate'),
+    ),
+  );
+}
+
+function GuLib_theme(){
+  return array(
+    'GuLib_GuForm_form' => array(
+      'arguments' => array(),
+    ),
+    'GuForm' => array(
+      'arguments' => array(),
+    ),
+    'GuSelectTable' => array(
+      'arguments' => array(),
+    ),
+    '\Gulei\Csv\Model' => array(
+      'arguments' => array(),
+    ),
+  );
+}
+
+function GuLib_GuForm_form(&$form_state, $eles){
+  return $eles;
+}
+
+function theme_GuLib_GuForm_form($form){
+  $obj = $form['#obj'];
+  return $obj->theme($form);
+}
+
+function gulib_inc($path, $sub = ''){
+  if($sub){
+    $path = '/' . $sub . '/' . $path;
+  }else{
+    $path = '/' . $path;
+  }
+  require_once(drupal_get_path('module', 'GuLib') . $path);
+}
+
+function _gecho($val, $string = false){
+  $buf = '<pre>' . htmlspecialchars(print_r($val, true)) . '</pre>';
+  if($string) return $buf;
+  else echo $buf;
+}
+
+function _gdump($val, $string = false){
+  $buf = '<pre>' . var_export($val, true) . '</pre>';
+  if($string) return $buf;
+  else echo $buf;
+}
+
+function _gind($arry, $ind){
+  return $arry[$ind];
+}
+
+function _ginc($path, $sub = ''){
+  return gulib_inc($path, $sub);
+}
+
+function _unaccent($str){
+  _ginc('Inflector.php', 'lib');
+  $i = new Doctrine_Inflector();
+  return $i->unaccent($str);
+}
+
+function GuLib_include($list){
+  if(is_string($list)){
+    $list = array($list);
+  }
+
+  foreach($list as $each){
+    module_load_include('inc', 'GuLib' . '/include/' . $each);
+  }
+}
+
+function gulib_csv_import_form(&$form_state, $archname)
+{
+  $p = new GuCsvImporter($form_state);
+  return $p->hook_form($form_state, $archname);
+}
+
+function gulib_csv_import_form_validate($form, &$form_state)
+{
+  $p = new GuCsvImporter($form_state);
+  return $p->hook_form_validate($form, $form_state);
+}
+
+function gulib_csv_import_form_submit($form, &$form_state)
+{
+  $p = new GuCsvImporter($form_state);
+  return $p->hook_form_submit($form, &$form_state);
+}

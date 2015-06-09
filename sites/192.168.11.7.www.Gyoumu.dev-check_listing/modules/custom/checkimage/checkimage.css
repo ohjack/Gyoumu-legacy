@@ -1,0 +1,10 @@
+table.checkimage-result .sep {
+  border-right: black solid 2px;
+}
+
+span.show_all_thumbnails,
+table.checkimage-result span.show_thumbnails {
+  font-size: small;
+  cursor: pointer;
+  color: #a52a2a;
+}

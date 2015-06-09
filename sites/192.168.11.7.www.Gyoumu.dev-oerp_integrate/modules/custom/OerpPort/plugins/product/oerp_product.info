@@ -1,0 +1,6 @@
+name = PM
+description = Customized Product management using OpenERP.
+package = OpenERP
+dependencies[] = GuLib
+dependencies[] = oerp
+core = 6.x

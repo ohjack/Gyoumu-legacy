@@ -1,0 +1,41 @@
+Drupal.behaviors.oerp_gallery_mapping = function(){
+  $('div.pool-slot img.seed').each(function(){
+    var $img = $(this);
+    $img.draggable({
+      revert: true,
+      revertDuration: 100
+    });
+  });
+
+  $('div.mapping-sel').each(function(){
+    var $sel = $(this);
+    var accept = '.sku-' + $sel.parents('div.mapping-slot:eq(0)').attr('sku');
+
+    $sel.droppable({
+      accept: accept,
+      hoverClass: 'hover',
+      drop: function(ev, ui){
+        var $slot = $(this);
+        var src = ui.draggable.attr('src');
+        $slot.addClass('dropped');
+        $slot.find('img').attr('src', src);
+        $slot
+            .parents('div.mapping-slot:eq(0)')
+            .addClass('mapped')
+            .find('input').val(src);
+      }
+    })
+  });
+
+  $('div.mapping-sel').click(function(){
+    var $slot = $(this).parents('div.mapping-slot:eq(0)');
+
+    if(!$slot.hasClass('mapped')){
+      return;
+    }
+
+    $slot.removeClass('mapped');
+    $slot.find('img').attr('src', $slot.attr('path'));
+    $slot.find('input').val('');
+  });
+};

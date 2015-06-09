@@ -1,0 +1,120 @@
+<?php
+namespace Oerp\Delivery\Page;
+
+class Ready extends \Oerp\Page\TreeView
+{
+  protected function getClassname()
+  {
+    return __CLASS__;
+  }
+
+  private function getOrderCarriers()
+  {
+    static $cache = null;
+
+    if(!is_null($cache)){
+      return $cache;
+    }
+
+    $q = new \Oerp\Query\Basic('stock.picking', array(array('state','=','assigned')), array('carrier_id'));
+    $cache = array();
+
+    foreach($q->raw() as $rec){
+      if($carr = $rec['carrier_id']){
+        $cache[$carr[1]][] = $rec['id'];
+      }
+    }
+    return $cache;
+  }
+
+  protected function getParam()
+  {
+    $param = parent::getParam();
+    $orderCarriers = $this->getOrderCarriers();
+
+    if($carr = $_GET['carr']){
+      $param['criteria'][] = array('id', 'in', $orderCarriers[$carr]);
+    }
+
+//    $param['pager'] = false;
+    return $param;
+  }
+
+  private function getEleFilterSeller()
+  {
+    $q = new \Oerp\Query\Basic('stock.picking', array(array('state','=','assigned')), array('x_seller'));
+    $opts = array();
+    $opts['_none_'] = '<None>';
+
+    foreach($q->raw() as $rec){
+      $seller = $rec['x_seller'];
+
+      if($seller && !isset($opts[$seller])){
+        $opts[$seller] = $seller;
+      }
+    }
+
+    return array(
+      '#title' => 'Seller',
+      '#type' => 'select',
+      '#options' => $opts,
+      '#attributes' => array('class' => 'oerp-delivery-filter')
+    );
+  }
+
+  private function getEleFilterCarrier()
+  {
+    $orderCarriers = $this->getOrderCarriers();
+
+    $opts = array();
+    $opts['_none_'] = '<None>';
+
+    foreach(array_keys($orderCarriers) as $carr){
+      $opts[$carr] = $carr;
+    }
+
+    return array(
+      '#title' => 'Carrier',
+      '#type' => 'select',
+      '#options' => $opts,
+      '#attributes' => array('class' => 'oerp-delivery-filter')
+    );
+  }
+
+  protected function hook_form_internal()
+  {
+    $form = array();
+
+    $spanel_ex = array();
+    $spanel_ex['filter-carrier'] = $this->getEleFilterCarrier();
+//    $spanel_ex['filter-carrier']['#prefix'] = '<div class="oerp-delivery-filter-wrapper">';
+
+    $spanel_ex['filter-seller'] = $this->getEleFilterSeller();
+//    $spanel_ex['filter-seller']['#suffix'] = '</div><div class="clearfix"></div>';
+
+    $arch = file_get_contents(__DIR__ . '/Ready.xml');
+    $param = array(
+      'arch' => $arch,
+      'searchpanel-ex' => $spanel_ex,
+    );
+
+    $this->args = array(0, $param);
+    $form = array_merge($form, parent::hook_form_internal());
+
+    drupal_add_css(drupal_get_path('module', 'oerp_delivery') . '/oerp_delivery.css');
+    drupal_add_js(drupal_get_path('module', 'oerp_delivery') . '/oerp_delivery.js');
+    return $form;
+  }
+
+  protected function getToolbarBottom()
+  {
+    $calls = array(
+      'Print_FedEx',
+      'Print_UPS',
+      'Mark_as_SENT',
+      'Mark_as_OoS',
+      'Mark_as_CANCEL',
+    );
+    return $this->getLocalCalleeEle($calls);
+  }
+}

@@ -1,0 +1,16 @@
+<?php
+
+module_load_include('module', 'oerp_stock');
+
+function oerp_stock_install()
+{
+  $insts = array(
+    "Tree\\Picking",
+    "Form\\Picking",
+    "Tree\\Inventory",
+    "Form\\Move",
+  );
+
+  $Inst = new \Gulei\Installer\Serial($insts, "Oerp\\Stock\\Installer\\");
+  $Inst->exe();
+}

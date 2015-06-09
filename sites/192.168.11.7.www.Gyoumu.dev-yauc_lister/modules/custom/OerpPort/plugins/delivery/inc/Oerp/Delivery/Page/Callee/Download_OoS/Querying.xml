@@ -1,0 +1,33 @@
+<tree>
+  <param name="oerp:model">stock.picking</param>
+
+  <field name="id">
+    <param name="hide">1</param>
+  </field>
+
+  <field name="x_seller" string="Seller"/>
+  <field name="name" string="Ref."/>
+  <field name="date" string="O.Date"/>
+
+  <field name="origin" string="O.ID"/>
+  <field name="move_lines">
+    <field name="product_id">
+      <field name="default_code" string="SKU"/>
+    </field>
+    <field name="product_qty" string="Qty"/>
+    <field name="note" string="Rmrk"/>
+
+  </field>
+  <field name="address_id" select="1">
+    <field name="name" string="Buyer"/>
+
+    <field name="state_id">
+      <field name="country_id" string="Country"/>
+    </field>
+  </field>
+
+  <field name="x_cust_val" string="C.Value"/>
+  <field name="carrier_id" string="Carrier"/>
+
+  <field name="x_tnum" string="Track #"/>
+</tree>

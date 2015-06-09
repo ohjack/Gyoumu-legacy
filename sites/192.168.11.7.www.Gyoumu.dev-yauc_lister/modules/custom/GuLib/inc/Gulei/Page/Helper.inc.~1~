@@ -1,0 +1,22 @@
+<?php
+namespace Gulei\Page;
+
+class Helper
+{
+  static public function createEntry($classname, $param = array())
+  {
+    $page_args = array('gulib_form_form', $classname);
+    $page_args = array_merge($page_args, $param['page arguments']);
+    unset($param['page arguments']);
+
+    return array_merge(
+      array(
+        'page callback' => 'drupal_get_form',
+        'page arguments' => $page_args,
+        'access callback' => true,
+        'type' => MENU_CALLBACK,
+      ),
+      $param
+    );
+  }
+}

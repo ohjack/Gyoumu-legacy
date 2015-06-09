@@ -1,0 +1,305 @@
+<?php
+
+module_load_include('inc', 'GuLib', 'autoload');
+\Gulei\Autoloader::register(__DIR__);
+
+function oerp_product_menu()
+{
+  $item = array();
+
+  $item['admin/oerp/product_mngn/settings'] = array(
+    'title' => 'Oerp Product',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_product_settings_form'),
+    'access arguments' => array('administer OerpPort'),
+    'file' => 'oerp_product.admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+
+  $item['oerp/product_mngn/purchase_pricelist/best'] = array(
+    'page callback' => 'oerp_product_PurchasePricelist_best',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $item['oerp/product_mngn/import/product'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('gulib_csv_import_form', 'Oerp\Importer\ProductData'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $importerPackaging = new \Oerp\Importer\Packaging();
+  $item['oerp/product_mngn/import/packaging'] = $importerPackaging->getMenuEntry();
+
+  $item['oerp/product_mngn/packaging'] = array(
+    'page callback' => 'oerp_product_packaging',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $item['oerp/product_mngn/packaging_list/%'] = array(
+    'page callback' => 'oerp_product_packaging_list',
+    'page arguments' => array(3),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $item['oerp/product_mngn/dev_progress'] = array(
+    'title' => 'Dev. Progress',
+    'page callback' => 'oerp_product_dev_progress',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  return $item;
+}
+
+function oerp_product_block($op = 'list', $delta = 0, $edit = array())
+{
+  switch ($op) {
+    case 'list':
+      $blocks[0]['info'] = t('Product Mngn');
+      return $blocks;
+
+    case 'view':
+      $items = array(
+        array(
+          'data' => \Oerp\Link\Tree::create('Products', 'x_product.product.tree'),
+          'children' => array(
+            array(l('Import', 'oerp/product_mngn/import/product')),
+            array(\Gulei\Link\Page::create('In Development', "Oerp\\Product\\Page\\InDev")),
+            array(l('Dev. Progress', 'oerp/product_mngn/dev_progress')),
+            array(\Oerp\Link\Tree::create('Package Type', 'x_product.ul.tree')),
+            array(\Gulei\Link\Page::create('Packaging', "Oerp\\Product\\Page\\Packaging")),
+          ),
+        ),
+        array(
+          'data' => \Gulei\Link\Page::create('Suppliers', "Oerp\\Product\\Page\\Suppliers")
+        ),
+        array(
+          'data' => \Oerp\Link\Tree::create('BoM', 'mrp.bom.tree')
+        ),
+        array(
+          'data' => \Gulei\Link\Page::create('Purchase pricelist', "Oerp\\Product\\Page\\PurchasePricelist"),
+        ),
+      );
+
+      $block['subject'] = t('Product Mngn');
+      $block['content'] = theme('item_list', $items, null, 'ul', array('class' => 'menu'));
+      return $block;
+  }
+}
+
+function oerp_product_oerp_treeview_process()
+{
+  $hooks = array();
+  $hooks['x_product.product.tree'] = array(
+    'pre' => array(
+      new \Oerp\Product\Command\assignSkuSeq(),
+    )
+  );
+  return $hooks;
+}
+
+function oerp_product_oerp_formview_fields(){
+  $hooks = array();
+  $hooks['x_product.product.form'] = array(
+    'state' => array(
+      'default_value' => 'draft',
+      'required' => 1,
+    ),
+    'default_code' => array(
+      'required' => 1,
+      'type' => 'SkuEditor'
+    ),
+    'description' => array(
+      'type' => 'DevNote'
+    ),
+    'product_manager' => array(
+      'required' => 1,
+    ),
+  );
+
+  $hooks['x_res.partner.form'] = array(
+    'customer' => array(
+      'default_value' => 0,
+    ),
+    'supplier' => array(
+      'default_value' => 1,
+    ),
+    'property_product_pricelist' => array(
+      'selectonly' => 1,
+    ),
+    'property_product_pricelist_purchase' => array(
+      'selectonly' => 1,
+    )
+  );
+
+  $hooks['x_res.partner.form']['address']['views']['form']['fields']['country_id'] = array(
+    'selectonly' => 1,
+  );
+
+  $eleDim = "Oerp\\Product\\Form\\Element\\PkgDimOverridden";
+
+  $hooks['cache:x_product.product.form-packaging'] = array(
+    'ul' => array(
+      'attributes' => array(
+        'reload' => 1,
+      )
+    ),
+    'height' => array(
+      'type' => $eleDim,
+    ),
+    'width' => array(
+      'type' => $eleDim,
+    ),
+    'length' => array(
+      'type' => $eleDim,
+    ),
+  );
+
+  return $hooks;
+}
+
+function oerp_product_PurchasePricelist_best()
+{
+  $param = array(
+    'mark_translated' => false,
+    'nl2br' => false,
+  );
+
+  $prov = new Oerp\Product\Provider\SupplierBestPrice();
+  $t = new \Gulei\Table\Arch($prov->getArch(), $prov, $param);
+  return $t->theme();
+}
+
+function oerp_product_packaging()
+{
+  $param = array(
+    'mark_translated' => false,
+  );
+
+  $prov = new Oerp\Product\Provider\PackagingEx();
+  $t = new \Gulei\Table\Arch($prov->getArch(), $prov, $param);
+  return $t->theme();
+}
+
+function oerp_product_packaging_list($pat)
+{
+  $q = new \Oerp\Query\Basic(
+    'product.packaging',
+    null,
+    array('product_id', 'weight', 'length', 'width', 'height', 'ul')
+  );
+
+  $recs = $q->raw();
+  $pkgs = array();
+  $pat = '/' . $pat . '/i';
+
+  $q = new \Oerp\Query\Basic('product.ul');
+  $refDim = $q->raw()->promote('name');
+
+  foreach($recs as $rec){
+    if(preg_match($pat, $rec['ul'][1])){
+      preg_match('/\[(.*)\]/', $rec['product_id'][1], $m);
+      $pkg = array(
+        'sku' => $m[1],
+        'l' => $rec['length'],
+        'w' => $rec['width'],
+        'h' => $rec['height'],
+        'wt' => $rec['weight'],
+        'ul' => $rec['ul'][1],
+      );
+
+      if($over = $refDim[$pkg['ul']]){
+        $pkg['l'] = ($tmp = $over['x_length']) ? $tmp : $pkg['l'];
+        $pkg['w'] = ($tmp = $over['x_width']) ? $tmp : $pkg['w'];
+        $pkg['h'] = ($tmp = $over['x_height']) ? $tmp : $pkg['h'];
+      }
+      $pkgs[$m[1]] = $pkg;
+    }
+  }
+
+  $pkgs = \Gulei\_Array::lambda($pkgs, "Oerp\\_Array\\Command\\sortSkuByKey");
+
+  $t = new \Gulei\Table\Simple(
+    array(
+      'sku' => 'SKU',
+      'ul' => 'Pkg',
+      'l' => 'L',
+      'w' => 'W',
+      'h' => 'H',
+      'wt' => 'Wt'
+    ),
+    $pkgs
+  );
+  return $t->theme();
+}
+
+function oerp_product_dev_progress()
+{
+  $chkFixed = new \Oerp\Product\Command\checkPicFixed();
+  $cachefixed = $chkFixed->getCache();
+  $chkPublish = new \Oerp\Product\Command\checkPicPublished();
+  $cachePublish = $chkPublish->getCache();
+
+  $q = new \Oerp\Query\Basic(
+    'product.product',
+    array(array('state', '=', 'draft')),
+    array('id', 'packaging', 'qty_available', 'default_code')
+  );
+
+  $prods = $q->raw();
+  $base = count($prods);
+
+  $packed = 0;
+  $stocked = 0;
+  $fixed = 0;
+  $published = 0;
+
+  foreach($prods as $prod){
+    $sku = $prod['default_code'];
+
+    if($prod['packaging']){
+      $packed++;
+    }
+
+    if($prod['qty_available'] > 0){
+      $stocked++;
+    }
+
+    if(isset($cachefixed->data[$sku])){
+      $fixed++;
+    }
+
+    if(isset($cachePublish->data[$sku])){
+      $published++;
+    }
+  }
+
+  $tb = <<<HTML
+<table class="product-dev-progress">
+<thead>
+  <th>Packaged</th>
+  <th>Stocked</th>
+  <th>Fixed</th>
+  <th>Published</th>
+</thead>
+<tr>
+  <td>%.2f%% (%d/%d)</td>
+  <td>%.2f%% (%d/%d)</td>
+  <td>%.2f%% (%d/%d)</td>
+  <td>%.2f%% (%d/%d)</td>
+</tr>
+</table>
+HTML;
+
+  return sprintf(
+    $tb,
+      $packed / $base * 100, $packed, $base,
+      $stocked / $base * 100, $stocked, $base,
+      $fixed / $base * 100, $fixed, $base,
+      $published / $base * 100, $published, $base
+  );
+}

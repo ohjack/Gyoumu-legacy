@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<form model="stock.picking" string="Delivery Order">
+  <param name="action">send</param>
+
+  <field name="type" type="hidden" value="delivery"/>
+  <field name="date" type="hidden" value="fn:date('Y-m-d H:i:s')"/>
+  
+  <field name="x_seller" string="Seller" colspan="2"/>
+  <field name="origin" string="Order ID" colspan="2"/>
+  
+  <separator string="Buyer Information"/>
+  <field name="address_id" colspan="4" col="6">
+    <field name="partner_id" type="hidden" value="1"/>
+    <field name="email"/>
+    <field name="name"/>
+    <field name="phone"/>
+    <field name="street"/>
+    <field name="street2"/>
+    <field name="city"/>
+    <field name="zip"/>
+    <field name="state_id" colspan="4">
+      <field name="code" type="hidden" value="0"/>
+      <field name="name" string="State"/>
+      <field name="country_id" option_key="code"/>
+    </field>
+  </field>
+  <field name="move_lines" colspan="4">
+    <separator string="Product"/>
+    <field name="name" type="hidden" value="fn:date('Y-m-d')"/>
+    <field name="product_uom" type="hidden" value="1"/>
+    <field name="location_id" type="hidden" value="11"/>
+    <field name="location_dest_id" type="hidden" value="8"/>
+    <field name="product_id" key="default_code" option_key="default_code"/>
+    <field name="product_qty"/>
+    <field name="note" string="Remark" colspan="4"/>
+  </field>
+  <separator string="Delivery Information"/>
+  <group colspan="4" col="3">
+    <field name="carrier_id" key="name" option_key="name" colspan="1"/>
+    <field name="weight" colspan="1"/>
+    <field name="x_cust_val" colspan="1"/>
+    <field name="note" colspan="3"/>
+  </group>
+  <field name="func:submit" string="Submit" type="submit"/>
+</form>

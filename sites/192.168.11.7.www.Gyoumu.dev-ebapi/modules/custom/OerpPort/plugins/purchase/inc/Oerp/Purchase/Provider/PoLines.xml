@@ -1,0 +1,39 @@
+<tree>
+  <param name="oerp:model">purchase.order</param>
+  <field name="id"/>
+  <field name="name"/>
+  <field name="state"/>
+  <field name="partner_id">
+    <field name="name"/>
+  </field>
+  <field name="order_line">
+    <field name="product_id">
+      <field name="state"/>
+      <field name="name"/>
+      <field name="product_manager"/>
+      <field name="default_code"/>
+      <field name="purchase_ok"/>
+    </field>
+    <field name="product_qty"/>
+    <field name="product_uom">
+      <field name="id"/>
+      <field name="name"/>
+    </field>
+    <field name="price_unit"/>
+    <field name="date_planned"/>
+    <field name="move_ids">
+      <field name="date"/>
+      <field name="date_planned"/>
+      <field name="location_id"/>
+      <field name="location_dest_id"/>
+      <field name="product_qty"/>
+      <field name="product_uom"/>
+      <field name="note"/>
+      <field name="purchase_line_id"/>
+      <field name="state"/>
+    </field>
+  </field>
+  <field name="picking_ids">
+    <field name="id"/>
+  </field>
+</tree>

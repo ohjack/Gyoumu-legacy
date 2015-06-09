@@ -1,0 +1,43 @@
+<?php
+
+module_load_include('inc', 'GuLib', 'autoload');
+\Gulei\Autoloader::register(__DIR__);
+
+//include_once 'checkimage.inc';
+
+function checkimage_menu(){
+  $item = array();
+
+  $item['admin/settings/checkimage/path'] = array(
+    'title' => 'CheckImage Path Setting',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('checkimage_settings_path_form'),
+    'access callback' => true,
+    'file' => 'checkimage.admin.inc',
+  );
+
+  $item['checkimage/check'] = array(
+    'title' => 'Check Images',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('checkimage_check_images_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  return $item;
+}
+
+function checkimage_check_images_form(&$form_state){
+  $Ctrl = new \Checkimage\Page\Main($form_state);
+  return $Ctrl->getFormEntry();
+}
+
+function checkimage_check_images_form_validate($form, &$form_state){
+  if($form_state['values']['load']){
+    _erp_connect();
+    $q = new \Oerp\Query\Basic('product.product', null, array('default_code'));
+    $form_state['values']['sku_list'] =
+      implode("\n", $q->raw()->collect('default_code'));
+  }
+  $form_state['rebuild'] = true;
+}

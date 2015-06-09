@@ -1,0 +1,119 @@
+﻿<html>
+<head>
+  <title></title>
+</head>
+
+<body>
+<center>
+  <table id="main-wrapper" width="800" border="0" cellspacing="0">
+    <tbody>
+    <tr>
+      <td>
+        <img src="http://www.picturemaster.info/TemplateUse/goodsbay/top.jpg" alt="top"/>
+      </td>
+    </tr>
+    <tr>
+      <td align="center">
+        <table width="790" border="0" cellspacing="1">
+          <tr>
+            <td colspan="2" align="center" bgcolor="#FFFFFF">
+              <p>
+                <font size="5" color="#000000"><b>${title}</b></font>
+              </p>
+            </td>
+
+          </tr>
+          <tr>
+            <td  bgcolor="#c4cb96" align="center" colspan="2">
+              <p>
+                <font size="4" color="#FFFFFF">
+                  <b>
+                    お支払い総額：
+                  </b>
+                </font>
+                <font size="6">
+                  ${buynow_price}
+                </font>
+                <font size="4" color="#FFFFFF">
+                  円+送料
+                </font>
+                <font size="6">
+                  ${shipping_fee}
+                </font>
+                <font size="4" color="#FFFFFF">
+                  円
+                </font>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td  bgcolor="#c4cb96" align="center" colspan="2">
+              <p><font size="5" color="e60012">※1円品ご入札・ご落札の注意事項※</font></p>
+              <ul>
+                <li><font color="e60012">お一人様1点限りとさせて頂きます</font></li>
+                <li><font color="e60012">送料無料商品と同梱は不可となります</font></li>
+              </ul>
+            </td>
+          </tr>
+          <tr>
+            <td bgcolor="#c4cb96" valign="middle" align="center" width="300">
+              <p>
+                <font color="#FFFFFF" size="5">商品情報</font>
+              </p>
+            </td>
+            <td bgcolor="#c7e5a1" valign="middle" align="center" width="500">
+              <ul>
+                <li><b>商品番号：${clabel}</b></li>
+                <li tal:repeat="model_line model_LINES">${model_line}</li>
+              </ul>
+            </td>
+          </tr>
+          <tr>
+
+            <td bgcolor="#c4cb96" valign="middle" align="center" width="300">
+              <p>
+                <font color="#FFFFFF" size="5">その他説明</font>
+              </p>
+            </td>
+            <td bgcolor="#c7e5a1" valign="middle" align="center" width="500">
+              <ul>
+                <li tal:repeat="desc_line desc_LINES">${desc_line}</li>
+              </ul>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="2" align="center">
+              <p><b>※携帯でご覧になる方は、一部の画像が表示されない場合もあります。</b></p>
+
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td align="center">
+        <img src="http://www.picturemaster.info/ProductPics/titosoy/${clabel_LOWERCASE}-1.jpg" alt="galleryPIC1" class="photo"/>
+      </td>
+    </tr>
+
+    <tr>
+      <td align="center">
+        <img src="http://www.picturemaster.info/ProductPics/titosoy/${clabel_LOWERCASE}-2.jpg" alt="galleryPIC2" class="photo"/>
+      </td>
+    </tr>
+    <tr>
+      <td align="center">
+        <img src="http://www.picturemaster.info/ProductPics/titosoy/${clabel_LOWERCASE}-3.jpg" alt="galleryPIC3" class="photo"/>
+      </td>
+
+    </tr>
+    <tr>
+      <td>
+        <img src="http://www.picturemaster.info/TemplateUse/goodsbay/bottom.jpg" alt="bottom"/>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+</center>
+</body>
+</html>

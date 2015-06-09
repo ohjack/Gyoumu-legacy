@@ -1,0 +1,20 @@
+<tree>
+  <param name="mark_translated">0</param>
+
+  <field name="product_id.default_code" string="SKU" class="font-mono"/>
+  <field name="product_id.name" string="Name"/>
+  <field name="product_uom.name" string="UoM"/>
+  <field name="product_qty" string="Qty."/>
+  <field name="func:picked" string="Picked"/>
+  <field name="date_planned" string="Planned"/>
+
+  <translate>
+    <func>
+      <src name="cmd:explode">
+        <arg> </arg>
+        <arg>0</arg>
+      </src>
+      <fld>date_planned</fld>
+    </func>
+  </translate>
+</tree>

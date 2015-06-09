@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<tree name="view" string="Packaging">
+  <param name="oerp:model">product.product</param>
+
+  <field name="default_code" string="SKU"/>
+  <field name="name" string="Name"/>
+  <field name="state" string="Status"/>
+
+  <field name="packaging">
+    <field name="length">
+      <param name="hide">1</param>
+    </field>
+    <field name="width">
+      <param name="hide">1</param>
+    </field>
+    <field name="height">
+      <param name="hide">1</param>
+    </field>
+    <field name="weight">
+      <param name="hide">1</param>
+    </field>
+  </field>
+
+  <field name="func:fedex_pack" string="Fedex Pack."/>
+  <field name="func:fedex_l" string="L"/>
+  <field name="func:fedex_w" string="W"/>
+  <field name="func:fedex_h" string="H"/>
+  <field name="func:fedex_wt" string="Wt"/>
+
+  <field name="func:other_pack" string="Other Pack."/>
+  <field name="func:other_l" string="L"/>
+  <field name="func:other_w" string="W"/>
+  <field name="func:other_h" string="H"/>
+  <field name="func:other_wt" string="Wt"/>
+
+  <translate>
+    <func>
+      <src name="cmd:Oerp\Product\Command\getFedexPackDim"/>
+      <fld>func:fedex_pack</fld>
+      <fld>func:fedex_l</fld>
+      <fld>func:fedex_w</fld>
+      <fld>func:fedex_h</fld>
+      <fld>func:fedex_wt</fld>
+
+      <fld>func:other_pack</fld>
+      <fld>func:other_l</fld>
+      <fld>func:other_w</fld>
+      <fld>func:other_h</fld>
+      <fld>func:other_wt</fld>
+    </func>
+  </translate>
+</tree>

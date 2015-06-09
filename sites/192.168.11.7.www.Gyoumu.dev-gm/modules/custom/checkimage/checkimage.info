@@ -1,0 +1,4 @@
+name = CheckImage
+core = 6.x
+package = Maolung
+dependencies[] = GuLib

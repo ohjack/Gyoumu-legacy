@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenShipments xmlns="x-schema:OpenShipments.xdr">
+  <OpenShipment ShipmentOption="" ProcessStatus="">
+    <ShipTo>
+      <CompanyOrName>${param/address_id.name}</CompanyOrName>
+      <Attention>${param/address_id.name}</Attention>
+      <Address1>${param/address_id.street}</Address1>
+      <Address2>${param/address_id.street2}</Address2>
+      <Address3></Address3>
+      <CountryTerritory>${param/address_id.state_id.country_id.code}</CountryTerritory>
+      <PostalCode>${param/address_id.zip}</PostalCode>
+      <CityOrTown>${param/address_id.city}</CityOrTown>
+      <StateProvinceCounty>${param/address_id.state_id.name}</StateProvinceCounty>
+      <Telephone>${param/address_id.phone}</Telephone>
+    </ShipTo>
+    <ShipmentInformation>
+      <ServiceType></ServiceType>
+      <PackageType></PackageType>
+      <NumberOfPackages>1</NumberOfPackages>
+      <ShipmentActualWeight>${param/weight}</ShipmentActualWeight>
+      <ShipmentDimensionalWeight>${param/weight}</ShipmentDimensionalWeight>
+      <DescriptionOfGoods>${param/desc}</DescriptionOfGoods>
+      <Reference1>${param/name}</Reference1>
+      <Reference2>G5 02 no brand</Reference2>
+      <Reference3>${param/origin}</Reference3>
+      <BillingOption></BillingOption>
+      <Length>${param/length}</Length>
+      <Width>${param/width}</Width>
+      <Height>${param/height}</Height>
+    </ShipmentInformation>
+    <InternationalDocumentation>
+      <InvoiceReasonForExport>02</InvoiceReasonForExport>
+      <InvoiceCurrencyCode>USD</InvoiceCurrencyCode>
+      <InvoiceLineTotal>1</InvoiceLineTotal>
+      <InvoiceAdditionalComments>G5 02 no brand</InvoiceAdditionalComments>
+    </InternationalDocumentation>
+    <Goods>
+      <PartNumber></PartNumber>
+      <DescriptionOfGood>${param/desc}</DescriptionOfGood>
+      <Inv-NAFTA-TariffCode></Inv-NAFTA-TariffCode>
+      <Inv-NAFTA-CO-CountryTerritoryOfOrigin>TW</Inv-NAFTA-CO-CountryTerritoryOfOrigin>
+      <InvoiceUnits>1</InvoiceUnits>
+      <InvoiceUnitOfMeasure>EA</InvoiceUnitOfMeasure>
+      <Invoice-SED-UnitPrice>${param/x_cust_val}</Invoice-SED-UnitPrice>
+      <InvoiceCurrencyCode>USD</InvoiceCurrencyCode>
+      <InvoiceNetWeight></InvoiceNetWeight>
+    </Goods>
+  </OpenShipment>
+</OpenShipments>

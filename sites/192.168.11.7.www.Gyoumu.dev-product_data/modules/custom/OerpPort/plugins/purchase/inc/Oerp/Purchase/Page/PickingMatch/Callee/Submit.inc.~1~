@@ -1,0 +1,260 @@
+<?php
+namespace Oerp\Purchase\Page\PickingMatch\Callee;
+
+class Submit extends \Gulei\Page\Form\Callee\_Abstract {
+  protected $pick;
+  protected $pick_id;
+
+  protected function getClassname() {
+    return __CLASS__;
+  }
+
+  protected function getQuery() {
+    return new \Oerp\Query('purchase.order', NULL, NULL, $this->rid);
+  }
+
+  protected function init_pick() {
+    $provPack = new \Oerp\Purchase\Provider\PoPicking($this->rid);
+    $this->pick = $provPack->getData();
+    $this->pick = array_pop($this->pick);
+
+    foreach ($this->pick['_lines'] as $line) {
+      if ($line['state'] == 'assigned'
+          && $line['picking_id']['type'] == 'in'
+          && $pick_id = $line['picking_id']['id'])
+      {
+        $this->pick_id = $pick_id;
+        break;
+      }
+    }
+  }
+
+  protected function init($form_state) {
+    $StateCtrl = new \Gulei\Form\State($form_state);
+    $this->vals = $StateCtrl->getVals();
+
+    $send_ref = (array)json_decode($this->vals['send']);
+    $send_ref = (array)$send_ref['vals'];
+    $this->send_ref = array();
+
+    foreach ($send_ref as $key => $val) {
+      preg_match('/.*\[(.*)\]\[(.*)\]/', $key, $m);
+      $this->send_ref[$m[1]][$m[2]] = $val;
+    }
+
+    $this->po = $this->FormPage->getPo();
+    $this->rid = $this->po['id'];
+    $this->init_pick();
+  }
+
+  protected function chkPick($line, $sku, $state) {
+    return $line['product_id']['default_code'] == $sku
+        && $line['state'] == $state
+        && $line['picking_id']['type'] == 'in';
+  }
+
+  protected function searchPick($sku, $state) {
+    foreach ($this->pick['_lines'] as $pk_line) {
+      if ($this->chkPick($pk_line, $sku, $state)) {
+        return $pk_line;
+      }
+    }
+    return FALSE;
+  }
+
+  protected function setMoveQty($mov_id, $qty) {
+    $q = new \Oerp\Query('stock.move', NULL, NULL, $mov_id);
+    $q->write(array('product_qty' => $qty));
+  }
+
+  protected function plusCascade($sku, $type, $qty) {
+    if ($qty <= 0 ) {
+      return;
+    }
+
+    foreach ($this->pick['_lines'] as &$pk_line) {
+      if ($this->chkPick($pk_line, $sku, $type)) {
+        $line_qty = $pk_line['product_qty'];
+
+        $new_qty = $line_qty + $qty;
+        $this->setMoveQty($pk_line['id'], $new_qty);
+        $pk_line['product_qty'] = $new_qty;
+        return;
+      }
+    }
+  }
+
+  protected function minusCascade($sku, $type, $qty) {
+    if ($qty <= 0) {
+      return;
+    }
+
+    foreach ($this->pick['_lines'] as &$pk_line) {
+      if ($this->chkPick($pk_line, $sku, $type)) {
+        $line_qty = $pk_line['product_qty'];
+
+        if ($line_qty < 1) {
+          continue;
+        }
+
+        $new_qty = $line_qty - $qty;
+        $new_qty = $new_qty < 0 ? 0 : $new_qty;
+
+        $this->setMoveQty($pk_line['id'], $new_qty);
+        $pk_line['product_qty'] = $new_qty;
+        $qty -= $line_qty - $new_qty;
+      }
+
+      if ($qty < 1) {
+        break;
+      }
+    }
+  }
+
+  protected function add_move($sku, $to_pick, $ref_line) {
+    if ($to_pick == 0) {
+      return FALSE;
+    }
+
+    $pk_line = $this->searchPick($sku, 'assigned');
+    $prod_line = $this->po['order_line'][$sku];
+
+    $loc_from = $to_pick > 0 ? 7 : 11;
+    $loc_to = $to_pick > 0 ? 11 : 7;
+
+    $abs_pick = abs($to_pick);
+
+    $new_move = array(
+      'picking_id' => $pk_line['picking_id']['id'],
+      'location_id' => $loc_from,
+      'location_dest_id' => $loc_to,
+      'product_id' => $prod_line['product_id']['id'],
+      'product_uom' => $prod_line['product_uom']['id'],
+      'product_qty' => $abs_pick,
+      'name' => sprintf('PICKING %s[%s]', $this->po['name'], $sku),
+      'date_planned' => $ref_line['pick_date'],
+      'note' => $ref_line['pick_note'],
+    );
+
+    if ($to_pick > 0 ) {
+      $this->minusCascade($sku, 'assigned', $abs_pick);
+    }
+    else if ($to_pick < 0) {
+      $this->plusCascade($sku, 'assigned', $abs_pick);
+    }
+
+    $q = new \Oerp\Query('stock.move');
+    return $q->create($new_move);
+  }
+
+  protected function exe_modify_pack_new_move() {
+    if (!$ref_lines = $this->send_ref) {
+      return FALSE;
+    }
+
+    $new_moves = array();
+
+    foreach ($ref_lines as $sku => $ref_line) {
+      $new_move = $this->add_move($sku, $ref_line['pick_qty'], $ref_line);
+
+      if ($new_move) {
+        $new_moves[] = $new_move;
+      }
+    }
+
+    $ops = array(
+      new \Oerp\Stock\Operation\ConfirmOrderline($new_moves),
+      new \Oerp\Stock\Operation\ConfirmAvailability($new_moves),
+      new \Oerp\Stock\Operation\MarkMoveAsDone($new_moves),
+    );
+
+    foreach ($ops as $op) {
+      $op->run();
+    }
+  }
+
+  protected function updateNewMoveInfo($pack_id, $ref_line) {
+    $new_mov_ids = \Oerp\Query::q(
+      'stock.move',
+      array(array('picking_id', '=', $pack_id)),
+      array('id')
+    )->collect('id');
+
+    $q = new \Oerp\Query( 'stock.move', NULL, NULL, $new_mov_ids);
+
+    $note = $ref_line['pick_note'];
+    $buf = $ref_line['pick_qty'] > 0 ? '[PICK]' : '[RETURN]';
+    $buf .= trim($note) ? "\n" : '';
+    $buf .= $note;
+    $ref_line['pick_note'] = $buf;
+
+    return $q->write(array(
+      'date_planned' => $ref_line['pick_date'],
+      'note' => $ref_line['pick_note'],
+    ));
+  }
+
+  protected function exe_modify_pack() {
+    if (!$ref_lines = $this->send_ref) {
+      return FALSE;
+    }
+
+    foreach ($ref_lines as $sku => $ref_line) {
+      $to_pick = $ref_line['pick_qty'];
+
+      if ($to_pick > 0) {
+        if ($pk_line = $this->searchPick($sku, 'assigned')) {
+          $diff = $to_pick - $pk_line['product_qty'];
+
+          if ($diff >= 0) {
+            $this->plusCascade($sku, 'assigned', $diff + 1);
+          }
+
+          $op = new \Oerp\Stock\Operation\ProductReceive(
+            $this->pick_id, array($sku => $to_pick));
+
+          $rs = $op->run();
+          $new_pick = $rs['datas']['new_picking'];
+          $this->updateNewMoveInfo($new_pick, $ref_line);
+
+          $this->init_pick();
+
+          if ($diff >= 0) {
+            $this->minusCascade($sku, 'assigned', $diff + 1);
+          }
+        }
+      }
+
+      if ($to_pick < 0) {
+        $to_plus = abs($to_pick);
+        if ($to_plus < 1) {
+          echo 'in';die;
+        }
+        $op = new \Oerp\Stock\Operation\PackingReturn(
+          $this->pick_id, array($sku => $to_plus), TRUE);
+
+        $rs = $op->run();
+        $this->updateNewMoveInfo($rs['picking_id'], $ref_line);
+        $this->plusCascade($sku, 'assigned', $to_plus);
+      }
+    }
+  }
+
+  protected function postfix() {
+    $hooks = array(
+      new \Oerp\Purchase\Hook\Form\FixPoState(),
+    );
+
+    foreach ($hooks as $hook) {
+      $param = array('rid' => $this->rid);
+      $hook->execute($param);
+    }
+  }
+
+  public function execute($form, &$form_state) {
+    $this->init($form_state);
+    $this->exe_modify_pack();
+    $this->postfix();
+    $this->reload();
+  }
+}

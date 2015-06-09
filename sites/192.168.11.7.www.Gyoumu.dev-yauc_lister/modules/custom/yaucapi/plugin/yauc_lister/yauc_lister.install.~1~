@@ -1,0 +1,57 @@
+<?php
+
+function yauc_lister_schema(){
+  $schema['yaucapi_lister_queue'] = array(
+    'description' => 'Queued auctions for uploading',
+    'fields' => array(
+      'id' => array(
+        'type' => 'serial',
+        'unsigned' => true,
+        'not null' => true,
+      ),
+      'sellerId' => array(
+        'type' => 'varchar',
+        'length' => 25,
+        'not null' => TRUE,
+        'description' => 'The seller id.',
+      ),
+      'src' => array(
+        'type' => 'text',
+        'not null' => true,
+      ),
+      'status' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => true,
+        'not null' => true,
+      ),
+      'msg' => array(
+        'type' => 'text',
+      ),
+      'createtime' => array(
+        'type' => 'int',
+        'unsigned' => true,
+        'not null' => true,
+      ),
+      'aid' => array(
+        'type' => 'varchar',
+        'length' => 60,
+      ),
+    ),
+    'primary key' => array('id'),
+    'indexes' => array(
+      'sellerId' => array('sellerId'),
+      'status' => array('status'),
+    ),
+  );
+
+  return $schema;
+}
+
+function yauc_lister_install(){
+  drupal_install_schema('yauc_lister');
+}
+
+function yauc_lister_uninstall(){
+  drupal_uninstall_schema('yauc_lister');
+}

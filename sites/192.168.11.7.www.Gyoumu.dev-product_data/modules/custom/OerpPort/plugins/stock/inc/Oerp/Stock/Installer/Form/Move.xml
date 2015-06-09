@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<form string="Stock Moves">
+  <separator colspan="4" string="Move Information"/>
+  <field name="location_id" select="1"/>
+  <field name="location_dest_id" select="1"/>
+  <field colspan="4" name="product_id" select="1"/>
+  <field name="product_qty" select="2"/>
+  <field name="product_uom" select="2"/>
+  <field colspan="4" name="name" select="2"/>
+  <field name="date"/>
+  <field name="date_planned"/>
+  <newline/>
+  <field name="note"/>
+  <field name="state" select="1"/>
+</form>

@@ -1,0 +1,77 @@
+<?php 
+
+function fedprint_schema(){
+  $schema['fedprint_recs'] = array(
+    'description' => 'Log print records.',
+    'fields' => array(
+      'rid' => array(
+        'type' => 'serial',
+        'unsigned' => true,
+        'not null' => true,
+      ),
+      'src' => array(
+        'type' => 'text',
+        'not null' => true,
+        'description' => 'Record source.',
+      ),
+      'resp' => array(
+        'type' => 'text',
+        'description' => 'Fedex server response.'
+      ),
+      'status' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => true,
+      ),
+      'tid' => array(
+        'type' => 'varchar',
+        'length' => '64',
+      ),
+      'tnum' => array(
+        'type' => 'char',
+        'length' => '60',
+      ),
+    ),
+    'primary key' => array('rid'),
+  );
+
+  return $schema;
+}
+
+function fedprint_install(){
+  drupal_install_schema('fedprint');
+}
+
+function fedprint_uninstall(){
+  drupal_uninstall_schema('fedprint');
+}
+
+function fedprint_update_6000(){
+  $ret = array();
+  $spec = array(
+    'type' => 'varchar',
+    'length' => '64',
+  );
+  db_add_field($ret, 'fedprint_recs', 'tid', $spec);
+  return $ret;
+}
+
+function fedprint_update_6001(){
+  $ret = array();
+  $spec = array(
+    'type' => 'char',
+    'length' => '12',
+  );
+  db_add_field($ret, 'fedprint_recs', 'tnum', $spec);
+  return $ret;
+}
+
+function fedprint_update_6002(){
+  $ret = array();
+  $spec = array(
+    'type' => 'char',
+    'length' => '60',
+  );
+  db_change_field($ret, 'fedprint_recs', 'tnum', 'tnum', $spec);
+  return $ret;
+}

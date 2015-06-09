@@ -1,0 +1,23 @@
+<tree>
+  <param name="oerp:model">purchase.order</param>
+
+  <field name="id">
+    <param name="hide">1</param>
+  </field>
+  <field name="name" string="單號"/>
+  <field name="partner_id.name" string="廠商"/>
+  <field name="order_line.product_id.default_code" string="SKU" class="font-mono"/>
+  <field name="order_line.product_id.func:pcode" string="產品編號"/>
+  <field name="order_line.func:supp_pack" string="銷貨單號"/>
+  <field name="order_line.func:supp_invoice" string="發票號碼"/>
+  <field name="order_line.func:sum" string="數量"/>
+  <field name="order_line.price_unit" string="單價"/>
+  <field name="order_line.func:subtotal" string="小計"/>
+
+  <translate>
+    <func>
+      <src name="cmd:Oerp\Command\LinkToFormView"/>
+      <fld>name</fld>
+    </func>
+  </translate>
+</tree>

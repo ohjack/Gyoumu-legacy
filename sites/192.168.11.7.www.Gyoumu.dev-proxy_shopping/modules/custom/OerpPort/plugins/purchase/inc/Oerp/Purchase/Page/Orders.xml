@@ -1,0 +1,182 @@
+<?xml version="1.0"?>
+<tree name="view" string="Purchase Orders">
+  <param name="oerp:model">purchase.order</param>
+  <param name="oerp:op-type">CXX</param>
+  <param name="items_per_page">10</param>
+
+  <field name="state" string="Status"/>
+  <field name="name" string="Ref"/>
+  <field name="func:modify_pick" string="Pick"/>
+  <field name="origin" string="Origin"/>
+  <field name="state" string="Status"/>
+  <field name="date_order" string="Created"/>
+  <field name="partner_id">
+    <field name="id"/>
+    <field name="name" string="Supplier"/>
+  </field>
+  <field name="partner_address_id">
+    <param name="hide">1</param>l
+
+    <field name="name" string="Contact">
+      <param name="hide">1</param>
+    </field>
+
+    <field name="phone" string="Phone">
+      <param name="hide">1</param>
+    </field>
+
+    <field name="fax" string="Fax">
+      <param name="hide">1</param>
+    </field>
+
+    <field name="email" string="Email">
+      <param name="hide">1</param>
+    </field>
+
+    <field name="zip" string="ZIP">
+      <param name="hide">1</param>
+    </field>
+
+    <field name="street" string='Street1'>
+      <param name="hide">1</param>
+    </field>
+
+    <field name="street2" string="Stree2">
+      <param name="hide">1</param>
+    </field>
+
+    <field name="city" string="City">
+      <param name="hide">1</param>
+    </field>
+
+    <field name="state" string="State">
+      <param name="hide">1</param>
+    </field>
+
+    <field name="country_id" string="Country">
+      <param name="hide">1</param>
+    </field>
+  </field>
+  <field name="pricelist_id">
+    <field name="currency_id" string="Crry"/>
+  </field>
+  <field name="amount_total" string="Total"/>
+  <field name="order_line">
+    <field name="product_id">
+      <field name="product_manager" string="P.Mgr">
+        <param name="hide">1</param>
+      </field>
+      <field name="name" string="P.Name">
+        <param name="hide">1</param>
+      </field>
+      <field name="func:pn" string="P/N">
+        <param name="hide">1</param>
+      </field>
+      <field name="state" string="P.Status"/>
+      <field name="code" string="SKU"/>
+    </field>
+    <field name="product_uom" string="UoM"/>
+    <field name="price_unit" string="U.Prz"/>
+    <field name="product_qty" string="Qty"/>
+    <field name="func:picked" string="Picked"/>
+    <field name="date_planned" string="Planned"/>
+  </field>
+
+  <translate>
+    <func>
+      <src><![CDATA[
+        $val = $rec[$name];
+        $sub = mb_substr($val, 0, 16);
+        return $sub == $val ? FALSE : $sub . ' ...';
+      ]]></src>
+      <fld>origin</fld>
+    </func>
+
+    <func>
+      <src name="cmd:explode">
+        <arg> </arg>
+        <arg>0</arg>
+      </src>
+      <fld>minimum_planned_date</fld>
+      <fld>order_line.date_planned</fld>
+    </func>
+
+    <func>
+      <src>
+        <![CDATA[
+        if($rec[$name] == 'In Development'){
+          return "<span class='notice'>$rec[$name]</span>";
+        }
+        return false;
+        ]]>
+      </src>
+      <fld>order_line.product_id.state</fld>
+    </func>
+
+    <func>
+      <src name="cmd:Oerp\Purchase\Command\PoPickingStatus"/>
+      <fld>order_line.func:picked</fld>
+    </func>
+
+    <func>
+      <src name="cmd:Oerp\Purchase\Command\FindPn"/>
+      <fld>order_line.product_id.func:pn</fld>
+    </func>
+
+    <func>
+      <src><![CDATA[
+        $link = sprintf(
+          '?q=gulib/form&amp;n=Oerp:Purchase:Page:PickingMatch&amp;rid=%s',
+          $rec['id']
+        );
+
+        return sprintf(
+          '<span><a href="%s"><span class="gu_value">Pick</span></a></span>',
+          $link
+        );
+      ]]></src>
+      <fld>func:modify_pick</fld>
+    </func>
+
+    <func>
+      <src name="cmd:Oerp\Command\LinkToFormView"/>
+      <fld>name</fld>
+    </func>
+  </translate>
+
+  <validate>
+    <func>
+      <src><![CDATA[
+        preg_match('@/ (.*)@', $rec['order_line.func:picked'], $m);
+        $picked = $m[1];
+
+        if ($picked >= $rec['order_line.product_qty']) {
+          return TRUE;
+        }
+
+        $date = date('Y-m-d');
+        return strcmp($date, $rec[$name]) < 0;
+      ]]></src>
+      <fld>order_line.date_planned</fld>
+      <msg>Due date.</msg>
+    </func>
+
+    <func>
+      <src><![CDATA[
+        preg_match('@/ (.*)@', $rec[$name], $m);
+        $picked = $m[1];
+        return $picked <= $rec['order_line.product_qty'];
+      ]]></src>
+      <fld>order_line.func:picked</fld>
+      <msg>Over-picked.</msg>
+    </func>
+
+    <func>
+      <src><![CDATA[
+        return $rec[$name] > 0 || $rec[$root_name . 'product_qty'] < 1;
+      ]]></src>
+      <fld>order_line.price_unit</fld>
+      <msg>Unusual unit price.</msg>
+    </func>
+  </validate>
+</tree>

@@ -1,0 +1,167 @@
+return array (
+  0 =>
+  array (
+    'data' =>
+    array (
+      'auc_id' =>
+      array (
+        'data' => '<a href="http://page8.auctions.yahoo.co.jp/jp/auction/h156175585" target="_blank"><span class="gu_value">h156175585</span></a>',
+        'gu_name' => 'auc_id',
+        'rowspan' => 1,
+      ),
+      'sku' =>
+      array (
+        'data' => '<span class="gu_value">ZA-00444</span>',
+        'gu_name' => 'sku',
+        'rowspan' => 1,
+      ),
+      'title' =>
+      array (
+        'data' => '<span class="gu_value">*iphone4センターボタンがシリコンソフトケースピンクZA-00444</span>',
+        'gu_name' => 'title',
+        'rowspan' => 1,
+      ),
+      'cur_price' =>
+      array (
+        'data' => '<span class="gu_value">1</span>',
+        'gu_name' => 'cur_price',
+        'rowspan' => 1,
+      ),
+      'shipping_fee' =>
+      array (
+        'data' => '<span class="gu_value">250</span>',
+        'gu_name' => 'shipping_fee',
+        'rowspan' => 1,
+      ),
+      'time_end' =>
+      array (
+        'data' => '<span class="gu_value">2011-08-24 11:31:31</span>',
+        'gu_name' => 'time_end',
+        'rowspan' => 1,
+      ),
+      'winner' =>
+      array (
+        'data' => '<span class="gu_value">chiyomi_aam</span>',
+        'gu_name' => 'winner',
+        'rowspan' => 1,
+      ),
+      'func:shipping_method' =>
+      array (
+        'data' => '<span class="gu_value">説明をご覧ください</span>',
+        'gu_name' => 'func:shipping_method',
+        'rowspan' => 1,
+      ),
+    ),
+    'class' => 'merge-odd',
+  ),
+  1 =>
+  array (
+    'data' =>
+    array (
+      'auc_id' =>
+      array (
+        'data' => '<a href="http://page2.auctions.yahoo.co.jp/jp/auction/b123022734" target="_blank"><span class="gu_value">b123022734</span></a>',
+        'gu_name' => 'auc_id',
+        'rowspan' => 1,
+      ),
+      'sku' =>
+      array (
+        'data' => '<span class="gu_value">CP-00962</span>',
+        'gu_name' => 'sku',
+        'rowspan' => 1,
+      ),
+      'title' =>
+      array (
+        'data' => '<span class="gu_value">*コスプレBLEACHブリーチ風草鞋.足袋わらじ24.5~25.5CP-00962</span>',
+        'gu_name' => 'title',
+        'rowspan' => 1,
+      ),
+      'cur_price' =>
+      array (
+        'data' => '<span class="gu_value">1100</span>',
+        'gu_name' => 'cur_price',
+        'rowspan' => 1,
+      ),
+      'shipping_fee' =>
+      array (
+        'data' => '<span class="gu_value">500</span>',
+        'gu_name' => 'shipping_fee',
+        'rowspan' => 1,
+      ),
+      'time_end' =>
+      array (
+        'data' => '<span class="gu_value">2011-08-24 10:57:03</span>',
+        'gu_name' => 'time_end',
+        'rowspan' => 1,
+      ),
+      'winner' =>
+      array (
+        'data' => '<span class="gu_value">one_pieeeeeece</span>',
+        'gu_name' => 'winner',
+        'rowspan' => 1,
+      ),
+      'func:shipping_method' =>
+      array (
+        'data' => '<span class="gu_value">書留郵便</span>',
+        'gu_name' => 'func:shipping_method',
+        'rowspan' => 1,
+      ),
+    ),
+    'class' => 'merge-even',
+  ),
+  2 =>
+  array (
+    'data' =>
+    array (
+      'auc_id' =>
+      array (
+        'data' => '<a href="http://page6.auctions.yahoo.co.jp/jp/auction/f100926174" target="_blank"><span class="gu_value">f100926174</span></a>',
+        'gu_name' => 'auc_id',
+        'rowspan' => 1,
+      ),
+      'sku' =>
+      array (
+        'data' => '<span class="gu_value">CP-00929</span>',
+        'gu_name' => 'sku',
+        'rowspan' => 1,
+      ),
+      'title' =>
+      array (
+        'data' => '<span class="gu_value">*コスプレ/青の祓魔師聖十字学園制服風ネクタイCP-00929</span>',
+        'gu_name' => 'title',
+        'rowspan' => 1,
+      ),
+      'cur_price' =>
+      array (
+        'data' => '<span class="gu_value">1500</span>',
+        'gu_name' => 'cur_price',
+        'rowspan' => 1,
+      ),
+      'shipping_fee' =>
+      array (
+        'data' => '<span class="gu_value">500</span>',
+        'gu_name' => 'shipping_fee',
+        'rowspan' => 1,
+      ),
+      'time_end' =>
+      array (
+        'data' => '<span class="gu_value">2011-08-24 10:03:14</span>',
+        'gu_name' => 'time_end',
+        'rowspan' => 1,
+      ),
+      'winner' =>
+      array (
+        'data' => '<span class="gu_value">sign7823</span>',
+        'gu_name' => 'winner',
+        'rowspan' => 1,
+      ),
+      'func:shipping_method' =>
+      array (
+        'data' => '<span class="gu_value">書留郵便</span>',
+        'gu_name' => 'func:shipping_method',
+        'rowspan' => 1,
+      ),
+    ),
+    'class' => 'merge-odd',
+  ),
+);

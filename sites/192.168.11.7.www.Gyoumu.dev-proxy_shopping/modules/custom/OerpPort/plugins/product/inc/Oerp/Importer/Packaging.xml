@@ -1,0 +1,38 @@
+<tree string="Import Packing">
+  <field name="SKU"/>
+  <field name="L"/>
+  <field name="W"/>
+  <field name="H"/>
+  <field name="Weight"/>
+  <field name="Packing"/>
+
+  <translate>
+    <func>
+      <src name="trim"/>
+      <fld>SKU</fld>
+      <fld>Packing</fld>
+    </func>
+  </translate>
+
+  <validate>
+    <func>
+      <src name="cmd:Oerp\Command\existValue">
+        <arg>product.ul</arg>
+        <arg></arg>
+        <arg>name</arg>
+      </src>
+      <fld>Packing</fld>
+      <msg>Unknown packing type.</msg>
+    </func>
+
+    <func>
+      <src name="cmd:Oerp\Command\existValue">
+        <arg>product.product</arg>
+        <arg></arg>
+        <arg>default_code</arg>
+      </src>
+      <fld>SKU</fld>
+      <msg>Unknown SKU.</msg>
+    </func>
+  </validate>
+</tree>

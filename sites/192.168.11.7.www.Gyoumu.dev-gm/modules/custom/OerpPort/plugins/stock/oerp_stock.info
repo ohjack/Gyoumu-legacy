@@ -1,0 +1,6 @@
+name = STK
+description = Stock management
+package = OpenERP
+dependencies[] = GuLib
+dependencies[] = oerp
+core = 6.x

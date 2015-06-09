@@ -1,0 +1,20 @@
+<?php
+namespace Gulei\Page\Form;
+
+class Basic extends _Abstract
+{
+  protected $q;
+  protected $form_state;
+
+  function __construct(&$form_state)
+  {
+    parent::__construct();
+    $this->form_state = $form_state;
+  }
+
+  public function hook_form_submit($form, &$form_state)
+  {
+    $btn = $this->getClickedButton();
+    $this->{$btn->method_name}($form, &$form_state);
+  }
+}

@@ -1,0 +1,1089 @@
+(function($) {
+  // FormView
+  var form_methods = {
+    init : function(params) {
+      return this.each(function() {
+        $this = $(this);
+        var v = new FormView(this);
+      });
+    },
+    update : function() {
+      return this.each(function() {
+        var v = new FormView(this);
+        v.prepareSubmit();
+      });
+    }
+  };
+
+  $.fn.oerpformview = function(method) {
+    if (form_methods[method]) {
+      return form_methods[method].apply(this, Array.prototype.slice.call(
+          arguments, 1));
+    } else if (typeof method === 'object' || !method) {
+      return form_methods.init.apply(this, arguments);
+    }
+  }
+
+  // TreeView
+  var tree_methods = {
+    init : function(params) {
+      return this.each(function() {
+        $this = $(this);
+        var v = new TreeView();
+
+        $this.find('.oerp-btn-del').click(function() {
+          v.catchClk(this).delTr();
+        });
+
+        $this.find('.oerp-btn-chk').click(function() {
+          v.catchClk(this).selTr();
+        });
+
+        $this.find('.oerp-btn-edit').click(function() {
+          v.catchClk(this);
+
+          if (!v.getTr().hasClass('toDelete')) {
+            v.editTr($(this));
+          }
+        });
+
+        $this.find('.oerp-btn-add').click(
+            function() {
+              $btn = $(this);
+              $btn.parents('table:eq(0)').find(
+                  'tr[oerp_rid="0"] .oerp-btn-edit').click();
+            });
+
+        $this.prev('table.sticky-header:eq(0)').find('.oerp-btn-add').click(
+            function() {
+              $(this).parents('div.oerp-treeview:eq(0)').find(
+                  'table.oerp-treeview div.oerp-btn-add').click();
+            });
+
+        if ($this.hasClass('select-one')) {
+          $this.find('tr[oerp_rid]').click(function() {
+            var rid = $(this).attr('oerp_rid');
+            v.catchClk(this);
+            v.clearSel();
+            v.selTr(rid);
+          });
+        }
+      });
+    },
+    update : function(params) {
+      return this.each(function() {
+        var v = new TreeView(this);
+        v.prepareChecked();
+      });
+    }
+  };
+
+  $.fn.oerptreeview = function(method) {
+    if (tree_methods[method]) {
+      return tree_methods[method].apply(this, Array.prototype.slice.call(
+          arguments, 1));
+    } else if (typeof method === 'object' || !method) {
+      return tree_methods.init.apply(this, arguments);
+    }
+  }
+})(jQuery);
+
+// Class PromptEditor declaration
+function PromptEditor(param) {
+  var $editor = this;
+
+  this.setDialog = function(send) {
+    var dialog_init = function(data) {
+      var dialog = $editor.dialog;
+      dialog.html(decodeURIComponent(eval(data)));
+      dialog.dialog('enable');
+
+      if (param.vals != undefined) {
+        // update regular form eles
+        dialog
+            .find(':input')
+            .each(
+            function() {
+              $this = $(this);
+
+              if ($this.parents('div.field:eq(0)').attr('oerp_type') == 'many2one') {
+                var pat = /(.*)\[name\]/;
+                var name = pat.exec($this.attr('name'));
+                var val = param.vals['#value'][name[1]];
+              } else {
+                var val = param.vals['#value'][$this.attr('name')];
+              }
+
+              if (val == undefined || val['#value'] == undefined)
+                return;
+
+              switch ($this[0].type) {
+                case 'hidden':
+                  $this.val(val['#value']);
+                  break;
+
+                case 'textarea':
+                  $this.attr('value', val['#value']);
+                  break;
+
+                case 'text':
+                  if (val['#text']) {
+                    // many2one
+                    $this.val(val['#text']).attr('rid', val['#value']);
+                  } else {
+                    $this.val(val['#value']);
+                  }
+                  break;
+
+                case 'checkbox':
+                  if (val) {
+                    $this.attr('checked', 'checked');
+                  } else {
+                    $this.removeAttr('checked');
+                  }
+                  break;
+
+                case 'select-one':
+                  $this.children('option[value="' + val['#value'] + '"]')
+                      .attr('selected', 'selected');
+
+                  break;
+              }
+            });
+
+        // update tree records
+        dialog.find('div.oerp-treeview').each(function() {
+          var name = 'view[' + $(this).attr('oerp_name') + ']';
+          var changes = param.vals['#value'][name];
+          var v = new TreeView(this);
+
+          for (var rid in changes) {
+            if (rid.substr(0, 2) == '0-') {
+              v.addTr(changes[rid], rid);
+            } else if (changes[rid]['#value']) {
+              v.updateTr(rid, changes[rid]);
+            }
+
+            if (changes[rid]['#delete']) {
+              v.delTr(rid);
+            }
+          }
+        });
+      }
+
+      dialog.find('form.oerp-formview').oerpformview();
+      dialog.find('table.oerp-treeview').oerptreeview();
+
+      // auto-adjust vertical position
+      var wrapper = dialog.parents('div.ui-dialog:eq(0)');
+      var bottom = wrapper.height() + wrapper.offset().top + 10;
+      var win_height = $(window).height();
+
+      dialog.dialog('option', 'position', 'center');
+      height = wrapper.height() + wrapper.offset().top + 10;
+
+      if ($('div.ui-widget-overlay').height() < height) {
+        $('div.ui-widget-overlay').height(height);
+      }
+    }
+
+    $editor.dialog.dialog('disable');
+    $.post('?q=oerp/view/editor/js', send, dialog_init);
+  }
+
+  this.getSend = function() {
+    var $form = $(this).find('form:eq(0)');
+    var send = {
+      '#value' : {}
+    };
+
+    // sync treeview records
+    $form.find('div.oerp-treeview').each(
+        function() {
+          var $this = $(this);
+          var send_inner = {};
+
+          $this.find('tr[oerp_rid]').each(function() {
+            var $this = $(this);
+
+            if ($this.data('val')) {
+              send_inner[$this.attr('oerp_rid')] = $this.data('val');
+            }
+          });
+
+          var fld_name = $this.children('input[type="hidden"]:eq(0)').attr(
+              'name').replace('[json]', '');
+
+          send['#value'][fld_name] = send_inner;
+        });
+
+    var post = $form.serializeArray();
+    $form.find('input:checkbox').each(function() {
+      if ($(this).attr('checked') == false) {
+        post.push({
+          name : $(this).attr('name'),
+          value : false
+        });
+      }
+    });
+
+    var required_pass = true;
+    // prepare send{}
+    for (var fld in post) {
+      var ele = $form.find('[name="' + post[fld]['name'] + '"]');
+      var ele_type = ele.parents('div[oerp_type]:eq(0)').attr('oerp_type');
+
+      if(ele.hasClass('required') && !post[fld]['value']){
+        ele.addClass('error');
+        required_pass = false;
+      }
+
+      var src = ele.attr('prepareSend');
+      if(src){
+        var funcLambda = new Function('form', 'ele', 'fld', src);
+        var resp = funcLambda($form, ele, post[fld]);
+        send['#value'][resp['#name']] = resp;
+      }
+    }
+    if(!required_pass)
+      return false;
+    
+    return send;
+  }
+
+  // create editform dialog
+  var date = new Date();
+  var editor_id = 'oerp-editor-' + param.send.model.replace('.', '-') + '-'
+      + date.getTime() + date.getMilliseconds();
+  delete date;
+
+  this.dialog = $(
+      '<div id="' + editor_id + '" class="oerp-formeditor">Loading...</div>')
+      .appendTo('body');
+
+  this.dialog.data('param', param);
+  this.dialog.data('v', param.v);
+  this.dialog.data('prompt', this);
+  this.dialog.data('field', param.field);
+  this.dialog.data('getSend', this.getSend);
+
+  // init dialog
+  var option = {
+    close : function(event, ui) {
+      $(this).remove();
+    },
+    width : 974,
+    modal : true
+  };
+
+  if (param.option) {
+    option = $.extend(option, param.option);
+  }
+
+  this.dialog.dialog(option);
+  this.setDialog(param.send);
+}
+
+// Class CatchEvent declaration
+FormEvent.prototype.catchClk = function(clicked) {
+  this.btn = $(clicked);
+  this.view = this.btn.parents('div.oerp-view:eq(0)');
+  return this;
+}
+
+function FormEvent() {
+}
+
+// Class FormView declaration
+FormView.prototype = new FormEvent();
+function FormView(ele) {
+  var formview = this;
+  var $form = $(ele);
+
+  this.isDialog = function() {
+    return $form.parents('div.ui-dialog:eq(0)').length
+  }
+
+  $form.find('[id^="oerp-tabs"]').tabs();
+
+  $form.find('.ui-icon').hover(function() {
+        $(this).parent('div').addClass('ui-state-hover');
+      }, function() {
+        $(this).parent('div').removeClass('ui-state-hover');
+      });
+
+  // init tooltips
+  $form.find('div.description').each(
+      function() {
+        $(this).prevAll('label:eq(0)').children('sup').hover(
+            function(e) {
+              var $this = $(this);
+              var text = $this.parent().nextAll('div.description');
+              var offset = $this.offset();
+
+              text.clone()
+                  .attr('id', 'tooltip')
+                  .css('position', 'absolute')
+                  .css('top', offset.top + $this.height() + 5)
+                  .css('left', offset.left)
+                  .appendTo('body')
+                  .show();
+
+              return false;
+
+            }, function(e) {
+              $('#tooltip').remove();
+            });
+      });
+
+  // init datepicker & timepicker
+  $form.find('input.form-text[widget="datepicker"]').each(function() {
+    var $this = $(this);
+
+    if (!$this.attr('readonly')) {
+      $this.attr('autocomplete', 'off');
+      $this.datepicker({
+        duration : 0,
+        dateFormat : 'yy-mm-dd'
+      });
+    }
+  });
+
+  $form.find('input.form-text[widget="datetimepicker"]').each(function() {
+    var $this = $(this);
+
+    if (!$this.attr('readonly')) {
+      $this.attr('autocomplete', 'off');
+      $this.datetimepicker({
+        duration : 0,
+        showSecond : true,
+        dateFormat : 'yy-mm-dd',
+        timeFormat : 'hh:mm:ss',
+        stepMinute : 15,
+        stepSecond : 15
+      });
+    }
+  });
+
+  this.getMany2oneEditor = function(field, isNew) {
+    return new PromptEditor(
+        {
+          v : this,
+          option : {
+            buttons : {
+              'Save' : function() {
+                var $editor = $(this);
+                var view = $editor.find('div.oerp-view:eq(0)');
+                var model = view.attr('oerp_model');
+                var rid = Number(view.attr('oerp_rid'));
+                var action;
+
+                if (rid == 0) {
+                  action = 'create';
+                  var send = [ model, 'create',
+                    $editor.data('getSend').call(this) ]
+                } else {
+                  action = 'write';
+                  var send = [ model, 'write', [ rid ],
+                    $editor.data('getSend').call(this) ]
+                }
+
+                $editor.dialog('disable');
+
+                // update
+                $.post('?q=oerp/execute/js', {
+                      send : JSON.stringify(send)
+                    }, function(data) {
+                      if (action == 'create') {
+                        rid = eval(data);
+                        field.attr('rid', rid);
+                      }
+
+                      // get name
+                      var send = [ model, 'name_get', [ Number(rid) ] ];
+
+                      $.post('?q=oerp/execute/js', {
+                            send : JSON.stringify(send)
+                          }, function(data) {
+                            var resp = eval(data);
+                            var sel = 'input[type="text"][rid="' + rid + '"][model="'
+                                + model + '"]';
+
+                            $(sel).attr('rid', resp[0][0]).change();
+
+                            sel = 'div.oerp-treeview tr[oerp_rid="' + rid
+                                + '"] td[oerp_relation="' + model
+                                + '"][oerp_field="name"]';
+
+                            $(sel).text(resp[0][1]);
+
+                            $editor.remove();
+                          });
+                    });
+              }
+            }
+          },
+          send : {
+            model : field.attr('model'),
+            name : field.attr('name'),
+            rid : isNew ? 0 : field.attr('rid'),
+            type : 'form'
+          }
+        });
+  }
+
+  // init tree search
+  if (this.isDialog()) {
+    var editor = $form.parents('div.oerp-formeditor:eq(0)');
+    var prompt = editor.data('prompt');
+    var param = editor.data('param');
+
+    $form.find('input[name="func:find"]').click(function(ev) {
+      ev.preventDefault();
+      post = $form.serializeArray();
+
+      var send = [];
+      for (var c = 0; c < post.length; c++) {
+        var pat = {
+          genernal : /.*\[_search\]\[([^\[]*)\]$/,
+          float : /.*\[_search\]\[([^\[]*)\]\[(GE|LE)\]$/
+        }
+
+        for (var i in pat) {
+          var m = pat[i].exec(post[c].name);
+
+          if (!m || !m[1]) {
+            continue;
+          }
+
+          if (post[c].value.length) {
+            if (m[2]) {
+              switch (m[2]) {
+                case 'GE':
+                  send.push([ m[1], '>=', post[c].value ]);
+                  break;
+
+                case 'LE':
+                  send.push([ m[1], '<=', post[c].value ]);
+                  break;
+              }
+            } else {
+              var ele = $form.find('[name="' + post[c].name + '"]');
+              var val = post[c].value;
+
+              switch (ele.parents('[oerp_type]:eq(0)').attr('oerp_type')) {
+                case 'boolean':
+                  switch (val) {
+                    case 'null':
+                      continue;
+
+                    case 'yes':
+                      val = 1;
+                      break;
+
+                    case 'no':
+                      val = 0;
+                      break;
+                  }
+                  break;
+              }
+              send.push([ m[1], ele.attr('op'), val ]);
+            }
+          }
+        }
+      }
+      param.send.domain = JSON.stringify(send);
+      prompt.setDialog(param.send);
+    });
+
+    $form.find('input[name="func:clear"]').click(function(ev) {
+      ev.preventDefault();
+      param.send.domain = null;
+      prompt.setDialog(param.send);
+    });
+  }
+
+  this.getMany2oneSearch = function(field) {
+    var editor = new PromptEditor(
+        {
+          v : this,
+          field : field,
+          option : {
+            maxHeight : 400,
+            buttons : {
+              'OK' : function() {
+                var $editor = $(this);
+                var rid = $editor.find('tr.selected').attr('oerp_rid');
+
+                if (rid === undefined) {
+                  // no record was selected
+                  return false;
+                }
+
+                var view = $editor.find('div.oerp-view:eq(0)');
+
+                var field = $editor.data('field');
+
+                if(!field.attr('selectonly')){
+                  field.next('span.field-suffix').find('div.oerp-btn-edit')
+                      .removeClass('ui-state-disabled');
+                }
+
+                var send = [ view.attr('oerp_model'), 'name_get',
+                  [ Number(rid) ] ];
+
+                $editor.dialog('disable');
+
+                // get name
+                $.post('?q=oerp/execute/js', {
+                      send : JSON.stringify(send)
+                    }, function(data) {
+                      var resp = eval(data);
+                      var dialogs = $('body div.ui-dialog');
+                      var field_sel = 'input[name="' + view.attr('oerp_name') + '"]';
+
+                      if (dialogs.length < 2) {
+                        $('body form.oerp-formview:eq(0)')
+                            .find(field_sel).attr('rid', resp[0][0]).change();
+                      }
+                      else {
+                        dialogs.eq(-2).find(field_sel)
+                            .attr('rid', resp[0][0]).change();
+                      }
+
+                      $editor.remove();
+                    });
+              },
+              'New' : function() {
+                var newEditor = formview.getMany2oneEditor(field, true);
+                var $editor = $(this);
+                $editor.remove();
+              }
+            }
+          },
+          send : {
+            model : field.attr('model'),
+            name : field.attr('name'),
+            type : 'tree',
+            domain : field.attr('domain')
+          }
+        });
+    return editor;
+  }
+
+  // init many2one widget - value
+  $form.find('div.field[oerp_type="many2one"] input.form-text').change(
+      function() {
+        var $this = $(this);
+        var send = [ $this.attr('model'), 'name_get',
+          [ Number($this.attr('rid')) ] ];
+
+        if ($this.parents('div.searchpanel:eq(0)').length) {
+          return;
+        }
+
+        $.post('?q=oerp/execute/js', {
+              send : JSON.stringify(send)
+            }, function(data) {
+              var resp = eval(data);
+
+              $this.attr('value', resp[0][1]);
+            });
+      });
+
+  // init many2one widget - edit
+  $form.find('div.field[oerp_type="many2one"] div.oerp-btn-edit').click(
+      function() {
+        var $this = $(this);
+
+        if($this.hasClass('ui-state-disabled')){
+          return false;
+        }
+
+        var field = $this.parents('div.form-item:eq(0)').find('input:eq(0)');
+        formview.getMany2oneEditor(field);
+      });
+
+  // init many2one widget - search
+  $form.find('div.field[oerp_type="many2one"] div.oerp-btn-search').click(
+      function() {
+        var $this = $(this);
+
+        if($this.hasClass('ui-state-disabled')){
+          return false;
+        }
+
+        var field = $this.parents('div.form-item:eq(0)').find('input:eq(0)');
+        formview.getMany2oneSearch(field);
+      });
+
+  // init on_change field
+  var funcOnchange = function() {
+    var $this = $(this);
+    var view = $this.parents('div.oerp-view:eq(0)');
+    var pat = /([^(]*)\((.*)\)/;
+    var m = pat.exec($this.attr('on_change'));
+    delete pat;
+
+    var send = [ view.attr('oerp_model'), m[1], [] ];
+
+    var args = m[2].split(',');
+    for (var c = 0; c < args.length; c++) {
+      var name = jQuery.trim(args[c]);
+      var matchParent = name.match(/^parent\.(.*)/);
+
+      if (matchParent) {
+        name = matchParent[1];
+      }
+
+      var fld_sel = 'div[oerp_name="' + name + '"]:eq(0)';
+
+      if (matchParent) {
+        var dia = view.parents('div.ui-dialog:eq(0)');
+        var dia_parent = dia.prevAll('div.ui-dialog');
+
+        if (dia_parent.length) {
+          var fld = dia_parent.find(fld_sel);
+
+        }
+        else {
+          var fld = $('body form.oerp-formview:eq(0)').find(fld_sel);
+        }
+      }
+      else {
+        var fld = view.find(fld_sel);
+      }
+
+      switch (fld.attr('oerp_type')) {
+        case 'many2one':
+          var val = fld.find('input[rid]:eq(0)');
+
+          if (val.length && val.attr('rid')) {
+            val = Number(val.attr('rid'));
+          }
+          else {
+            val = false;
+          }
+          break;
+
+        case 'int':
+        case 'float':
+          var val = Number(fld.find('input').val());
+          break;
+
+        default:
+          var val = fld.val();
+
+          if (!val) {
+            val = false;
+          }
+          break;
+      }
+      send.push(val);
+    }
+
+    $.post('?q=oerp/execute/js', {
+      send : JSON.stringify(send),
+      onchange : true
+    }, function(data) {
+      // var resp = JSON.parse(data);
+      var resp = eval('(' + data + ')');
+
+      for (x in resp.value) {
+        if (resp.value[x] === false) {
+          continue;
+        }
+
+        var fld = view.find('div[oerp_name="' + x + '"]:eq(0)');
+
+        if (fld.attr('invisible')) {
+          fld.find('input[type="hidden"]').val(resp.value[x]);
+          continue;
+        }
+
+        switch (fld.attr('oerp_type')) {
+          case 'int':
+          case 'float':
+          case 'char':
+          case 'date':
+          case 'datetime':
+            fld.find('input.form-text').val(resp.value[x]);
+            break;
+
+          case 'many2one':
+            fld.find('input.form-text').attr('rid', resp.value[x]).change();
+            break;
+        }
+      }
+    });
+  };
+
+  $form.find('div[oerp_type] *[on_change]').change(funcOnchange);
+
+  // init object buttons for formeditor
+  $form.find('input[type="submit"][button_type="object"]').click(
+      function(ev) {
+        if (formview.isDialog()) {
+          ev.preventDefault();
+          
+          var btn = $(this);
+          btn.parents('.oerp-formeditor:eq(0)').dialog('disable');
+
+          $.post(
+              '?q=oerp/execute/js',
+              {
+                send : JSON.stringify([
+                  btn.attr('model'),
+                  btn.attr('name'),
+                  Number(btn.attr('rid'))
+                ])
+              },
+              function(data) {
+                window.location.reload();
+              }
+          )
+        }
+        else {
+          $form.oerpformview('update');
+        }
+      }
+  );
+
+// init action button
+  $form.find('input[type="submit"][button_type="action"]').click(
+      function(ev) {
+        ev.preventDefault();
+
+        var btn = $(this);
+        var prompt = new PromptEditor({
+          v: this,
+          option: {
+            width: 450
+          },
+          send : {
+            model : btn.attr('model'),
+            rid : btn.attr('rid'),
+            act_id : btn.attr('name')
+          }
+        });
+      }
+  );
+
+//  init state button
+  $form.find('input[type="submit"][button_type="state"]').click(
+      function(ev) {
+        ev.preventDefault();
+        var btn = $(this);
+
+        if (btn.attr('name') == 'end') {
+          btn.parents('div.ui-dialog:eq(0)').
+              find('a.ui-dialog-titlebar-close').click();
+        }
+        else {
+          var dialog = btn.parents('div.oerp-formeditor:eq(0)');
+          var value = dialog.data('getSend').call(dialog[0]);
+
+          $.post(
+              '?q=oerp/execute/js',
+              {
+                send : JSON.stringify({
+                  action : btn.attr('name'),
+                  model: btn.attr('model'),
+                  value : value,
+                  datas : btn.attr('datas'),
+                  wid : btn.attr('wid'),
+                  rid : btn.attr('rid')
+                }),
+                service : 'wizard'
+              },
+              function(data) {
+                window.location.reload();
+              }
+          )
+        }
+      }
+  )
+
+  // init workflow button
+  $form.find('input[type="submit"][button_type="workflow"]').click(
+      function(ev) {
+        if (formview.isDialog()) {
+          ev.preventDefault();
+          var btn = $(this);
+          btn.parents('.oerp-formeditor:eq(0)').dialog('disable');
+
+          $.post(
+              '?q=oerp/execute/js',
+              {
+                send : JSON.stringify([
+                  btn.attr('model'),
+                  btn.attr('name'),
+                  Number(btn.attr('rid'))
+                ]),
+                exec : 'exec_workflow'
+              },
+              function(data) {
+                window.location.reload();
+              }
+          )
+        }
+        else {
+          $form.oerpformview('update');
+        }
+      }
+  );
+
+  this.prepareSubmit = function() {
+    $form.find('table.oerp-treeview').each(function() {
+      $tv = $(this);
+      var pat = new RegExp('edit-view-(.*)-wrapper');
+      var m = pat.exec($tv.parents('[id^="edit-"]:eq(0)').attr('id'));
+      $tv.parents('div:eq(0)').children('hidden').remove();
+
+      var recs = {};
+      $tv.find('tr[oerp_rid]').each(function() {
+        var val = $(this).data('val');
+
+        if (val !== undefined) {
+          recs[$(this).attr('oerp_rid')] = val;
+        }
+      });
+
+      var key = $tv.parents('div.oerp-view:eq(0)').attr('oerp_key');
+
+      var send = escape(JSON.stringify(recs));
+      $('#edit-' + key + '-json').attr('value', send);
+    });
+
+    $form.find('input[type="text"][rid]').each(
+        function() {
+          var $input = $(this);
+
+          var pat = /(.*)\[name\]/;
+          var name = pat.exec($input.attr('name'));
+
+          $input.before('<input type="hidden" name="' + name[1]
+              + '[rid]" value="' + $input.attr('rid') + '"/>');
+        });
+  }
+}
+
+TreeView.prototype = new FormEvent();
+function TreeView(selector) {
+  this.view = (selector === undefined) ? undefined : $(selector);
+  this.btn = undefined;
+
+  this.prepareChecked = function() {
+    var chks = [];
+    this.view.find('tr.selected').each(function() {
+      chks.push($(this).attr('oerp_rid'));
+    });
+
+    var send = escape(JSON.stringify(chks));
+    $('#edit-checked').attr('value', send);
+  }
+
+  this.getTr = function(rid) {
+    if (rid === undefined) {
+      var tr = this.btn.parents('tr[oerp_rid]:eq(0)')
+    } else {
+      var tr = this.view.find('tr[oerp_rid="' + rid + '"]');
+      this.btn = tr.children('td:eq(0)');
+    }
+
+    return (tr.length > 0) ? tr : undefined;
+  }
+
+  this.updateTr = function(rid, vals) {
+    var tr = this.getTr(rid);
+    tr.data('val', vals);
+
+    tr.children('td[oerp_field]').each(
+        function() {
+          var $this = $(this);
+          var val = vals['#value']['view[' + $(this).attr('oerp_field') + ']'];
+
+          if (val == undefined) {
+            if ($this.children('span.oerp-changed').length == 0) {
+              $this.html(
+                  '<span class="oerp-changed">' + $this.html() + '</span>');
+            }
+          } else {
+            if (val['#text']) {
+              $this.html(val['#text']);
+            } else {
+              $this.html(val['#value']);
+            }
+          }
+        });
+
+    tr.addClass('toChange');
+    tr.nextAll('tr').each(function(){
+      if(!$(this).attr('merged')){
+        return false;
+      }
+      else{
+        $(this).addClass('toChange');
+      }
+    })
+  }
+
+  this.addTr = function(val, rid) {
+    var rid = (rid === undefined) ? '0-'
+        + this.getTree().find('tr.oerp-new').length : rid;
+
+    var newTr = this.getTpl().clone(true);
+    newTr.attr('oerp_rid', rid).removeClass('oerp-tpl').addClass('oerp-new');
+
+    this.getTree().removeClass('empty').find('tbody:eq(0)').append(newTr);
+
+    this.updateTr(rid, val);
+  }
+
+  this.modifyTr = function(send) {
+    if (this.getRId() == 0) {
+      this.addTr(send);
+    } else {
+      this.updateTr(this.getRId(), send);
+    }
+  }
+
+  this.getTpl = function() {
+    var tr = this.getTree().find('tr.oerp-tpl');
+    return (tr.length > 0) ? tr : false;
+  }
+
+  this.getRId = function() {
+    return this.getTr().attr('oerp_rid');
+  }
+
+  this.getVId = function(level) {
+    level = (level === undefined) ? 0 : level;
+    // var vid = this.btn.parents('div.oerp-view:eq(' + level +
+    // ')').attr('oerp_vid');
+    var vid = this.btn.parents('[oerp_vid]:eq(' + level + ')').attr('oerp_vid');
+    return (vid == undefined) ? '' : vid;
+  }
+
+  this.getCacheId = function() {
+    return this.getView().attr('cache_id');
+  }
+
+  this.getView = function() {
+    return this.view;
+  }
+
+  this.getTree = function() {
+    var tree = this.getView().find('table.oerp-treeview:eq(0)');
+    return (tree.length > 0) ? tree : false;
+  }
+
+  this.getKey = function() {
+    return this.getView().attr('oerp_key');
+  }
+
+  this.getModel = function(level) {
+    level = (level === undefined) ? 0 : level;
+    var mod = this.btn.parents('[oerp_model]:eq(' + level + ')').attr(
+        'oerp_model');
+    return (mod === undefined) ? '' : mod;
+  }
+
+  this.getName = function() {
+    return this.getView().attr('oerp_name');
+  }
+
+  this.getValue = function() {
+    var val = $('#edit-' + this.getKey() + '---json-' + this.getRId());
+    return JSON.parse(val.attr('value'));
+  }
+
+  this.delTr = function(rid) {
+    var tr = this.getTr(rid);
+    if (tr) {
+      var val = tr.data('val');
+
+      if (tr.hasClass('toDelete')) {
+        delete val['#delete'];
+
+        (val['#value'] === undefined) ? tr.removeData('val') : tr.data('val',
+            val);
+      } else {
+        if (val == undefined) {
+          tr.data('val', {
+            '#delete' : true
+          });
+        } else {
+          val['#delete'] = true;
+          tr.data('val', val);
+        }
+      }
+      
+      tr.toggleClass('toDelete');
+      tr.nextAll('tr').each(function(){
+        if($(this).attr('merged')){
+          $(this).toggleClass('toDelete');
+        }
+        else{
+          return false;
+        }
+      })
+    }
+  }
+
+  this.clearSel = function() {
+    this.view.find('tr.selected').removeClass('selected');
+
+    this.view.find('td.oerp-op div.oerp-button').addClass('ui-state-default')
+        .removeClass('ui-state-highlight');
+  }
+
+  this.selTr = function(rid) {
+    var tr = this.getTr(rid);
+    var op = tr.find('td.oerp-op div.oerp-button');
+
+    if (tr) {
+      if (op.hasClass('ui-state-highlight')) {
+        op.removeClass('ui-state-highlight').addClass('ui-state-default');
+      } else {
+        op.removeClass('ui-state-default').addClass('ui-state-highlight');
+      }
+
+      tr.toggleClass('selected');
+    }
+  }
+
+  this.editTr = function() {
+    var editor = new PromptEditor({
+      v : this,
+      vals : this.getTr().data('val'),
+      option : {
+        buttons : {
+          'Update' : function() {
+            var $editor = $(this);
+            var v = $editor.data('v');
+            var resp = $editor.data('getSend').call(this);
+
+            if(resp){
+              v.modifyTr(resp);
+              $editor.remove();
+            }
+            else{
+              alert('Some required fields are missing. Please check again.');
+            }
+          }
+        }
+      },
+      send : {
+        par_model : this.getModel(1),
+        par_vid : this.getVId(1),
+        model : this.getModel(),
+        vid : this.getVId(0),
+        name : this.getName(),
+        rid : this.getRId(),
+        cache_id : this.getCacheId(),
+        type : 'form'
+      }
+    });
+  }
+}

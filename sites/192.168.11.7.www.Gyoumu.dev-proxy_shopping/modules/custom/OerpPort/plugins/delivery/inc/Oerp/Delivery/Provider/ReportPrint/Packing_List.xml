@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tree name="packing_list" model="stock.picking">
+  <param name="class">print</param>
+  <param name="merge">1</param>
+  <param name="copy_method">ditto</param>
+  <param name="count">1</param>
+
+  <field name="name" string="Ref."/>
+  <field name="x_tnum" string="Track #"/>
+  <field name="origin" string="O.ID"/>
+  <field name="func:pkg_type" string="Pkg."/>
+  <field name="move_lines">
+    <field name="product_id">
+      <field name="default_code" string="SKU"/>
+    </field>
+    <field name="product_qty" string="Qty"/>
+    <field name="note" string="Remark"/>
+  </field>
+  <field name="carrier_id" string="Carrier"/>
+
+  <translate>
+    <func>
+      <src name="cmd:Oerp\Command\getFedexTrack"/>
+      <fld>x_tnum</fld>
+    </func>
+
+    <func>
+      <src name="cmd:Oerp\Command\GetPkgType"/>
+      <fld>func:pkg_type</fld>
+    </func>
+
+    <function>
+      <src name="cmd:Oerp\Command\appendChkCode"/>
+      <field>name</field>
+    </function>
+  </translate>
+</tree>

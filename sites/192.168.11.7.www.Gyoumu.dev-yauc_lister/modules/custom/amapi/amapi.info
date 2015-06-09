@@ -1,0 +1,5 @@
+name = Amazon API Helper
+version = dev
+core = 6.x
+package = Maolung
+dependencies[] = GuLib

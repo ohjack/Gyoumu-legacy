@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<arch>
+  <form>
+    <field name="yid" type="textfield" string="お客様のYAHOO ID" colspan="4">
+      <param name="req">1</param>
+    </field>
+    
+    <field name="aid" type="textarea" string="オークションID" colspan="4">
+      <param name="req">1</param>
+      <param name="desc">※異なるオークションID/複数落札の場合、オークションIDごとにご記入ください。</param>
+    </field>
+    <field name="email" type="textfield" string="連絡E-mail" colspan="4">
+      <param name="desc">※荷物の追跡番号がある場合、ご記入のE-mailにお通知します。携帯メールにも対応します。</param>
+    </field>
+    
+    <div><strong>決済金額</strong></div>
+    <field name="price_bid" type="textfield" string="落札金額">
+      <param name="req">1</param>
+    </field>
+    <field name="price_ship" type="textfield" string="送料">
+      <param name="default">390</param>
+      <param name="req">1</param>
+      <param name="desc">送料無料の場合「0」とご記入下さい。</param>
+    </field>
+    
+    <field name="payment" type="select" string="決済方法" colspan="4">
+      <option value="kantan">＜かんたん決済＞</option>
+      <option value="bank">＜銀行振込＞ジャパンネットバンク銀行</option>
+    </field>
+    
+    <field name="kessai_id" type="textfield" string="決済ID" colspan="4">
+      <param name="desc">※銀行振込の場合は記入不要。</param>
+    </field>
+    
+    <separator string="お名前／フリガナ"/>
+    <field name="name_kanji_last" type="textfield" string="漢字">
+      <param name="req">1</param>
+      <param name="desc">苗字</param>
+    </field>
+    <field name="name_kanji_first" type="textfield" string="&#160;">
+      <param name="req">1</param>
+      <param name="desc">名前</param>
+    </field>
+    
+    <field name="name_kana_last" type="textfield" string="フリガナ">
+      <param name="req">1</param>
+      <param name="desc">苗字</param>
+    </field>
+    <field name="name_kana_first" type="textfield" string="&#160;">
+      <param name="req">1</param>
+      <param name="desc">名前</param>
+    </field>
+
+    <separator string="住所"/>
+    <field name="phone" type="textfield" string="電話番号" colspan="4"/>
+    <field name="zip" type="textfield" colspan="3" string="郵便番号">
+      <param name="req">1</param>
+      <param name="desc">※郵便番号から住所を自動入力できます</param>
+    </field>
+
+    <field name="func-searchAddr" type="submit" colspan="1" string="検索住所">
+      <param name="ahah">
+        {"path": "yaucjp/contact_form/js", "wrapper": "sug_addr-wrapper"} 
+      </param>
+    </field>
+    
+    <field name="sug_addr" type="markup" colspan="4">
+      <param name="prefix"><![CDATA[
+        <div id="sug_addr-wrapper">
+      ]]></param>
+      <param name="suffix"><![CDATA[
+        </div>
+      ]]></param>
+    </field>
+    
+    <group colspan="4" col="6">
+      <field name="addr_todoufuken" type="textfield" string="都道府県">
+        <param name="desc">※カタガナのみ</param>    
+      </field>
+  
+      <field name="addr_sichouson" type="textfield" string="市町村">
+        <param name="desc">※カタガナのみ</param>    
+      </field>
+  
+      <field name="addr_chouiki" type="textfield" string="町域">
+        <param name="desc">※カタガナのみ</param>    
+      </field>
+    </group>
+
+    <group colspan="4" col="6">
+      <field name="addr_choume" type="textfield" string="丁目">
+        <param name="desc">※数字のみ</param>
+      </field>
+      
+      <field name="addr_banchi" type="textfield" string="番地">
+        <param name="desc">※数字のみ</param>      
+      </field>
+      
+      <field name="addr_gou" type="textfield" string="号">
+        <param name="desc">※数字のみ</param>            
+      </field>
+
+      <field name="addr_house" type="textfield" string="建物・ビルの名前">
+        <param name="desc">※カタガナのみ</param>
+      </field>
+      
+      <field name="addr_floor" type="textfield" string="階">
+        <param name="desc">※数字のみ</param>      
+      </field>
+      
+      <field name="addr_room" type="textfield" string="号室">
+        <param name="desc">※英字、数字のみ</param>
+      </field>
+    </group>
+    
+    <separator string="その他のメッセージ"/>
+    <field name="msg" type="textarea" colspan="4" nolabel="1">
+      <param name="desc">ご不明の場合は、zakklaboxx@yahoo.co.jpまでお問い合わせ下さい。</param>
+    </field>
+    
+    <separator/>
+    <field name="func:toConfirm" type="submit" string="確認画面へ"/>
+  </form>
+</arch>

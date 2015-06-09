@@ -1,0 +1,7 @@
+div#ebapi-listings-wrapper div.ebapi-searchpanel-buttons {
+  clear: both;
+}
+
+div#ebapi-listings-wrapper div.ebapi-searchpanel-buttons fieldset input {
+  float: left;
+}

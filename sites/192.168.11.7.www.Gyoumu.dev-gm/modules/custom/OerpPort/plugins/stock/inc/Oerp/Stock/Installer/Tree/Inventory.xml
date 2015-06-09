@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<tree string="Periodical Inventory">
+  <field name="name"/>
+  <field name="date"/>
+  <field name="state"/>
+</tree>

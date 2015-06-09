@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<form string="Input Packing List">
+  <group colspan="4" col="6">
+    <field name="type" select="1"/>
+    <field name="address_id" on_change="onchange_partner_in(address_id)" select="2"
+           context="{'contact_display':'partner'}"/>
+    <field name="origin" select="1"/>
+    <field name="name" readonly="1" select="1"/>
+    <field name="backorder_id" select="2" readonly="1"/>
+    <field name="min_date" select="2"/>
+    <field name="invoice_state" string="Invoice Control" invisible="1"/>
+  </group>
+  <notebook colspan="4">
+    <page string="General Information">
+      <field colspan="4" name="move_lines" nolabel="1" widget="one2many_list"
+             default_get="{'move_line':move_lines, 'address_in_id': address_id}">
+        <tree string="Stock Moves">
+          <field name="location_dest_id"/>
+          <field name="product_id"/>
+          <field name="product_qty"/>
+          <field name="product_uom"/>
+          <field name="state"/>
+        </tree>
+        <form string="Stock Moves">
+          <separator colspan="4" string="Move Information"/>
+          <field name="location_id" select="1" domain="[('usage','&lt;&gt;','view')]"/>
+          <field domain="[('usage','=','internal')]" name="location_dest_id" select="1"/>
+          <field colspan="4" context="location=location_id" name="product_id"
+                 on_change="onchange_product_id(product_id, location_id, location_dest_id)" select="1"/>
+          <field name="product_qty" select="1"/>
+          <field name="product_uom" select="1"/>
+          <field groups="base.group_extended" name="date_planned"/>
+          <newline/>
+          <separator string="Move State"/>
+          <field name="state" select="1" colspan="1"/>
+          <button name="action_confirm" states="draft" string="Confirm Orderline" type="object" colspan="1"/>
+          <button name="force_assign" states="confirmed" string="Confirm Availability" type="object" colspan="1"/>
+          <button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" colspan="1"/>
+          <button name="action_cancel" states="confirmed,assigned" string="Cancel Orderline" type="object" colspan="1"/>
+          <field colspan="4" invisible="1" name="name" select="1"/>
+        </form>
+      </field>
+      <group col="10" colspan="4">
+        <field name="state" readonly="1" select="1"/>
+        <button name="draft_force_assign" states="draft" string="Confirm Order" type="object"/>
+        <button name="draft_validate" states="draft" string="Process Now" type="object"/>
+        <button name="force_assign" states="confirmed" string="Confirm Availability" type="object"
+                groups="base.group_extended"/>
+        <button name="263" states="assigned" string="Products Received" type="action"/>
+        <button name="button_cancel" states="assigned,confirmed,draft" string="Cancel"/>
+        <button name="266" states="done" string="Return Packaging" type="action"/>
+      </group>
+    </page>
+    <page string="Notes">
+      <field colspan="4" name="note" nolabel="1"/>
+    </page>
+  </notebook>
+</form>

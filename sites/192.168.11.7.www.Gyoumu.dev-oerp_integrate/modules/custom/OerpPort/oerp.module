@@ -1,0 +1,472 @@
+<?php
+
+module_load_include('inc', 'GuLib', 'autoload');
+Gulei\Autoloader::register(__DIR__);
+
+include 'erp_connect.php';
+require_once __DIR__ . '/inc/hooks.inc';
+
+function oerp_menu(){
+  $items = array();
+  
+  $items['admin/settings/oerp'] = array(
+    'title' => 'OerpPort',
+    'description' => 'Manage XML-RPC settings for OpenERP.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_settings_form'),
+    'access arguments' => array('administer OerpPort'),
+    'file' => 'oerp.admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['oerp/overview/%'] = array(
+    'page callback' => 'oerp_Overview',
+    'page arguments' => array(2),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['oerp/action/%'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_action_form', 2),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['oerp/view/tree/%'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_ViewTree_form', 3),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['oerp/view/form/%/%/%'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_ViewForm_form', 3, 4, 5),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['oerp/view/editor/js'] = array(
+    'page callback' => 'oerp_ViewEditor_js',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+ 
+  $items['oerp/courier/pricelist/overview'] = array(
+    'title' => 'Courier Pricelist Overview',
+    'page callback' => 'oerp_CourierPricelistOverview',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['oerp/courier/fee/calc'] = array(
+    'title' => 'Calculate Shipping Fee',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_CourierFeeCalc_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['oerp/courier/fee/overview'] = array(
+    'title' => 'Shipping Overview',
+    'page callback' => 'oerp_CourierFeeOverview',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['oerp/execute/js'] = array(
+    'page callback' => 'oerp_execute_js',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['oerp/addsku'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_addSku_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+function oerp_theme(){
+  return array(
+    'oerp_CourierFeeCalc_form' => array(
+      'arguments' => array(),
+    ),
+    'oerp_ViewFormJson_form' => array(
+      'arguments' => array(),
+    ),
+    'oerp_formview' => array(
+      'arguments' => array(),
+    ),
+    'oerp_treeview' => array(
+      'arguments' => array(),
+    ),
+    'oerp_many2one' => array(
+      'arguments' => array(),
+    ),
+    'oerp_searchpanel' => array(
+      'arguments' => array(),
+    ),
+  );
+}
+
+function oerp_elements(){
+  return array(
+    'oerp_formview' => array(
+      '#input' => true,
+      '#value' => null,
+      '#process' => array('oerp_formview_process'),
+    ),
+    'oerp_treeview' => array(
+      '#input' => true,
+      '#value' => null,
+      '#process' => array('oerp_treeview_process'),
+    ),
+    'oerp_many2one' => array(
+      '#input' => true,
+      '#value' => null,
+      '#process' => array('oerp_many2one_process'),
+    ),
+    'oerp_searchpanel' => array(
+      '#input' => true,
+      '#value' => null,
+      '#process' => array('oerp_searchpanel_process'),
+    ),    
+  );
+}
+
+function oerp_Overview($type){
+  switch($type){
+    case 'view':
+      return oerp_OverviewViews();
+
+    case 'hook':
+      return oerp_OverviewHook();
+
+    default:
+      drupal_set_message('oerp: No overview for "' . $type . '"', 'error');
+      return '';
+  }
+}
+
+function oerp_CourierFeeCalc_form(&$form_state){
+  $form = array();
+
+  $Qry = new \Oerp\Query\Basic('x_country_code', null, array('x_name'));
+  $opts = $Qry->raw()->promote('id', true);
+    
+  $form['country'] = array(
+    '#title' => 'Country',
+    '#type' => 'select',
+    '#options' => $opts,
+    '#default_value' => $form_state['values']['country'],
+  );
+  
+  $form['weight'] = array(
+    '#title' => 'Weight',
+    '#description' => '(kg)',
+    '#type' => 'textfield',
+    '#size' => 10,
+    '#required' => true,
+    '#default_value' => $form_state['values']['weight'],
+  );
+  
+  $form['length'] = array(
+    '#title' => 'Length',
+    '#type' => 'textfield',
+    '#size' => 10,
+    '#required' => true,
+    '#default_value' => $form_state['values']['length'],
+  );
+  
+  $form['width'] = array(
+    '#title' => 'Width',
+    '#type' => 'textfield',
+    '#size' => 10,
+    '#required' => true,
+    '#default_value' => $form_state['values']['width'],
+  );
+  
+  $form['height'] = array(
+    '#title' => 'height',
+    '#type' => 'textfield',
+    '#size' => 10,
+    '#required' => true,
+    '#default_value' => $form_state['values']['height'],
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Calculate',
+  );
+  
+//result  
+  if(isset($form_state['values'])){
+    $vals = $form_state['values'];
+    $result = '<hr>';
+
+    $Plists = new OerpGather;
+    $Plists
+      ->append('x_courier.pricelist')
+      ->in()
+      ->append('res.partner', null, array('name'))
+      ->append('x_courier.price', null, array('x_wt', 'x_price'))
+      ->append('x_courier.dest_grid')
+      ->in()
+      ->append('x_courier.dest')
+      ->in()
+      ->append('x_courier.size_limit')
+    ;
+    
+    $plists = $Plists->go(1)->sum()->filter('
+      foreach($item["x_dest_grid"]["x_dest"] as $dest){
+        if($dest["x_country"][0] == ' . $vals['country'] . '){
+          return true;
+        }
+      }
+      return false;
+    ');
+    unset($Plists);
+      
+    if($plists->count() == 0){
+      $result = '<br><strong>Destination is not available</strong>';
+    }else{
+      $hds = array('Courier', 'Pricelist', 'Weight', 'Price', 'Discounted');
+      $rows = array();
+            
+      foreach($plists as $plist){
+        foreach($plist['x_dest_grid']['x_dest'] as $dest){
+          if($vals['weight'] > $dest['x_wt_limit']){
+            $result .= sprintf('*Oversized in <strong>%s</strong>: %s<br>',
+              $plist['x_name'], $dest['x_wt_limit']);
+              
+            break;
+          }
+
+          if($dest['x_country'][0] == $vals['country']){
+            $func = $dest['x_size_limit']['x_func'];
+            $func = create_function('$l,$w,$h, $wt', 'return ' . $func . ';');
+            
+            if(call_user_func($func,
+              $vals['length'], $vals['width'], $vals['height'], $vals['weight']) === true){
+
+              $VW = false;
+              $vw_factor = 6000;
+
+              while(true){
+                $row = array();
+                $row[] = array('data'=>$plist['x_partner']['name']);
+                $row[] = ($VW) ? array('data'=>$plist['x_name'] . ' (DW ' . $vw_factor . ' cm<sup>3</sup>)')
+                               : array('data'=>$plist['x_name']);
+    
+                $AryPrices = new \Gulei\_Array\Basic($plist['x_prices']);
+                $AryPrices->usort(create_function('$a,$b', '
+                  return ($a["x_wt"] < $b["x_wt"]) ? -1 : 1;'));
+
+//              TODO variable dimentional weight factor  
+                $wt = ($VW) ? $vals['length'] * $vals['width'] * $vals['height'] / $vw_factor
+                            : $vals['weight'];
+                            
+                $price = $AryPrices->testUntil(create_function(
+                  '$i', 'return $i["x_wt"] > ' . $wt . ';'));
+    
+                $row[] = array('data'=>$price['x_wt']);
+                $row[] = array('data'=>$price['x_price']);
+                $row[] = array('data'=>'<strong>' . (float)$price['x_price'] * 0.75 . '</strong>');
+                $rows[] = $row;
+                
+                if($VW == true){
+                  break;
+                }else{
+                  $VW = true;
+                }
+              }
+            }else{
+              $result .= sprintf('*Invaid size for <strong>%s</strong>: %s<br>',
+                $plist['x_name'], $dest['x_size_limit']['x_desc']);
+
+              break;
+            }
+          }
+        }
+      }
+      if(!empty($rows)){
+        $result .= theme('table', $hds, $rows, array('class'=>'oerp'));
+      }
+    }
+
+    $form['result'] = array(
+      '#value' => $result,
+    );
+  }
+  
+  return $form;
+}
+
+function oerp_CourierFeeCalc_form_validate($form, &$form_state){
+  $form_state['rebuild'] = true;
+}
+
+
+function theme_oerp_CourierFeeCalc_form($form){
+  OerpUtil::addCss();
+  
+  $buf = '';
+  $buf .= drupal_render($form['courier']);
+  $buf .= drupal_render($form['country']);
+  $buf .= drupal_render($form['weight']);
+  
+  $buf .= '<div class="form-item"><label>Length x Width x Height:';
+  $buf .= '&nbsp;<span title="This field is required." class="form-required">*</span></label>';
+  unset($form['length']['#title']);
+  unset($form['width']['#title']);
+  unset($form['height']['#title']);
+  $buf .= '<div class="inline-ele">' .
+          drupal_render($form['length']) . 'x' .
+          drupal_render($form['width']) . 'x' .
+          drupal_render($form['height']) .
+          '</div>';
+  $buf .= '<div class="description">(cm)</div></div>';
+          
+  $buf .= drupal_render($form);
+  return $buf;
+}
+
+function oerp_OverviewViews(){
+  $flds = array(
+    'id', 'inherit_id', 'model', 'type', 'name', 'priority',
+    'field_parent', 
+  );
+
+  $q = new \Oerp\Query\Basic('ir.ui.view', null, $flds);
+  $recs = (array)$q->raw();
+  usort($recs, create_function('$a,$b', '
+    return $a["id"] - $b["id"];
+  '));
+
+  $rows = array(); 
+  foreach($recs as $rec){
+    $row = array();
+    foreach($flds as $fld){
+      if($fld == 'name'){
+        switch($rec['type']){
+          case 'tree':
+            $l = sprintf('oerp/view/tree/%s',
+              $rec['id']
+//              rawurlencode(serialize(array('model' => $rec['model'])))
+            );
+            $row[] = l($rec[$fld], $l);
+            break;
+            
+          case 'form':
+            $l = sprintf('oerp/view/form/%s/%s/0',
+              $rec['model'], $rec['id']);
+              
+            $row[] = l($rec[$fld], $l);
+            break;
+            
+          default:
+            $row[] = $rec[$fld];
+        }
+        continue;
+      }
+      $row[] = $rec[$fld];
+    }
+    
+    $rows[] = $row;
+  }
+  
+  return theme_table($flds, $rows);
+}
+
+function oerp_OverviewHook()
+{
+  $arch = <<<XML
+<tree>
+  <param name="escape">1</param>
+
+  <field name="name"/>
+  <field name="conf">
+    <param name="pre">1</param>
+  </field>
+</tree>
+XML;
+
+  $q = 'SELECT `name`, `conf` FROM {oerp_hook} ORDER BY `name`';
+  $rs = db_query($q);
+
+  $recs = array();
+  while($data = db_fetch_object($rs)){
+    $rec = array(
+      'name' => $data->name,
+      'conf' => $data->conf,
+    );
+    $recs[] = $rec;
+  }
+
+  $t = new \Gulei\Table\Arch($arch, $recs);
+  return $t->theme();
+}
+
+function oerp_addSku_form(&$form_state)
+{
+  $form = array();
+
+  $form['sku_list'] = array(
+    '#title' => 'List',
+    '#type' => 'textarea',
+    '#description' => 'Enter each line of an SKU.',
+    '#prefix' => '<h1>Add SKUs</h1>',
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Submit',
+  );
+
+  return $form;
+}
+
+function oerp_addSku_form_submit($form, &$form_state)
+{
+  $lines = $form_state['values']['sku_list'];
+  $lines = explode("\n", $lines);
+  $lines = array_map('trim', $lines);
+  $lines = array_map('strtoupper', $lines);
+  $lines = array_unique($lines);
+  $lines = array_filter($lines);
+
+  foreach($lines as $sku){
+    $q = new \Oerp\Query\Basic('product.product', array(array('default_code', '=', $sku)), array('id'));
+    $check = (array)$q->raw();
+
+    if(empty($check)){
+      if(preg_match('/[A-Z]{2}-\d{5}/', $sku)){
+        $resp = $q->create(
+          array(
+               'default_code' => $sku,
+               'name' => '_UNCONFIRMED_',
+          )
+        );
+
+        if($resp){
+          drupal_set_message($sku . ' added.');
+        }
+      }
+      else{
+        drupal_set_message('Invalid format: ' . $sku);
+      }
+    }
+    else{
+      drupal_set_message($sku . ' exists.');
+    }
+  }
+}
+
+function oerp_flush_caches(){
+  return array('cache_oerpport');
+}

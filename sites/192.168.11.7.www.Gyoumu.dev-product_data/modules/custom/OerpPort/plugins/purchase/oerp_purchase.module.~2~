@@ -1,0 +1,110 @@
+<?php
+
+module_load_include('module', 'oerp');
+\Gulei\Autoloader::register(__DIR__);
+
+function oerp_purchase_menu()
+{
+  $item = array();
+
+  $item['oerp/purchase/auto_procure'] = array(
+    'page callback' => 'oerp_purchase_auto_procure',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $item['oerp/purchase/merge_op'] = array(
+    'page callback' => 'oerp_purchase_mergeOP',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  return $item;
+}
+
+function oerp_purchase_block($op = 'list', $delta = 0, $edit = array())
+{
+  switch ($op) {
+    case 'list':
+      $blocks[0]['info'] = t('Purchase Mngn');
+      return $blocks;
+
+    case 'view':
+      $items = array(
+        array(
+          'data' => Gulei\Link\Page::create('Purchase Orders', "Oerp\\Purchase\\Page\\Orders"),
+          'children' => array(
+            array('data' => Gulei\Link\Page::create(
+              'Draft', "Oerp\\Purchase\\Page\\Orders", array('cri' => '[["state","=","draft"]]'))),
+            array('data' => Gulei\Link\Page::create(
+              'Confirmed', "Oerp\\Purchase\\Page\\Orders", array('cri' => '[["state","=","confirmed"]]'))),
+            array('data' => Gulei\Link\Page::create(
+              'Approved', "Oerp\\Purchase\\Page\\Orders", array('cri' => '[["state","=","approved"]]'))),
+            array(
+              'data' => Oerp\Link\Tree::create(
+                'Exceptions', 'mrp.procurement.tree', array('cri' => '[["state","=","exception"]]')
+              ),
+            ),
+          ),
+        ),
+        array(
+          'data' => Gulei\Link\Page::create('Create Order', "Oerp\\Purchase\\Page\\SupplierGoods"),
+        )
+      );
+
+      $block['subject'] = t('Purchase Mngn');
+      $block['content'] = theme('item_list', $items, null, 'ul', array('class' => 'menu'));
+      return $block;
+  }
+}
+
+function oerp_purchase_auto_procure() {
+  $Op = new \Oerp\Purchase\Operation\AutoProcure();
+  $resp = $Op->run();
+
+  if ($resp['state'] == 'end') {
+    drupal_set_message('Orderpoints computed. The result may not show immediately, please check here again later.');
+  }
+  else {
+    drupal_set_message('Orderpoint computation failed.', 'error');
+  }
+  drupal_goto('gulib/form', 'cri=[["state","=","draft"]]&n=Oerp\Purchase\Page\Orders');
+}
+
+function oerp_purchase_mergeOP()
+{
+  $op = new \Oerp\Purchase\Operation\MergeDraftOpOrder();
+  $op->run();
+  drupal_set_message('Draft orderpoint orders merged.');
+  drupal_goto('gulib/form', 'cri=[["state","=","draft"]]&n=Oerp\Purchase\Page\Orders');
+}
+
+function oerp_purchase_oerp_formview_fields() {
+  $hooks = array();
+
+  $hooks['x_purchase.order.form'] = array(
+    'order_line' => array(
+//      'type' => 'PoWithHints',
+    ),
+  );
+  return $hooks;
+}
+
+function oerp_purchase_oerp_formview_process()
+{
+  $hooks = array();
+  $hooks['x_purchase.order.form'] = array(
+    'saved' => array(
+      new \Oerp\Purchase\Hook\Form\SyncPoPackQty(),
+      new \Oerp\Purchase\Hook\Form\FixPoState(),
+    ),
+  );
+  return $hooks;
+}
+
+function oerp_purchase_oerp_js_hook() {
+  return array(
+    new \Oerp\Purchase\Hook\JS\OnChange_AllowZeroQty(),
+    new \Oerp\Purchase\Hook\JS\FixPackStateAfterPicking(),
+  );
+}

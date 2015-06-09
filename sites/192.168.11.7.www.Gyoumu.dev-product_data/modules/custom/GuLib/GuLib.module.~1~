@@ -1,0 +1,200 @@
+<?php
+
+require_once __DIR__ . '/autoload.inc';
+require_once __DIR__ . '/inc/hook.inc';
+drupal_add_js(drupal_get_path('module', 'GuLib') . '/js/GuLib.js');
+
+function GuLib_menu()
+{
+  $items = array();
+
+  $items['gulib/form'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('gulib_form_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['gulib/csv_import/%'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('gulib_csv_import_form', 2),
+    'access callback' => true,
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  return $items;
+}
+
+function GuLib_hookForm_form(&$form_state, $classname, $arg_json)
+{
+  $p = new $classname($form_state);
+  return $p->hook_form(func_get_args());
+}
+
+function GuLib_hookFormJs($classname)
+{
+  $p = new $classname(null);
+  return $p->hook_form_js();
+}
+
+function GuLib_elements(){
+  return array(
+    'GuForm' => array(
+      '#input' => true,
+      '#process' => array('GuLib_GuForm_process'),
+    ),
+    
+    'GuSelectTable' => array(
+      '#input' => true,
+      '#process' => array('GuLib_GuSelectTable_process'),
+    ),
+    
+    '\Gulei\Csv\Model' => array(
+      '#input' => true,
+      '#process' => array('GuLib_GuCsv_process'),
+      '#element_validate' => array('GuLib_GuCsv_validate'),
+    ),
+  );
+}
+
+function GuLib_theme(){
+  return array(
+    'GuLib_GuForm_form' => array(
+      'arguments' => array(),
+    ),
+    'GuForm' => array(
+      'arguments' => array(),
+    ),
+    'GuSelectTable' => array(
+      'arguments' => array(),
+    ),
+    '\Gulei\Csv\Model' => array(
+      'arguments' => array(),
+    ),
+    'GuleiPageForm' => array(
+      'arguments' => array(),
+    ),
+  );
+}
+
+function GuLib_GuForm_form(&$form_state, $eles){
+  return $eles;
+}
+
+function theme_GuLib_GuForm_form($form){
+  $obj = $form['#obj'];
+  return $obj->theme($form);
+}
+
+function gulib_inc($path, $sub = ''){
+  if($sub){
+    $path = '/' . $sub . '/' . $path;
+  }else{
+    $path = '/' . $path;
+  }
+  require_once(drupal_get_path('module', 'GuLib') . $path);
+}
+
+function _gecho($val, $string = false){
+  $buf = '<pre>' . htmlspecialchars(print_r($val, true)) . '</pre>';
+  if($string) return $buf;
+  else echo $buf;
+}
+
+function _gdump($val, $string = false){
+  $buf = '<pre>' . var_export($val, true) . '</pre>';
+  if($string) return $buf;
+  else echo $buf;
+}
+
+function _gind($arry, $ind){
+  return $arry[$ind];
+}
+
+function _ginc($path, $sub = ''){
+  return gulib_inc($path, $sub);
+}
+
+function _unaccent($str){
+  _ginc('Inflector.php', 'lib');
+  $i = new Doctrine_Inflector();
+  return $i->unaccent($str);
+}
+
+function GuLib_include($list){
+  if(is_string($list)){
+    $list = array($list);
+  }
+
+  foreach($list as $each){
+    module_load_include('inc', 'GuLib' . '/include/' . $each);
+  }
+}
+
+function gulib_csv_import_form(&$form_state, $importer_name)
+{
+  $p = new \Gulei\Csv\Importer($form_state);
+  $form_state['storage']['importer_name'] = $importer_name;
+  return $p->hook_form($form_state);
+}
+
+function gulib_csv_import_form_validate($form, &$form_state)
+{
+  $p = new \Gulei\Csv\Importer($form_state);
+  return $p->hook_form_validate($form, $form_state);
+}
+
+function gulib_csv_import_form_submit($form, &$form_state)
+{
+  $p = new \Gulei\Csv\Importer($form_state);
+  return $p->hook_form_submit($form, &$form_state);
+}
+
+function gulib_form_form(&$form_state, $n = null)
+{
+  if($mod_dep = $_GET['m']){
+    module_load_include('module', $mod_dep);
+  }
+
+  $n = $_GET['n'] ? str_replace(':', "\\", $_GET['n']) : $n;
+  $classname = $n;
+  $form_state['storage']['classname']= $n;
+
+  $ctrl = new $classname($form_state);
+  return $ctrl->hook_form();
+}
+
+function gulib_form_form_validate($form, &$form_state) {
+  $classname = $form_state['storage']['classname'];
+  $ctrl = new $classname($form_state);
+  return $ctrl->hook_validate($form, $form_state);
+}
+
+function gulib_form_form_submit($form, &$form_state)
+{
+  $classname = $form_state['storage']['classname'];
+  $ctrl = new $classname($form_state);
+  return $ctrl->hook_form_submit($form, $form_state);
+}
+
+function theme_GuleiPageForm($form)
+{
+  $classname = $form['_classname_']['#value'];
+  $ctrl = new $classname();
+  return $ctrl->hook_theme($form);
+}
+
+function gulib_render(&$form, $FormPage)
+{
+  $buf = '';
+  foreach($form as $name => &$ele){
+    if(is_array($ele) && $themer = $ele['#themer']){
+      $Themer = new $themer($FormPage);
+      $buf .= $Themer->theme($ele);
+    }
+    else if(strpos($name, '#') !== 0 && is_array($ele)){
+      $buf .= drupal_render($ele);
+    }
+  }
+  return $buf;
+}

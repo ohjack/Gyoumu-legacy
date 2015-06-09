@@ -1,0 +1,35 @@
+<?php
+namespace Oerp\Provider;
+
+class Nested implements \Gulei\Provider\_Interface
+{
+  private $arch;
+  private $q;
+
+  public function __construct($arch, $param = array())
+  {
+    $this->arch = $arch;
+    $this->q = new \Oerp\Query\Nested($this->arch, $param);
+  }
+
+  public function getData()
+  {
+    return (array)$this->q->sum();
+  }
+
+  public function getCsv()
+  {
+  }
+
+  public function getReference()
+  {
+    return array(
+      '_arch' => $this->arch
+    );
+  }
+
+  public function count()
+  {
+    return $this->q->execute('search_count');
+  }
+}

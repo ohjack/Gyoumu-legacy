@@ -1,0 +1,475 @@
+<?php
+namespace Gulei\Table;
+use Gulei as G;
+
+abstract class _Abstract
+{
+  protected $hds;
+  protected $recs;
+  protected $rows;
+
+  protected $count;
+  protected $param;
+  protected $marks = array();
+
+  protected $provRecord;
+  protected $provHeader;
+  public $mods;
+
+  abstract protected function getDefaultParam();
+  abstract protected function getFuncPrefix();
+
+  public function __construct(\Gulei\Provider\_Interface $provHeader, \Gulei\Provider\_Interface $provRecord, $param)
+  {
+    $this->provHeader = $provHeader;
+    $this->provRecord = $provRecord;
+    $this->param = $param;
+
+    $this->mods = array(
+      'hd' => array(
+        'raw' => array(new G\Modifier\Pack\HeaderRaw()),
+        'alt' => array(new G\Modifier\Pack\HeaderAlt()),
+      ),
+      'rec' => array(
+        'alt' => array(new G\Modifier\Pack\RecordAlt()),
+      ),
+      'row' => array(
+        'raw' => array(new G\Modifier\Pack\RowRaw()),
+        'alt' => array(new G\Modifier\Pack\RowAlt()),
+      )
+    );
+  }
+
+  protected function getMods($domain, $type)
+  {
+    $mods = array();
+    foreach($this->mods[$domain][$type] as $mod){
+      if($mod instanceof G\Modifier\Pack\_Abstract){
+        $mods = array_merge($mods, $mod->getItems());
+      }
+      else{
+        $mods[] = $mod;
+      }
+    }
+    return $mods;
+  }
+
+  public function getRecordsCount(){
+    return $this->provRecord->count();
+  }
+
+  public function getRowCount(){
+    return $this->count;
+  }
+
+  protected function createPager(){
+    $param = $this->getParam();
+    $param['count'] = $this->getRecordsCount();
+    return new G\Pager($param);
+  }
+
+  protected function getPager(){
+    return $this->createPager()->theme();
+  }
+
+  public function getParam($name = null, $override = null){
+    $param = $this->getDefaultParam();
+
+    if($this->Ele){
+      $param = array_merge(
+        $param,
+        $this->Ele->getNodeValues('./param[@name]')
+      );
+    }
+
+    $param = array_merge($param, $this->param);
+
+    if(is_array($override)){
+      $param = array_merge($param, $override);
+    }
+
+    if(is_null($name)){
+      return $param;
+    }
+    else{
+      return $param[$name];
+    }
+  }
+
+  public function isValid(){
+    return !count($this->marks['error']);
+  }
+
+  protected function getHeaderProcessor($param)
+  {
+    $Proc = new \Gulei\Processor\Basic();
+    $Proc
+        ->setDataProvider($this->provHeader)
+        ->addReference(array('_param' => $param))
+        ->addModifiers($this->getMods('hd', 'raw'))
+    ;
+
+    if($this->Ele){
+      $arch = $this->Ele->dump();
+      $Proc
+          ->applyArchReference($arch)
+      ;
+    }
+    return $Proc;
+  }
+
+  public function getHeaders($hds = null, $param = array()){
+    if($hds)
+      return $this->hds = $hds;
+
+    $param = $this->getParam(null, $param);
+    $output = $this->getHeaderProcessor($param)->getOutput();
+    return $this->hds = $output[0]['data'];
+  }
+
+  public function getRecords($recs = null, $param = array()){
+    if($recs)
+      return $this->recs = $recs;
+
+    return $this->provRecord->getData();
+  }
+
+  protected function getRowsProcessor($recs, $param)
+  {
+    $hds = $this->getHeadersAltered($param);
+    $Proc = new \Gulei\Processor\Basic();
+    $Proc
+        ->setDataProvider(new \Gulei\Provider\Compose($recs, $hds))
+        ->addReference(array('_param' => $param))
+        ->applyArchReference($this->Ele->dump())
+        ->addModifiers($this->getMods('row', 'raw'))
+    ;
+    return $Proc;
+  }
+
+  protected function countRows()
+  {
+    return count($this->rows);
+  }
+
+  public function getRows($recs = null, $rows = null, $param = array()){
+    if($rows)
+      return $this->rows = $rows;
+
+    $param = $this->getParam(null, $param);
+    $recs = $this->getRecords($recs, $param);
+    $this->alterRecords($recs);
+    $Proc = $this->getRowsProcessor($recs, $param);
+
+    $this->rows = $Proc->getOutput();
+    $this->count = $this->countRows();
+    return $this->rows;
+  }
+
+  protected function alterHeaders(&$hds, $param = array()){
+    $param = $this->getParam(null, $param);
+
+    $toAlter = array(
+      array('data' => $hds)
+    );
+
+    $p = new \Gulei\Processor\Basic();
+    $p
+        ->setDataProvider(new \Gulei\Provider\Lambda($toAlter))
+        ->addReference(array('_param' => $param))
+        ->addModifiers($this->getMods('hd', 'alt'))
+    ;
+
+    $altered = $p->getOutput();
+    $hds = $altered[0]['data'];
+  }
+
+  public function getHeadersAltered($param = array()){
+    $param = $this->getParam(null, $param);
+    $hds = $this->getHeaders(null, $param);
+    $this->alterHeaders($hds, $param);
+    return $hds;
+  }
+
+
+  protected function searchFunction($type, $param = null){
+    $eles = array();
+    $eles[] = $this;
+
+    if(isset($param[$type]) && $param[$type]){
+      $eles[] = new \Gulei\Arch\Element('<root>' . $param[$type] . '</root>');
+    }
+
+    $funcs = array();
+    foreach($eles as $ele){
+      $funcNode = $ele->xp('./' . $type, $ele->getArch())->item(0);
+
+      if($funcNode){
+        foreach($ele->xp('./function | ./func', $funcNode) as $func_ele){
+          $func = array();
+
+          if($func_type = $func_ele->getAttribute('type')){
+            $func['type'] = $func_type;
+          }
+          else{
+            $func['type'] = 'error';
+          }
+
+          foreach($ele->xp('./source | ./src', $func_ele) as $node){
+            $newNode = $this->getDoc()->importNode($node, true);
+            $func['src'][] = $newNode;
+          }
+
+          $func['fld'] = array();
+          foreach($ele->xp('./field | ./fld', $func_ele) as $node){
+            $func['fld'][] = $node->nodeValue;
+          }
+
+          foreach($ele->xp('./message | ./msg', $func_ele) as $node){
+            $func['msg'][] = trim($node->nodeValue);
+          }
+
+          $ref = array(
+            'param' => $param,
+            'ObjTable' => $this,
+            'func' => $func,
+            'prefix' => $this->getFuncPrefix(),
+          );
+
+          $classname = 'Gulei\Command' . ucfirst($type);
+          $funcs[] = new $classname($ref);
+        }
+      }
+    }
+    return $funcs;
+  }
+
+  protected function alterRecords(&$recs, $param = array()){
+    $this->marks = array();
+    $param = $this->getParam(null, $param);
+    $param['func_prefix'] = $this->getFuncPrefix();
+    $param['ObjTable'] = $this;
+
+    if($this->Ele){
+      $param['arch'] = $this->Ele->dump();
+    }
+
+    $p = new \Gulei\Processor\Basic();
+    $p
+        ->setDataProvider(new \Gulei\Provider\Lambda($recs))
+        ->addReference(array('_param' =>$param))
+        ->addModifiers($this->getMods('rec', 'alt'))
+    ;
+
+    $recs = $p->getOutput();
+  }
+
+  public function getRecordsAltered($param = array()){
+    $param = $this->getParam(null, $param);
+    $recs = $this->getRecords(null, $param);
+    $this->alterRecords($recs, $param);
+    return $recs;
+  }
+
+  protected function alterRows(&$rows, $param = array()){
+    $param = $this->getParam(null, $param);
+
+    $p = new \Gulei\Processor\Basic();
+    $p
+        ->setDataProvider(new \Gulei\Provider\Lambda($rows))
+        ->applyArchReference($this->Ele->dump())
+        ->addReference(array('_param' => $param))
+        ->addModifiers($this->getMods('row', 'alt'));
+
+    $rows = $p->getOutput();
+  }
+
+  public function getRowsAltered($recs = null, $rows = null, $param = array()){
+    $param = $this->getParam(null, $param);
+    $rows = $this->getRows($recs, $rows, $param);
+    $this->alterRows($rows, $param);
+    return $rows;
+  }
+
+  public function isSeparatorSet()
+  {
+    return !!$this->marks['sep'];
+  }
+
+  public function markRecord($name, $ind, $msg, $type){
+    $this->marks[$type][$ind][$name] = $msg;
+  }
+
+  protected function markCells(&$rows, $marked, $type){
+    if(!is_array($marked)){
+      return;
+    }
+
+    foreach($marked as $ind => $each_cell){
+      if(isset($rows[$ind])){
+        foreach($each_cell as $name => $msg){
+          $data = &$rows[$ind]['data'][$name]['data'];
+          preg_match('@<span class="gu_value">([\s\S]*)</span>@', $data, $m);
+
+          if(strlen($m[1]) == 0){
+            $data = str_repeat('&nbsp;', 8);
+          }
+
+          $data = '<span class="' . $type . '">' . $data . '</span>';
+          if($msg){
+            $data = sprintf('<span>%s<span class="show-tooltip-text">%s</span></span>', $data, $msg);
+          }
+        }
+      }
+    }
+  }
+
+  public function theme($hds = null, $rows = null, $param = array()){
+    $param = $this->getParam(null, $param);
+
+    $hds = $this->getHeaders($hds, $param);
+    $rows = $this->getRows(null, $rows, $param);
+
+    $this->alterHeaders($hds, $param);
+    $this->alterRows($rows, $param);
+
+    if($param['mark_invalid']){
+      $this->markCells($rows, $this->marks['error'], 'invalid');
+    }
+
+    if($param['mark_notice']){
+      $this->markCells($rows, $this->marks['notice'], 'notice');
+    }
+
+    if($param['mark_translated'] && $trans = $this->marks['translated']){
+      $this->markCells($rows, $trans, 'translated');
+    }
+
+    if(is_array($this->marks['sep'])){
+      $seps = array_keys($this->marks['sep']);
+
+      for($ind = array_shift($seps); $ind < count($rows); $ind++){
+        $rows[$ind]['class'] .= ' sep-after';
+      }
+    }
+
+    $attrs = $param['attrs'];
+    $attrs['class'] .= ' ' . $param['class'] . ' gu-table';
+    $attrs['style'] .= $param['style'];
+
+    if($param['copy_method'] == 'merge'){
+      $attrs['class'] .= ' merge';
+    }
+    if($param['hidetip']){
+      $attrs['class'] .= ' hidetip';
+    }
+
+    $inc = new G\IncluderTable();
+    $inc->includeCss();
+    $inc->includeJs();
+
+    if(empty($rows)){
+      $rows = array(array());
+    }
+
+    $output = theme('table', $hds, $rows, $attrs);
+
+    if($param['sticky_header'] === false){
+      $Output = new \Gulei\Arch\Element($output);
+      $Output->xp('/table/thead')->item(0)->setAttribute('class', 'tableHeader-processed');
+      return $Output->dump();
+    }
+
+    if($param['pager']){
+      $output .= $this->getPager();
+    }
+
+    return $output;
+  }
+
+  public function mapRecords($mapping){
+    $recs = new GuArray($this->getRecordsAltered());
+    return $recs->mapping($mapping);
+  }
+
+  public function getCsvFile($param = null, $name = ''){
+    $param = is_null($param) ? array() : $param;
+
+    $param = array_merge(
+      array(
+        'id' => true,
+        'copy_method' => 'merge',
+        'nl2br' => false,
+      ),
+      $param
+    );
+
+    $param = $this->getParam(null, $param);
+    $recs = $this->getRecordsAltered($param);
+
+    $path = sprintf('%s/%s_%s.csv', file_directory_temp(), $name, date('m-d'));
+    return './' . file_save_data($this->dumpCsv($recs, $param), $path);
+  }
+
+  public function dumpCsv($recs = null, $param = array()){
+    $func_prepareRow = create_function('$i', '
+      $val = is_array($i) ? $i["data"] : $i;
+      return "\"" . str_replace("\"", "\"\"", $val) . "\"";
+    ');
+
+    $param = $this->getParam(null, $param);
+    $mani = new \Gulei\Manipulator\GuValue();
+
+//  set headers
+    $hds = $this->getHeaders(null, $param);
+    foreach($hds as &$hd){
+      $val = (isset($hd['data'])) ? $hd['data'] :$hd;
+      $hd = $mani->value($val);
+    }
+    $hds = array_map($func_prepareRow, $hds);
+
+    $buffer = implode(',', $hds) . "\n";
+
+//  set records
+    if(is_null($recs)){
+      $recs = $this->getRecordsAltered($param);
+    }
+
+    foreach($recs as &$rec){
+
+      foreach($rec as &$val){
+        $val = is_array($val) ? $val["data"] : $val;
+        $val = $mani->value($val);
+        $val = "\"" . str_replace("\"", "\"\"", $val) . "\"";
+      }
+
+      $seq_rec = array();
+      foreach(array_keys($hds) as $name){
+        $seq_rec[$name] = $mani->value($rec[$name]);
+      }
+      $rec = implode(',', $seq_rec);
+    }
+
+    $buffer .= implode("\n", $recs);
+    return $buffer;
+  }
+
+  public function save()
+  {
+    $this->Ele->save();
+    return $this;
+  }
+
+  public function renew()
+  {
+    $this->Ele->renew();
+    return $this;
+  }
+
+  public function __call($name, $args)
+  {
+    return ($this->Ele)
+        ? call_user_func_array(array($this->Ele, $name), $args)
+        : null;
+  }
+}

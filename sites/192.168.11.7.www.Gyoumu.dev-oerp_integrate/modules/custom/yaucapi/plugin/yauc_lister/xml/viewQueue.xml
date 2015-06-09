@@ -1,0 +1,39 @@
+<tree>
+  <param name="type">select-many</param>
+  <param name="mark_translated">0</param>
+  
+  <field name="status" string="Status"/>
+  <field name="func:theme" string="Theme"/>
+  <field name="msg" string="Msg."/>
+  <field name="clabel" string="SKU"/>
+  <field name="title" string="Title"/>
+  <field name="format" string="Format"/>
+  <field name="qty" string="Qty."/>
+  <field name="buynow_price" string="Fix.Price"/>
+  <field name="shipping_fee" string="Sh.Fee"/>
+  <field name="shipping_term" string="Sh.Term"/>
+  <field name="carrier" string="Carrier"/>
+  <field name="relist" string="Relist"/>
+
+  <translate>
+    <func>
+      <src name="cmd:Yauc\Lister\Command\getPreviewSnippet"/>
+      <fld>func:theme</fld>
+    </func>
+
+    <func>
+      <src name="cmd:Yauc\Lister\Command\mapStatus"/>
+      <fld>status</fld>
+    </func>
+
+    <func>
+      <src name="cmd:Yauc\Lister\Command\appendAnchor"/>
+      <fld>title</fld>
+    </func>
+
+    <func>
+      <src name="cmd:Yauc\Lister\Command\mapShTerm"/>
+      <fld>shipping_term</fld>
+    </func>
+  </translate>
+</tree>

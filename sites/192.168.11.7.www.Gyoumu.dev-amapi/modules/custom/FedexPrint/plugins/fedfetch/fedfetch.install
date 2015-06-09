@@ -1,0 +1,165 @@
+<?php
+
+function fedfetch_schema(){
+  $schema['fedfetch_export_recs'] = array(
+    'description' => 'Custom export records',
+    'fields' => array(
+      'account' => array(
+        'type' => 'varchar',
+        'length' => 64,
+      ),
+      'rid' => array(
+        'type' => 'serial',
+        'unsigned' => true,
+        'not null' => true,
+      ),
+      'pid' => array(
+        'type' => 'varchar',
+        'length' => 64,
+      ),
+      'html' => array(
+        'type' => 'text',
+      ),
+      'txt' => array(
+        'type' => 'text',
+      ),
+      'date' => array(
+        'type' => 'char',
+        'length' => 8,
+      ),
+      'pdf' => array(
+        'type' => 'blob',
+      ),
+    ),
+    'primary key' => array('rid'),
+    'unique keys' => array(
+      'pid' => array('pid'),
+    ),
+    'indexes' => array('date' => array('date'))
+  );
+  
+  $schema['fedfetch_export_dailycheck'] = array(
+    'fields' => array(
+      'account' => array(
+        'type' => 'varchar',
+        'length' => 64,
+      ),
+      'date' => array(
+        'type' => 'char',
+        'length' => 8,
+      ),
+    ),
+    'indexes' => array('date' => array('date'))
+  );
+
+  $schema['fedfetch_account'] = array(
+    'fields' => array(
+      'custId' => array(
+        'type' => 'varchar',
+        'length' => 64,
+      ),
+      'passWord' => array(
+        'type' => 'varchar',
+        'length' => 64,
+      ),
+      'selectBin' => array(
+        'type' => 'varchar',
+        'length' => 64,
+      ),
+    ),
+    'primary key' => array('custId'),
+  );
+  
+  return $schema;
+}
+
+function fedfetch_install(){
+  drupal_install_schema('fedfetch');
+}
+
+function fedfetch_uninstall(){
+  drupal_uninstall_schema('fedfetch');
+}
+
+function fedfetch_update_6000(){
+  $ret = array();
+  $spec = array(
+    'type' => 'blob',
+  );
+  db_add_field($ret, 'fedfetch_export_recs', 'pdf', $spec);
+  return $ret;  
+}
+
+function fedfetch_update_6001(){
+  $ret = array();
+  $spec = array(
+    'account' => array(
+      'type' => 'varchar',
+      'length' => 64,
+    ),
+  );
+
+  $tb = 'fedfetch_export_dailycheck';
+
+  db_add_field($ret, $tb, 'account', $spec['account']);
+  db_drop_primary_key($ret, $tb);
+  db_drop_unique_key($ret, $tb, 'date');
+  db_add_index($ret, $tb, 'date', array('date'));
+
+  $sql = 'UPDATE {%s} SET account="%s"';
+  db_query($sql, $tb, 'FDX28815934');
+  return $ret;
+}
+
+function fedfetch_update_6002(){
+  $ret = array();
+  $spec = array(
+    'account' => array(
+      'type' => 'varchar',
+      'length' => 64,
+    ),
+  );
+
+  $tb = 'fedfetch_export_recs';
+  db_add_field($ret, $tb, 'account', $spec['account']);
+  db_add_index($ret, $tb, 'date', array('date'));
+
+  $sql = 'UPDATE {%s} SET account="%s"';
+  db_query($sql, $tb, 'FDX28815934');
+  return $ret;
+}
+
+function fedfetch_update_6003(){
+  $ret = array();
+
+  $schema['fedfetch_account'] = array(
+    'fields' => array(
+      'custId' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => true,
+      ),
+      'passWord' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => true,
+      ),
+      'selectBin' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => true,
+      ),
+      'type' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => true,
+      ),
+    ),
+    'primary key' => array('custId'),
+  );
+
+  db_create_table($ret, 'fedfetch_account', $schema['fedfetch_account']);
+  return $ret;
+}
+
+?>

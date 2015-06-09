@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<form model="stock.picking" string="Delivery Order Details">
+  <param name="action">send</param>
+  <param name="oerp:ids">[1713]</param>
+
+  <field name="origin" string="Pack ID"/>
+
+  <tree name="move_lines" colspan="4" type="oerp_treeview">
+    <field name="product_id" string="Name"/>
+  </tree>
+
+  <field name="carrier_id" colspan="1" col="1">
+    <field name="name" colspan="1"/>
+  </field>
+</form>

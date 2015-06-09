@@ -1,0 +1,5 @@
+<tree name="move_lines" colspan="4" type="oerp_treeview" model="stock.picking" relation="stock.move" mapped="2">
+    <field name="product_id" string="Name" model="stock.move" ttype="many2one" relation="product.product" mapped="2"/>
+    <field name="product_qty" string="Qty" model="stock.move" ttype="float" mapped="2"/>
+    <field name="note" string="Remark" model="stock.move" ttype="text" mapped="2"/>
+  <param name="oerp:ids" mapped="2">[1754]</param></tree>

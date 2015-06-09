@@ -1,0 +1,5 @@
+name = Listing helper
+core = 6.x
+version = dev
+package = Maolung
+dependencies[] = GuLib

@@ -1,0 +1,5 @@
+table.oerp-treeview td.oerp-op {
+  width: auto; }
+  table.oerp-treeview td.oerp-op input.ex-op {
+    width: 35px;
+    margin: 3px 0 0; }

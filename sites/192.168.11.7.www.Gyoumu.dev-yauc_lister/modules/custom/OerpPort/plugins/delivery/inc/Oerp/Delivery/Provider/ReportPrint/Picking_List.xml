@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tree name="packing_list" model="stock.picking">
+  <field name="move_lines">
+    <field name="product_id">
+      <field name="default_code" string="SKU"/>
+    </field>
+    <field name="product_qty" string="Qty"/>
+  </field>
+</tree>

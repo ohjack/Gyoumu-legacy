@@ -1,0 +1,41 @@
+<tree string="Create Purchase Order">
+  <param name="oerp:model">product.supplierinfo</param>
+  <param name="oerp:op-type">XXX</param>
+
+  <field name="id">
+    <param name="hide">1</param>
+  </field>
+  <field name="name" select="1" string="Supplier"/>
+  <field name="qty" string="MoTQ"/>
+  <field name="product_id">
+    <field name="id">
+      <param name="hide">1</param>
+    </field>
+    <field name="product_manager" string="P.Mgr"/>
+    <field name="name" string="P.Name"/>
+    <field name="func:sku" string="SKU"/>
+  </field>
+  <field name="product_code" string="P/N"/>
+  <field name="pricelist_ids">
+    <field name="min_quantity" string="MoQ"/>
+    <field name="price" string="U.Prz"/>
+  </field>
+
+  <field name="func:real_stock" string="Real Stk."/>
+  <field name="func:virt_stock" string="Virtual Stk."/>
+  <field name="func:safe_stock" string="Safety Stk."/>
+
+  <translate>
+    <func>
+      <src name="cmd:Oerp\Product\Command\GetSkuFromProdTpl"/>
+      <fld>product_id.func:sku</fld>
+    </func>
+
+    <func>
+      <src name="cmd:Oerp\Product\Command\GetStockFromProdTpl"/>
+      <fld>func:real_stock</fld>
+      <fld>func:virt_stock</fld>
+      <fld>func:safe_stock</fld>
+    </func>
+  </translate>
+</tree>

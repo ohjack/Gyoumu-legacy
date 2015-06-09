@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE html
+   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd" >
+
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:tal="http://xml.zope.org/namespaces/tal">
+  <head>
+  </head>
+  <body>
+    <center>
+      <img src="http://www.picturemaster.info/TemplateUse/EMSTOP.jpg"
+      alt="pic" />
+
+      <p>
+      <b><font color="GRAY" size="6">
+      <span tal:replace="title">{Cat1} {Cat2} {Item Category_US}</span>
+      </font></b>
+      </p>
+      <hr />
+
+      <div id="gallery" tal:repeat='pic pics'>
+        <p>
+          <img src="" alt="" tal:condition='pic' tal:attributes='src pic; alt repeat/pic/key'/>
+        </p>
+      </div>      
+
+      <hr />
+      <p>
+      </p>
+      <table width="800" border="0" cellspacing="1" cellpadding="2" bgcolor="#666666">
+        <tr>
+          <td bgcolor="#F0F0F0">
+            <table width="800" border="0" cellspacing="1" cellpadding="4">
+              <tr>
+                <td colspan="3" bgcolor="#777777" align="center">
+                  <table border="0">
+                    <tr>
+                      <td bgcolor="#888888">
+                        <b><font color="#ffffff">
+                          <span tal:replace="title">キャンセラー内蔵LEDナンバー灯{Category}</span>
+                        </font></b>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td bgcolor="#BBBBBB" width="20%" align="center" colspan="2">
+                  <table border="0">
+                    <tr>
+                      <td bgcolor="#CCCCCC" nowrap="nowrap">
+                        <font color="#666666" size="3"><b>・適用モデル・</b></font>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+                <td bgcolor="#DDDDDD" width="75%">
+                  <font color="#414141">
+                    <ul>
+                      <li tal:repeat="model fitment">
+                        <span tal:replace="model" />
+                      </li>
+                    </ul>
+                  </font>
+                </td>
+              </tr>
+              <tr>
+                <td bgcolor="#BBBBBB" align="center" colspan="2">
+                  <table border="0">
+                    <tr>
+                      <td bgcolor="#CCCCCC">
+                        <font color="#666666" size="3"><b>・商品説明・</b></font>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+                <td bgcolor="#DDDDDD">
+                  <font color="#414141">
+                  <ul>
+                    <li>商品番号: <span tal:replace='sku'>{SKU}</span></li>
+                    <li tal:repeat='sentence pinfo'>
+                      <span tal:replace='sentence' />
+                    </li>
+                  </ul>
+                  </font>                      
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+      <p>
+        <img src="http://www.picturemaster.info/TemplateUse/Policy_JP.jpg"
+        alt="pic" class="photo" usemap="#Policy" border="none" />
+      </p>
+    </center>
+  </body>
+</html>
+

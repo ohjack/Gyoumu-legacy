@@ -1,0 +1,47 @@
+<translate>
+  <func>
+    <src name="trim"/>
+    <src name="strtolower"/>
+    <fld>SKU</fld>
+  </func>
+
+  <func>
+    <src>
+      <![CDATA[
+      $sku = $rec['商品番号'];
+      $sku_token = explode('-', $sku);
+      $ceil = ((int)$sku_token[1] - 1) / 500;
+      $ceil = ((int)$ceil + 1) * 500;
+
+      $links = array();
+      for($c = 1; $c <= 3; $c++){
+        $links[] = sprintf(
+          "http://image.rakuten.co.jp/titosoy/cabinet/items%s/%s-%s.jpg",
+          $ceil, strtolower($sku), $c
+        );
+      }
+      return implode(" ", $links);
+    ]]>
+    </src>
+    <fld>商品画像URL</fld>
+  </func>
+
+  <func>
+    <src name="cmd:Phptal">
+      <arg><![CDATA[%XML_PC%]]></arg>
+      <arg>Src1</arg>
+      <arg>Src2</arg>
+    </src>
+    <fld>PC用商品説明文</fld>
+  </func>
+
+  <func>
+    <src name="cmd:Phptal">
+      <arg><![CDATA[%XML_MB%]]></arg>
+      <arg>Src1</arg>
+      <arg>Src2</arg>
+    </src>
+    <src name="html_entity_decode"/>
+    <fld>モバイル用商品説明文</fld>
+  </func>
+</translate>

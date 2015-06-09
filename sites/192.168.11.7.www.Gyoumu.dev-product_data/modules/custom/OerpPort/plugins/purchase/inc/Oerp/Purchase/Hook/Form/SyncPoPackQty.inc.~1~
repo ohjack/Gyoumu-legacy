@@ -1,0 +1,139 @@
+<?php
+namespace Oerp\Purchase\Hook\Form;
+
+class SyncPoPackQty {
+  protected $param;
+  protected $rec;
+
+  protected function init($param) {
+    $this->param = $param;
+    $this->rec = $this->getRec();
+  }
+
+  protected function getRec() {
+    $arch = <<<XML
+<tree>
+  <param name="oerp:model">purchase.order</param>
+
+  <field name="state"/>
+  <field name="name"/>
+  <field name="order_line">
+    <field name="product_id">
+      <field name="default_code"/>
+    </field>
+    <field name="product_qty"/>
+  </field>
+</tree>
+XML;
+
+    $q_param = array(
+      'oerp:ids' => $this->param['rid'],
+      'no-cache' => TRUE,
+    );
+
+    $q = new \Oerp\Query\Nested($arch, $q_param);
+    $flag = array('no-selection-name' => TRUE);
+    $recs = (array)$q->sum($flag);
+    return $this->rec = $recs[0];
+  }
+
+  protected function getPicking() {
+    $oline_ids = array();
+    foreach ($this->rec['order_line'] as $line) {
+      $oline_ids[] = $line['id'];
+    }
+
+    $provPo = new \Oerp\Purchase\Provider\PoPicking(
+      array($this->param['rid']));
+
+    $picking = $provPo->getData();
+    return array_shift($picking);
+  }
+
+  protected function getSearchType() {
+    switch($this->rec['state']) {
+      case 'draft':
+      case 'confirmed':
+        return 'confirmed';
+
+      case 'approved':
+      case 'done':
+        return 'assigned';
+    }
+    return FALSE;
+  }
+
+  public function execute($param) {
+    $this->init($param);
+    $picking = $this->getPicking();
+    $search_type = $this->getSearchType();
+    $state = $this->rec['state'];
+
+    if ($state == 'cancel') {
+      return FALSE;
+    }
+
+    foreach ($this->rec['order_line'] as $line) {
+      $sku = $line['product_id']['default_code'];
+      dpr($sku);
+      if (!$this_pick = $picking[$sku]) {
+        continue;
+      }
+
+      $qty_op = $line['product_qty'];
+
+      if ($state == 'approved') {
+        $qty_pa = $this_pick['assigned'] + $this_pick['done'];
+      }
+      else {
+        $qty_pa = array_sum($this_pick);
+      }
+
+      $diff = (int)($qty_op - $qty_pa);
+      dpr($diff);
+      if ($diff <> 0) {
+        foreach ($picking['_lines'] as &$move) {
+          if ($move['product_id']['default_code'] == $sku
+              && $move['state'] === $search_type) {
+
+            $qty_line = $move['product_qty'];
+
+            $q = new \Oerp\Query('stock.move', NULL, NULL, $move['id']);
+
+            if ($qty_line + $diff >= 0) {
+              $new_qty = $qty_line + $diff;
+              $q->write(array('product_qty' => $new_qty));
+
+              $move['product_qty'] = $new_qty;
+              break;
+            }
+            else {
+              $q->write(array('product_qty' => 0));
+
+              $move['product_qty'] = 0;
+              $diff = $diff + $qty_line;
+              continue;
+            }
+          }
+        }
+      }
+    }
+
+    if (is_array($picking['_lines'])) {
+      $packs = array();
+
+      foreach ($picking['_lines'] as $line) {
+        if ($line['state'] == 'assigned' && $pick_id = $line['picking_id']['id']) {
+          $packs[$pick_id] += $line['product_qty'];
+        }
+      }
+
+      foreach ($packs as $pick_id => $qty) {
+        if ($qty < 1) {
+          $op = new \Oerp\Stock\Operation\ProductReceive($pick_id, array());
+          $op->run();
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,98 @@
+<?php
+
+include_once('include/util.inc');
+include_once('include/GuCsv.inc');
+include_once('include/GuText.inc');
+include_once('include/file.inc');
+include_once('include/page.inc');
+
+function GuLib_elements(){
+  return array(
+    'GuForm' => array(
+      '#input' => true,
+      '#process' => array('GuLib_GuForm_process'),
+    ),
+    
+    'GuSelectTable' => array(
+      '#input' => true,
+      '#process' => array('GuLib_GuSelectTable_process'),
+    ),
+    
+    'GuCsv' => array(
+      '#input' => true,
+      '#process' => array('GuLib_GuCsv_process'),
+      '#element_validate' => array('GuLib_GuCsv_validate'),
+    ),
+  );
+}
+
+function GuLib_theme(){
+  return array(
+    'GuLib_GuForm_form' => array(
+      'arguments' => array(),
+    ),
+    'GuForm' => array(
+      'arguments' => array(),
+    ),
+    'GuSelectTable' => array(
+      'arguments' => array(),
+    ),
+    'GuCsv' => array(
+      'arguments' => array(),
+    ),
+  );
+}
+
+function GuLib_GuForm_form(&$form_state, $eles){
+  return $eles;
+}
+
+function theme_GuLib_GuForm_form($form){
+  $obj = $form['#obj'];
+  return $obj->theme($form);
+}
+
+function gulib_inc($path, $sub = ''){
+  if($sub){
+    $path = '/' . $sub . '/' . $path;
+  }else{
+    $path = '/' . $path;
+  }
+  require_once(drupal_get_path('module', 'GuLib') . $path);
+}
+
+function _gecho($val, $string = false){
+  $buf = '<pre>' . htmlspecialchars(print_r($val, true)) . '</pre>';
+  if($string) return $buf;
+  else echo $buf;
+}
+
+function _gdump($val, $string = false){
+  $buf = '<pre>' . var_export($val, true) . '</pre>';
+  if($string) return $buf;
+  else echo $buf;
+}
+
+function _gind($arry, $ind){
+  return $arry[$ind];
+}
+
+function _ginc($path, $sub = ''){
+  return gulib_inc($path, $sub);
+}
+
+function _unaccent($str){
+  _ginc('Inflector.php', 'lib');
+  $i = new Doctrine_Inflector();
+  return $i->unaccent($str);
+}
+
+function GuLib_include($list){
+  if(is_string($list)){
+    $list = array($list);
+  }
+
+  foreach($list as $each){
+    module_load_include('inc', 'GuLib' . '/include/' . $each);
+  }
+}

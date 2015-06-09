@@ -1,0 +1,8 @@
+<tree act="create" model="product.packaging" dict_key="product_id">
+  <field name="product_id" from="product_id"/>
+  <field name="length" from="L"/>
+  <field name="width" from="W"/>
+  <field name="height" from="H"/>
+  <field name="weight" from="Weight"/>
+  <field name="ul" from="Packing" dict_key="name" fallback="skip"/>
+</tree>

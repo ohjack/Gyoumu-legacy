@@ -1,0 +1,23 @@
+<?php
+namespace Oerp\Command;
+
+class appendChkCode extends \Gulei\Command\WithReference\WithTable
+{
+  function execute($refVar = null){
+    list($rec, $name) = $this->ref->vals('rec', 'name');
+
+    $mani = new \Gulei\Manipulator\GuValue();
+    $val = $rec[$name];
+    dpr($val);die;
+    $newVal = $mani->value($val);
+
+    preg_match("/^PACK(\d*)/", $newVal, $m);
+    if($m[1]){
+      $newVal =  $newVal . chr((int)$m[1] % 26 + 65);
+      $mani->replace($newVal, $val);
+      return $val;
+    }
+    return false;
+  }
+}
+

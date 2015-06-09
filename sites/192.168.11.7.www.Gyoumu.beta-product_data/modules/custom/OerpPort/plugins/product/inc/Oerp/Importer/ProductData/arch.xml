@@ -1,0 +1,78 @@
+<tree string="Update Product Data">
+  <field name="Owner"/>
+  <field name="SKU"/>
+  <field name="Status"/>
+  <field name="Name"/>
+  <field name="Supplier"/>
+  <field name="Currency"/>
+
+  <translate>
+    <func>
+      <src name="func:trim"/>
+      <fld>Owner</fld>
+      <fld>SKU</fld>
+      <fld>Status</fld>
+      <fld>Name</fld>
+      <fld>Supplier</fld>
+      <fld>Currency</fld>
+    </func>
+  </translate>
+
+  <validate>
+    <func>
+      <src name="cmd:Oerp\Command\existValue">
+        <arg>res.users</arg>
+        <arg/>
+        <arg>login</arg>
+      </src>
+      <fld>Owner</fld>
+      <msg>
+        Not found in database.
+      </msg>
+    </func>
+
+    <func type="notice">
+      <src name="cmd:Oerp\Command\existValue">
+        <arg>res.partner</arg>
+        <arg/>
+        <arg>name</arg>
+      </src>
+      <fld>Supplier</fld>
+      <msg>
+        In-exist supplier will be created on-fly.
+      </msg>
+    </func>
+
+    <func>
+      <src name="cmd:Oerp\Command\existValue">
+        <arg>res.currency</arg>
+        <arg/>
+        <arg>code</arg>
+      </src>
+      <fld>Currency</fld>
+      <msg>
+        Not found in database.
+      </msg>
+    </func>
+
+    <func>
+      <src name="cmd:Gulei\Command\isDistinct"/>
+      <fld>SKU</fld>
+      <msg>
+        Duplicate value.
+      </msg>
+    </func>
+
+    <func type="notice">
+      <src name="cmd:Oerp\Command\existValue">
+        <arg>product.product</arg>
+        <arg/>
+        <arg>default_code</arg>
+      </src>
+      <fld>SKU</fld>
+      <msg>
+        In-exist product will be created on-fly.
+      </msg>
+    </func>
+  </validate>
+</tree>

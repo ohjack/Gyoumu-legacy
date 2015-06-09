@@ -1,0 +1,163 @@
+<?php
+namespace Oerp\Purchase\Page;
+
+class PickingMatch extends \Gulei\Page\Form\_Abstract {
+  protected $inited;
+
+  protected function getClassname() {
+    return __CLASS__;
+  }
+
+  public function getPo() {
+    $prov = new \Oerp\Purchase\Provider\PoLines($_GET['rid']);
+    $po = $prov->getData();
+    return $po[0];
+  }
+
+  protected function init() {
+    if ($this->inited) {
+      return;
+    }
+
+    $this->po = $this->getPo();
+    $this->pick = $this->getPick();
+    dpr($this->pick);
+    jquery_ui_add('ui.dialog');
+
+    $js_path = \Gulei\Util\Path::get(
+      __DIR__ . '/PickingMatch/PickingMatch.js');
+
+    drupal_add_js($js_path);
+    $this->inited = TRUE;
+  }
+
+  protected function getPick() {
+    $prov = new \Oerp\Purchase\Provider\PoPicking($_GET['rid']);
+    $picks = $prov->getData();
+    return array_pop($picks);
+  }
+
+  public function getTableRecs() {
+    $this->init();
+
+    $Lines = new \Oerp\Util\_Array(array_values($this->po['order_line']));
+    $lines = array();
+    $Lines->inherit($lines);
+
+    foreach ($lines as &$line) {
+      $sku = $line['product_id.default_code'];
+
+      if (!$got = $this->pick[$sku]['done']) {
+        $got = 0;
+      }
+      $line['func:received'] = $got;
+    }
+    return $lines;
+  }
+
+  protected function getTableSrc() {
+    $recs = $this->getTableRecs();
+
+    $arch = <<<XML
+<tree>
+  <field name="product_id.default_code" string="SKU"/>
+  <field name="product_id.name" string="Name"/>
+  <field name="product_uom" string="UoM"/>
+  <field name="product_qty" string="Ordered"/>
+  <field name="func:received" string="Received"/>
+</tree>
+XML;
+
+    $Table = new \Gulei\Table\Arch(
+      $arch, new \Gulei\Provider\Lambda($recs));
+
+    return $Table->theme();
+  }
+
+  protected function getDialogTpl($id, $dvals) {
+    $dia = array(
+      '#prefix' => '<div id="' . $id . '">',
+      '#suffix' => '</div>',
+    );
+
+    foreach ($this->po['order_line'] as $sku => $line) {
+      $prod = $line['product_id'];
+
+      $dia[$sku] = array(
+        '#title' => sprintf('[%s] %s', $prod['default_code'], $prod['name']),
+        '#type' => 'textfield',
+        '#default_value' => $dvals[$sku],
+      );
+    }
+    return $dia;
+  }
+
+  protected function getPoDvals() {
+    $dvals = array();
+    foreach ($this->po['order_line'] as $sku => $line) {
+      $dvals[$sku] = $line['product_qty'];
+    }
+    return $dvals;
+  }
+
+  protected function hook_form_internal() {
+    $this->init();
+
+    $src = '';
+    $src .= '<h2>' . $this->po['name'] . '</h2>';
+    $src .= '<h3>' . $this->po['partner_id']['name'] . '</h3>';
+    $src .= '<h3>' . $this->po['state'] . '</h3>';
+    $src .= $this->getTableSrc();
+
+    $form = array(
+      '#tree' => TRUE,
+    );
+
+    $form['info'] = array(
+      '#type' => 'markup',
+      '#value' => $src,
+    );
+/*
+    $form['btn-dia-po'] = array(
+      '#type' => 'button',
+      '#value' => 'Modify Order Qty',
+      '#attributes' => array(
+        'target-dialog' => 'dialog-po',
+      ),
+    ) ;
+*/
+    $form['btn-dia-pack'] = array(
+      '#type' => 'button',
+      '#value' => 'Modify Received Qty',
+      '#attributes' => array(
+        'target-dialog' => 'dialog-pack',
+      ),
+    ) ;
+
+    $form['callees'] = array_merge(
+      array(
+        '#prefix' => '<div class="hidden-callee">',
+        '#suffix' => '</div>',
+      ),
+      $this->getLocalCalleeEle('Submit')
+    );
+
+    $form['send'] = array(
+      '#type' => 'hidden',
+    );
+
+//    $form['dialog-po'] = $this->getDialogTpl('dialog-po', $this->getPoDvals());
+    $form['dialog-pack'] =
+        $this->getDialogTpl('dialog-pack', $this->getPoDvals());
+
+    return $form;
+  }
+
+  protected function getToolbarBottom() {
+    return array();
+  }
+
+  public function getParam() {
+    return array();
+  }
+}

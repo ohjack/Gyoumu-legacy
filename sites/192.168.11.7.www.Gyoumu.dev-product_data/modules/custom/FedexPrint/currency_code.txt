@@ -1,0 +1,37 @@
+AFL|Netherlands Antilles Guilder
+ARA|Argentina Austral 
+AUD|Australian Dollars 
+BHD|Bahraini Dinars 
+BRC|Brazil Cruzado 
+CAD|Canadian Dollars 
+CHP|Chilean Pesos  
+CYL|Cyprus Pounds 
+DHS|UAE Dirhams  
+DKK|Denmark Krone  
+EUR|Euro  
+HKD|Hong Kong Dollars  
+HUF|Hungarian Forint  
+INR|Indian Rupees  
+JAD|Jamaican Dollars  
+JYE|Japanese Yen  
+KUD|Kuwaiti Dinars  
+MOP|Macau Patacas  
+MYR|Malaysian Ringgits  
+NMP|Mexican Pesos  
+NOK|Norwegian Kronen  
+NTD|New Taiwan Dollars  
+NZD|New Zealand Dollars 
+PHP|Phillipine Pesos 
+SAR|Saudi Arabian Riyals  
+SBD|Solomon Islands Dollar  
+SEK|Swedish Krona  
+SFR|Swiss Francs  
+SID|Singapore Dollars  
+THB|Thailand Baht  
+TOP|Tongan Pa Anga  
+TRL|Turkish Lira  
+UKL|British Pound  
+USD|US Dollar  
+UYP|Uruguay New Pesos  
+VEB|Venezuelan Bolivar
+WON|S.Korean Won

@@ -1,0 +1,82 @@
+<?php
+namespace Oerp\Util;
+
+class _Array extends \Gulei\_Array\Basic
+{
+  public function supplement($fld_names, $method){
+    $recs = array();
+    $this->inherit($recs);
+
+    if(empty($recs[0])){
+      return array();
+    }
+
+    $name_chks = array();
+    foreach($fld_names as $fld_name){
+      $rel = explode('.', $fld_name);
+      array_pop($rel);
+
+      if($rel){
+        $name_chks[$fld_name] = $rel;
+      }
+    }
+
+    foreach ($recs as $ind => &$rec) {
+      $isRoot = false;
+
+      $rec_name_chks = array();
+      foreach(array_keys($rec) as $name){
+        $rel = explode('.', $name);
+        array_pop($rel);
+
+        if($rel){
+          $rec_name_chks[] = $rel;
+        }
+        else{
+          $isRoot = true;
+          break;
+        }
+      }
+
+      if($isRoot){
+        continue;
+      }
+
+      foreach ($fld_names as $fld_name) {
+        if(!isset($rec[$fld_name])){
+          $isDitto = true;
+          foreach($rec_name_chks as $rec_name_chk){
+            if(!$chk = $name_chks[$fld_name]){
+              break;
+            }
+
+            if(!array_diff_assoc($rec_name_chk, $chk)){
+              $isDitto = false;
+              break;
+            }
+          }
+
+          if($isDitto){
+            switch ($method) {
+              case 'copy':
+                for($i = $ind - 1; $ind > 0; $ind--){
+                  if(isset($recs[$i][$fld_name])){
+                    $rec[$fld_name] = $recs[$i][$fld_name];
+                    break;
+                  }
+                }
+                break;
+
+              case 'merge':
+              case 'ditto':
+                $rec[$fld_name] = '_DITTO_';
+                break;
+            }
+          }
+        }
+      }
+    }
+
+    return $recs;
+  }
+}

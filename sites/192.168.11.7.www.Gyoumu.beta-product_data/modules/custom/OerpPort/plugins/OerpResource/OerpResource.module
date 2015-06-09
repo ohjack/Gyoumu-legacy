@@ -1,0 +1,26 @@
+<?php 
+
+module_load_include('inc', 'GuLib', 'include/GuTable');
+include_once 'OerpResource.inc';
+
+function OerpResource_menu(){
+  $item = array();
+  
+  $item['oerpport/image/check_publish/%'] = array(
+    'page callback' => 'OerpResource_imageCheckPublish',
+    'page arguments' => array(3),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  return $item;
+}
+
+function OerpResource_imageCheckPublish($dir){
+  $output = '';
+  
+  $ih = new OerpImageHandler($dir);
+  $output .= $ih->processNewFixed();  
+  
+  return $output;
+}

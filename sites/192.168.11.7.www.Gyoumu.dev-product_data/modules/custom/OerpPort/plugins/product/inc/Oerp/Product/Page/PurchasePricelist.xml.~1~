@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tree name="view" string="Purchase Pricelist">
+  <param name="oerp:model">product.product</param>
+
+  <field name="default_code" string="SKU" select="1"/>
+  <field name="name" string="Product Name" select="1"/>
+  <field name="qty_available" string="Stk."/>
+  <field name="product_tmpl_id">
+    <field name="state" string="Status"/>
+    <field name="seller_ids">
+      <field name="product_code" string="P/N"/>
+      <field name="name">
+        <field name="name" string="Supplier"/>
+        <field name="property_product_pricelist_purchase">
+          <field name="currency_id" string="Curr."/>z
+        </field>
+      </field>
+      <field name="pricelist_ids">
+        <field name="price" string="Price"/>
+        <field name="min_quantity" string="MoQ"/>
+      </field>
+    </field>
+  </field>
+</tree>

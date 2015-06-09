@@ -1,0 +1,18 @@
+<?php
+namespace Oerp\Product\Command;
+
+class checkPicFixed extends \Gulei\Command\WithReference\_Abstract
+{
+  static $rs_cache = null;
+
+  public function execute($refVar = null)
+  {
+    list($recs, $rec, $name) = $this->ref->vals('recs', 'rec', 'name');
+    $Recs = new \Gulei\_Array\Basic($recs);
+    $skus = $Recs->collect('default_code');
+
+    $chkLocal = new \Checkimage\SkuChecker\Local($skus, '/Fixed');
+    var_dump($chkLocal->getFound());
+    dpr($recs);die;
+  }
+}

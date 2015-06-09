@@ -1,0 +1,77 @@
+return array (
+  0 =>
+  array (
+    'data' =>
+    array (
+      '%count' =>
+      array (
+        'data' => '<span class="gu_value">1</span>',
+        'gu_name' => '%count',
+        'rowspan' => 1,
+      ),
+      'date' =>
+      array (
+        'data' => '<span class="gu_value">2011-07-06 09:32:41</span>',
+        'gu_name' => 'date',
+        'rowspan' => 1,
+        'style' => 'display:none;',
+      ),
+      'name' =>
+      array (
+        'data' => '<span class="gu_value">PACK1164U</span>',
+        'gu_name' => 'name',
+        'rowspan' => 1,
+      ),
+      'origin' =>
+      array (
+        'data' => '<span class="gu_value">70603</span>',
+        'gu_name' => 'origin',
+        'rowspan' => 1,
+        'style' => 'display:none;',
+      ),
+      'x_tnum' =>
+      array (
+        'data' => '<span class="gu_value"></span>',
+        'gu_name' => 'x_tnum',
+        'rowspan' => 1,
+      ),
+      'move_lines.product_id.default_code' =>
+      array (
+        'data' => '<span class="gu_value">PD-00176</span>',
+        'gu_name' => 'move_lines.product_id.default_code',
+        'rowspan' => 1,
+      ),
+      'move_lines.product_qty' =>
+      array (
+        'data' => '<span class="gu_value">3</span>',
+        'gu_name' => 'move_lines.product_qty',
+        'rowspan' => 1,
+      ),
+      'move_lines.note' =>
+      array (
+        'data' => '<span class="gu_value"></span>',
+        'gu_name' => 'move_lines.note',
+        'rowspan' => 1,
+      ),
+      'address_id.name' =>
+      array (
+        'data' => '<span class="gu_value">Hrvoje Loncar</span>',
+        'gu_name' => 'address_id.name',
+        'rowspan' => 1,
+      ),
+      'address_id.state_id.country_id' =>
+      array (
+        'data' => '<span class="gu_value">Germany</span>',
+        'gu_name' => 'address_id.state_id.country_id',
+        'rowspan' => 1,
+      ),
+      'carrier_id' =>
+      array (
+        'data' => '<span class="gu_value">Fedex IE</span>',
+        'gu_name' => 'carrier_id',
+        'rowspan' => 1,
+      ),
+    ),
+    'class' => 'merge-odd',
+  ),
+);

@@ -1,0 +1,77 @@
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+    <title></title>
+</head>
+<body>
+<center>
+    <table id="main-wrapper" border="0" cellspacing="0" width="800">
+        <tbody>
+        <tr>
+            <td><img
+                    src="http://www.picturemaster.info/TemplateUse/euromotor/top.jpg"
+                    alt="top"/></td>
+        </tr>
+        <tr>
+            <td align="center">
+                <table border="0" cellspacing="1" width="790">
+                    <tbody>
+                    <tr>
+                        <td colspan="2" bgcolor="#ffffff" align="center">
+                            <p><font color="#000000" size="5"><b>${head}</b></font></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" bgcolor="#4b494a" align="center">
+                            <p><font color="#ffffff" size="6"><b>送料：</b></font><font
+                                    color="#dd8461" size="7">${shipping_fee}</font><font color="#ffffff">円</font></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td bgcolor="#4b494a" valign="middle" width="250"
+                            align="center">
+                            <p><font color="#dd8461" size="5">適合モデル</font></p>
+                        </td>
+                        <td bgcolor="#d2d2d2" valign="middle" width="550"
+                            align="center">
+                            <ul>
+                                <li><b>商品番号：${clabel}</b></li>
+                                <li tal:repeat="model_line model_LINES">${model_line}</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td bgcolor="#4b494a" valign="middle" width="250"
+                            align="center">
+                            <p><font color="#dd8461" size="5">商品詳細</font></p>
+                        </td>
+                        <td bgcolor="#d2d2d2" valign="middle" width="550"
+                            align="center">
+                            <ul>
+                                <li tal:repeat="desc_line desc_LINES">${desc_line}</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td align="center"><img src="http://www.picturemaster.info/ProductPics/euromotor/${clabel_UPPERCASE}-1.jpg" alt="galleryPIC1" class="photo"/></td>
+        </tr>
+        <tr>
+            <td align="center"><img src="http://www.picturemaster.info/ProductPics/euromotor/${clabel_UPPERCASE}-2.jpg" alt="galleryPIC2" class="photo"/></td>
+        </tr>
+        <tr>
+            <td align="center"><img src="http://www.picturemaster.info/ProductPics/euromotor/${clabel_UPPERCASE}-3.jpg" alt="galleryPIC3" class="photo"/></td>
+        </tr>
+        <tr>
+            <td><img
+                    src="http://www.picturemaster.info/TemplateUse/euromotor/bottom.jpg"
+                    alt="bottom"/></td>
+        </tr>
+        </tbody>
+    </table>
+</center>
+</body>
+</html>

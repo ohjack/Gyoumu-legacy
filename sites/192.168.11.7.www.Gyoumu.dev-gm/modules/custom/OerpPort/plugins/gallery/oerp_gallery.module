@@ -1,0 +1,156 @@
+<?php
+
+module_load_include('module', 'oerp');
+\Gulei\Autoloader::register(__DIR__);
+
+function oerp_gallery_menu(){
+  $item = array();
+  
+  $item['oerpport/image/check_publish/%'] = array(
+    'page callback' => 'oerp_gallery_imageCheckPublish',
+    'page arguments' => array(3),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $item['oerp/gallery/approve/fixed'] = array(
+    'title' => 'Approve Fixed Pictures',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_gallery_approve_fixed_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $item['oerp/gallery/mapping/%'] = array(
+    'title' => 'Mapping Pictures for Publishing',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_gallery_mapping_form', 3),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $item['oerp/gallery/photo/request'] = array(
+    'title' => 'Enter Photo Request',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_gallery_photo_request_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $item['oerp/gallery/photo/submit'] = array(
+    'title' => 'Submit Photos',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_gallery_photo_submit_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  return $item;
+}
+
+function oerp_gallery_block($op = 'list', $delta = 0, $edit = array())
+{
+  switch($op){
+    case 'list':
+      $block[0]['info'] = 'Gallery Mngn';
+      return $block;
+
+    case 'view':
+      $items = array(
+        array(
+          'data' => 'Photographer',
+          'children' => array(
+            array(
+              'data' => l('Photo Submit', 'oerp/gallery/photo/submit'),
+            ),
+          )
+        ),
+        array(
+          'data' => 'Developer',
+          'children' => array(
+            array(
+              'data' => l('Photo Request', 'oerp/gallery/photo/request'),
+            ),
+            array(
+              'data' => l('Approve Fixed', 'oerp/gallery/approve/fixed'),
+            ),
+            array(
+              'data' => l('Mapping', 'oerp/gallery/mapping/New'),
+            ),
+          )
+        ),
+      );
+
+      $block['subject'] = 'Gallery Mngn';
+      $block['content'] = theme('item_list', $items, null, 'ul', array('class' => 'menu'));
+      return $block;
+  }
+}
+
+function oerp_gallery_imageCheckPublish($dir){
+  $output = '';
+  
+  $ih = new OerpImageHandler($dir);
+  $output .= $ih->processNewFixed();  
+  
+  return $output;
+}
+
+function oerp_gallery_approve_fixed_form(&$form_state)
+{
+  $p = new \Oerp\Gallery\Page\ApproveFixed($form_state);
+  return $p->hook_form(func_get_args());
+}
+
+function oerp_gallery_approve_fixed_form_submit($form, &$form_state)
+{
+  $p = new \Oerp\Gallery\Page\ApproveFixed($form_state);
+  return $p->hook_form_submit($form, $form_state);
+}
+
+function oerp_gallery_mapping_form(&$form_state)
+{
+  $ctrl = new \Oerp\Gallery\Page\MappingPublish($form_state);
+  return $ctrl->hook_form(func_get_args());
+}
+
+function oerp_gallery_mapping_form_validate($form, &$form_state)
+{
+  $ctrl = new \Oerp\Gallery\Page\MappingPublish($form_state);
+  return $ctrl->hook_validate($form, $form_state);
+}
+
+function oerp_gallery_mapping_form_submit($form, &$form_state)
+{
+  $ctrl = new \Oerp\Gallery\Page\MappingPublish($form_state);
+  return $ctrl->hook_form_submit($form, $form_state);
+}
+
+function oerp_gallery_photo_request_form(&$form_state)
+{
+  $ctrl = new \Oerp\Gallery\Page\PhotoRequest($form_state);
+  return $ctrl->hook_form(func_get_args());
+}
+
+function oerp_gallery_photo_request_form_validate($form, &$form_state){
+  $ctrl = new \Oerp\Gallery\Page\PhotoRequest($form_state);
+  return $ctrl->hook_validate($form, $form_state);
+}
+
+function oerp_gallery_photo_request_form_submit($form, &$form_state)
+{
+  $ctrl = new \Oerp\Gallery\Page\PhotoRequest($form_state);
+  return $ctrl->hook_form_submit($form, $form_state);
+}
+
+function oerp_gallery_photo_submit_form(&$form_state)
+{
+  $ctrl = new \Oerp\Gallery\Page\PhotoSubmit(&$form_state);
+  return $ctrl->hook_form(func_get_args());
+}
+
+function oerp_gallery_photo_submit_form_submit($form, &$form_state)
+{
+  $ctrl = new \Oerp\Gallery\Page\PhotoSubmit($form_state);
+  return $ctrl->hook_form_submit($form, $form_state);
+}

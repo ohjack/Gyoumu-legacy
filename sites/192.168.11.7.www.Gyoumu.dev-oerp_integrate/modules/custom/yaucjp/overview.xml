@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<table>
+  <param name="mark_translated">0</param>
+
+  <field name="sellerId" string="Seller"/>
+  <field name="yid" string="Y.ID"/>
+  <field name="aid" string="A.ID"/>
+  <field name="payment" string="Payment"/>
+  <field name="kessai_id" string="Kessai ID"/>
+  <field name="func:name_kanji" string="Name"/>
+  <field name="func:name_roman" string="-"/>
+  <field name="price_bid" string="Price"/>
+  <field name="price_ship" string="S.Fee"/>
+  <field name="zip" string="Zip"/>
+  <field name="addr_todoufuken" string="City"/>
+  <field name="func:addr1" string="Addr1"/>
+  <field name="func:addr2" string="Addr2"/>
+  <field name="email" string="E-mail"/>
+  <field name="phone" string="Phone"/>
+  
+  <translate>
+    <func>
+      <src><![CDATA[
+        $str = array('kantan'=>'かんたん決済', 'bank'=>'銀行振込');
+        return $str[$rec[$name]];
+      ]]></src>
+      <fld>payment</fld>
+    </func>
+    
+    <func>
+      <src><![CDATA[
+        return $rec['name_kanji_last'] . $rec['name_kanji_first'];
+      ]]></src>
+      <fld>func:name_kanji</fld>
+    </func>
+    
+    <func>
+      <src><![CDATA[
+        $str = $rec['name_kana_last'] . ' ' . $rec['name_kana_first'];
+        $h = new GuTextHelper();
+        return strtoupper($h->kana2roma($str));
+      ]]></src>
+      <fld>func:name_roman</fld>
+    </func>
+    
+    <func>
+      <src><![CDATA[
+        $h = new GuTextHelper();
+        return $h->kana2roma($rec[$name]);        
+      ]]></src>
+      <fld>addr_todoufuken</fld>
+    </func>
+    
+    <func>
+      <src><![CDATA[
+        $str = $rec['addr_sichouson'] . ' ' . $rec['addr_chouiki'];
+        $h = new GuTextHelper();
+        return $h->kana2roma($str);
+      ]]></src>
+      <fld>func:addr1</fld>
+    </func>
+
+    <func>
+      <src><![CDATA[
+        $m = new YaucjpModel();
+        $h = new GuTextHelper();
+        $str = mb_convert_kana($m->getAddr2($rec));
+        return $h->kana2roma($str);
+      ]]></src>
+      <fld>func:addr2</fld>
+    </func>
+
+  </translate>
+</table>

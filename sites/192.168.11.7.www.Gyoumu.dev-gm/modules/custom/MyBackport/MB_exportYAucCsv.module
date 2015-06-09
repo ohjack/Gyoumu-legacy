@@ -1,0 +1,108 @@
+<?php
+function MB_exportYAucCsv_menu(){
+  $items = array();
+  $items['MyBackport/exportYAucCsv'] = array(
+    'title' => 'Upload eBay Raw Data CSV',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('MB_exportYAucCsv_form'),
+    'access arguments' => array('export CSV'),
+    'type' => MENU_CALLBACK,
+  );
+  
+  return $items;
+}
+
+function MB_exportYAucCsv_form(){
+  $form = array();
+  $form['#attributes']['enctype'] = 'multipart/form-data';
+    
+  $form['upload'] = array(
+    '#type' => 'file',
+  );
+  
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Submit',
+  );
+  
+  return $form;
+}
+
+function MB_exportYAucCsv_form_validate(){
+  require_once(drupal_get_path('module', 'MyLib') . '/lib/DataSource.php');
+  require_once 'PHPTAL.php';    
+
+  $CsvSrc = new File_CSV_DataSource;
+  $CsvSrc->load($_FILES['files']['tmp_name']['upload']);
+  $src = $CsvSrc->connect();
+  
+  //drupal_set_message('<pre>' . var_export($src, true) . '</pre>');
+
+  $CsvTpl = new File_CSV_DataSource;
+  $CsvTpl->load(drupal_get_path('module', 'MB_exportYAucCsv') . '/tpl/tpl_YAuc_iMacro.csv');
+
+  //drupal_set_message('<pre>' . var_export($CsvTpl->connect(), true) . '</pre>');
+  
+  $recs = array();
+  $recs[0] = $CsvTpl->getHeaders();
+
+  for($c = 0; $c < count($src); $c++){
+    for($hd = 0; $hd < $CsvTpl->countHeaders(); $hd++){
+      switch($recs[0][$hd]){
+      case 'clabel':
+        $recs[$c + 1][$hd] = $src[$c]['sku'];
+        break;
+      case 'title':
+        $recs[$c + 1][$hd] = $src[$c]['title'];
+        break;
+      case 'desc':
+        $recs[$c + 1][$hd] = _getHtml('EmsY_simple', 
+        $src[$c]['sku'], 
+        $src[$c]['title'], 
+        $src[$c]['features'], 
+        $src[$c]['fitment']);
+        break;
+      case 'price':
+        $recs[$c + 1][$hd] = $src[$c]['price'];
+        break;
+      case 'pic':
+        $recs[$c + 1][$hd] = $src[$c]['sku'] . '-1.jpg';
+        break;
+      default:
+        $recs[$c + 1][$hd] = null;                                                  
+      }
+    }                                                 
+  }
+
+  $send = '';
+  for($x = 0; $x < count($recs); $x++){
+    for($y = 0; $y < count($recs[$x]); $y++){
+      if($y > 0){
+        $send .= ',';
+      }
+
+      $send .= '"' . str_replace('"', '""', $recs[$x][$y]) . '"';
+    }      
+    $send .= "\n";
+  }
+
+  $download = file_save_data($send, file_directory_path() . '/csv/output.csv');
+  drupal_goto($download);
+}
+
+function _getHtml($account, $sku, $title, $features, $fitment){
+  $tpl = new PHPTAL(drupal_get_path('module', 'MB_exportYAucCsv') . '/tpl/tpl_' . $account . '.xhtml');
+  $tpl->title = $title;
+  $tpl->pinfo = explode("\n", $features);
+  $tpl->sku = $sku;
+  $tpl->fitment = explode("\n", $fitment);
+
+  $pics = array();  
+  for($c = 1; $c <= 3; $c++){
+    array_push($pics, "http://www.picturemaster.info/ProductPics/$sku-$c.jpg");
+  }
+
+  $tpl->pics = $pics;  
+
+  return $tpl->execute();  
+}

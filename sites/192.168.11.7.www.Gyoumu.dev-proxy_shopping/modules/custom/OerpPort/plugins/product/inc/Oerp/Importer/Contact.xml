@@ -1,0 +1,60 @@
+<tree string="Update Contacts">
+  <field name="partner"/>
+  <field name="contact"/>
+  <field name="phone"/>
+  <field name="fax"/>
+  <field name="email"/>
+  <field name="address"/>
+  <field name="reg_num"/>
+  <field name="payment"/>
+  <field name="note"/>
+
+  <translate>
+    <func>
+      <src name="func:trim"/>
+      <fld>partner</fld>
+    </func>
+
+    <func>
+      <src><![CDATA[
+        if(strlen($rec[$name]) < 1) return "聯絡人";
+        return false;
+      ]]></src>
+      <fld>contact</fld>
+    </func>
+  </translate>
+
+  <validate>
+    <func type="notice">
+      <src name="cmd:Oerp\Command\existValue">
+        <arg>res.partner</arg>
+        <arg/>
+        <arg>name</arg>
+      </src>
+      <fld>partner</fld>
+      <msg>
+        Not found in database.
+      </msg>
+    </func>
+
+    <func>
+      <src name="cmd:isDistinct"/>
+      <fld>partner</fld>
+      <msg>
+        Duplicate value.
+      </msg>
+    </func>
+
+    <!--<func type="notice">-->
+      <!--<src name="cmd:Oerp\\Command\\existValue">-->
+        <!--<arg>res.partner</arg>-->
+        <!--<arg/>-->
+        <!--<arg>name</arg>-->
+      <!--</src>-->
+      <!--<fld>Supplier</fld>-->
+      <!--<msg>-->
+        <!--In-exist supplier will be created on-fly.-->
+      <!--</msg>-->
+    <!--</func>-->
+  </validate>
+</tree>

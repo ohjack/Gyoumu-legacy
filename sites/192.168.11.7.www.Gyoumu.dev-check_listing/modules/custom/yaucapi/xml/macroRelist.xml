@@ -1,0 +1,12 @@
+<div tal:omit-tag="php:1">VERSION BUILD=7200328 RECORDER=FX
+TAB T=1
+  <div tal:repeat="url param/urls" tal:omit-tag="php:1">
+URL GOTO=${url}
+TAG POS=1 TYPE=INPUT:BUTTON FORM=NAME:NoFormName ATTR=ID:auc_insertion_ok
+TAG POS=1 TYPE=INPUT:TEXT FORM=NAME:auction ATTR=ID:auc_bkname1 CONTENT=
+TAG POS=1 TYPE=INPUT:TEXT FORM=NAME:auction ATTR=ID:auc_bkname2 CONTENT=
+TAG POS=1 TYPE=INPUT:TEXT FORM=NAME:auction ATTR=ID:auc_bkname3 CONTENT=
+TAG POS=1 TYPE=INPUT:BUTTON FORM=ID:auction ATTR=ID:auc_submit2
+TAG POS=1 TYPE=INPUT:BUTTON FORM=NAME:auction ATTR=ID:auc_preview_submit
+  </div>
+</div>

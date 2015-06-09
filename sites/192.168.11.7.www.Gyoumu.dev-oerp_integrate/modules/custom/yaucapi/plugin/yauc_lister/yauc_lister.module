@@ -1,0 +1,185 @@
+<?php
+//require_once 'yauc_lister.inc';
+module_load_include('inc', 'GuLib', 'autoload');
+\Gulei\Autoloader::register(__DIR__);
+
+function yauc_lister_menu()
+{
+  $items = array();
+
+  $items['yaucapi/seller/%/auctions/queue'] = array(
+    'title' => 'Queue List',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array(
+      'yauc_lister_sellerAuctionsQueue_form', 2,
+      array(
+        \Yauc\Lister\Provider\_Abstract::Q_NEW,
+        \Yauc\Lister\Provider\_Abstract::Q_FAILED
+      )
+    ),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['yaucapi/seller/%/auctions/queue/new'] = array(
+    'title' => 'Queue',
+    'access arguments' => true,
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 1,
+  );
+
+  $items['yaucapi/seller/%/auctions/queue/import'] = array(
+    'title' => 'Import',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('yauc_lister_auctionsImport_form', 2),
+    'access callback' => true,
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 2
+  );
+
+  $items['yaucapi/seller/%/auctions/queue/done'] = array(
+    'title' => 'Done',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array(
+      'yauc_lister_sellerAuctionsQueue_form', 2,
+      array(
+        \Yauc\Lister\Provider\_Abstract::Q_DONE,
+        \Yauc\Lister\Provider\_Abstract::Q_CANCEL
+      )
+    ),
+    'access callback' => true,
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 3
+  );
+
+  $items['yauc_lister/check_category/%'] = array(
+    'page callback' => 'yauc_lister_check_category',
+    'page arguments' => array(2),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['yauc_lister/preview/%/js'] = array(
+    'page callback' => 'yauc_lister_preview_js',
+    'page arguments' => array(2),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['yauc_lister/test'] = array(
+    'page callback' => 'yauc_lister_test',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+function yauc_lister_form_yaucapi_sellers_view_form_alter(&$form, &$form_state)
+{
+  $p = new \Yauc\Lister\Page\SellersView($form_state);
+  $form = $p->hook_form($form_state);
+}
+
+function yauc_lister_sellerAuctionsQueue_form(&$form_state, $sellerId, $status)
+{
+  $p = new \Yauc\Lister\Page\Queue($form_state);
+  return $p->hook_form($form_state, $sellerId, $status);
+}
+
+function yauc_lister_sellerAuctionsQueue_form_submit($form, &$form_state)
+{
+  $p = new \Yauc\Lister\Page\Queue($form_state);
+  return $p->hook_form_submit($form, $form_state);
+}
+
+function yauc_lister_auctionsImport_form(&$form_state, $sellerId)
+{
+  $form = array();
+  $form['#attributes']['enctype'] = 'multipart/form-data';
+
+  $form['title'] = array(
+    '#type' => 'markup',
+    '#value' => "<h1><em>$sellerId</em></h1>"
+  );
+
+  $form['sellerId'] = array(
+    '#type' => 'value',
+    '#value' => $sellerId,
+  );
+  
+  $arch = \Gulei\File\Helper::getPathContent('module', 'yauc_lister', '/xml/auctionsImport.xml');
+  $c = new \Gulei\Csv\Buffer($arch, $form_state);
+
+  $form = array_merge($form, $c->getFormEntry($form_state));
+  return $form;
+}
+
+function yauc_lister_auctionsImport_form_validate($form, &$form_state)
+{
+  $buf = $form['csv_file']['#obj']->renew();
+  $buf->validateForm($form_state);
+}
+
+function yauc_lister_auctionsImport_form_submit($form, &$form_state)
+{
+  $buf = $form['csv_file']['#obj']->renew();
+  $recs = $buf->getRecords();
+
+  $createtime = time();
+
+  foreach($recs as $rec){
+    $newRec = new stdClass();
+    $newRec->sellerId = $form['sellerId']['#value'];
+    $newRec->src = json_encode($rec);
+    $newRec->status = \Yauc\Lister\Provider\_Abstract::Q_NEW;
+    $newRec->createtime = $createtime;
+
+    drupal_write_record('yaucapi_lister_queue', $newRec);
+  }
+}
+
+function yauc_lister_test()
+{
+  $sellerId = 'akilla2011';
+  $drv = new \Yauc\Lister\Driver\Lister($sellerId, '2xaugadr');
+//  $sellerId = 'yjqnk880';
+//  $drv = new \Yauc\Lister\DriverLister($sellerId, 'banribanri');
+  $drv->init();
+
+  if(!$drv->login()){
+    return '<em>Failted to login.</em>';
+  }
+
+  $prov = new \Yauc\Lister\Provider\Queue(
+    $sellerId, array(\Yauc\Lister\Provider\_Abstract::Q_NEW)
+  );
+  
+  foreach($prov->getData() as $rec){
+    $resp = $drv->submit($rec);
+//    $resp = $drv->submit($rec, true);
+//    break;
+    $ctrl = new \Yauc\Lister\Query\Queue($rec['id']);
+
+    if($resp === true){
+      $ctrl->setDone();
+    }
+    else{
+      $ctrl->setFailed($resp['msg']);
+    }
+  }
+  return '';
+}
+
+function yauc_lister_check_category($id)
+{
+  $ctrl = new \Yauc\Lister\Query\Queue($id);
+  var_dump($ctrl->checkCategory());
+  return '';
+}
+
+function yauc_lister_preview_js($rid)
+{
+  $prov = new \Yauc\Lister\Provider\Theme($rid);
+  drupal_json($prov->getData($rid));
+}

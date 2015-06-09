@@ -1,0 +1,46 @@
+<?php
+namespace Oerp\Stock\Page;
+
+class PeriodOutputForBD extends \Oerp\Page\Abstract_PeriodQuery {
+  public function getClassname() {
+    return __CLASS__;
+  }
+
+  protected function getTitle() {
+    return "Period Output";
+  }
+
+  protected function getProvider() {
+    _erp_connect(NULL, 'maolung');
+    $vals = $this->getStateValues();
+    return new \Oerp\Stock\Provider\PeriodOutput($vals);
+  }
+
+  protected function getTreeArch() {
+    return file_get_contents(__DIR__.'/PeriodOutputForBD/PeriodOutputForBD.xml');
+  }
+
+  protected function getSearchEle() {
+    $vals = $this->getStateValues();
+
+    $search = parent::getSearchEle();
+    $search['supp'] = array(
+      '#title' => 'Supplier',
+      '#type' => 'textfield',
+      '#size' => '',
+      '#default_value' => $vals['supp'],
+      '#weight' => 2.1
+    );
+    return $search;
+  }
+
+  public function hook_validate($form, $form_state) {
+    $vals = $this->getStateValues();
+
+    foreach (array('date-from', 'date-to', 'supp') as $fld_name) {
+      if (!$vals[$fld_name]) {
+        form_set_error($fld_name, "Field cannnot be empty.");
+      }
+    }
+  }
+}

@@ -1,0 +1,456 @@
+<?php
+namespace Ebapi;
+
+class CsvSerialLoader
+{
+  protected $fp;
+
+  public function getSourceEntry()
+  {
+    $form = array();
+    $srcFound = glob(__DIR__ . '/*.csv');
+
+    if(!$srcFound){
+      $form['msg'] = array(
+        '#type' => 'markup',
+        '#value' => '<strong>No source MVL found.</strong>',
+      );
+      return $form;
+    }
+
+    $opts = array();
+    foreach($srcFound as $each){
+      $toks = explode('/', $each);
+      $opts[$each] = $toks[count($toks) - 1];
+    }
+
+    $form = array();
+    $form['source'] = array(
+      '#title' => 'MVL Source',
+      '#type' => 'select',
+      '#options' => $opts,
+    );
+
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => 'Reload'
+    );
+    return $form;
+  }
+  
+  public function reload($fp)
+  {
+    $sql = 'DELETE FROM {ebapi_fitment} WHERE 1';
+    db_query($sql);
+
+    $fh = fopen($fp, 'r');
+    $hds = array();
+
+    while(($line = fgets($fh)) !== false){
+      $data = str_getcsv($line);
+
+      if(empty($hds)){
+        foreach($data as $datum){
+          $hds[] = preg_replace('/[^[:alnum:]]/', '_', $datum);
+        }
+      }
+      else{
+        $rec = array_combine($hds, $data);
+        drupal_write_record('ebapi_fitment', $rec);
+      }
+    }
+  }
+}
+
+abstract class AbstractWidgetController
+{
+  protected $form_state;
+
+  abstract public function getFormEntry();
+
+  public function __construct($form_state)
+  {
+    $this->form_state = $form_state;
+  }
+
+  protected function getValue($name = null)
+  {
+    if(is_null($name)){
+      return $this->form_state['values'];
+    }
+    return $this->form_state['values'][$name];
+  }
+}
+
+class CompatibilityListController extends AbstractWidgetController
+{
+  const prefix = 'select-';
+
+  private function isParentSelected($pars)
+  {
+    foreach($pars as $par){
+      if(!$this->getValue($par)){
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private function getSelectOptions($name, $cri, $year_range = false)
+  {
+    $where = $this->getWhere($cri, $year_range);
+    $sql = sprintf('SELECT DISTINCT `%s` FROM {ebapi_fitment} %s ORDER BY `%s` ASC', $name, $where, $name);
+    $rs = db_query($sql);
+    $opts = array('0' => '-SELECT-');
+
+    while($data = db_result($rs)){
+      $opts[$data] = $data;
+    }
+    return $opts;
+  }
+
+  private function getEleAhah($param, $clear = true){
+    $tpl = array(
+      '#ahah' => array(
+        'path' => 'ebapi/fitment/select/js',
+        'wrapper' => 'ebapi-compatibility-wrapper',
+      ),
+    );
+
+    if($clear){
+      $tpl['#suffix'] = '<div style="clear:both;"></div>';
+    }
+
+    $ele = array_merge($tpl, $param);
+
+    if($ele['#type'] == 'select'){
+      $ele['#attributes']['class'] .= ' ebapi-fitment-selector';
+    }
+
+    return $ele;
+  }
+
+  private function getEleSelect($title, $name, $pars = array(), $year_range = false)
+  {
+    $ele = $this->getEleAhah(
+      array(
+           '#title' => $title,
+           '#type' => 'select',
+      )
+    );
+    
+    $isReady = $this->isParentSelected($pars);
+    
+    if(!$isReady){
+      $ele['#options'] = array('0' => '-SELECT-');
+    }
+    else{
+      $ele['#options'] = $this->getSelectOptions($name, Fitment::getCri($pars), $year_range);
+    }
+
+    $dval = $this->getValue(self::prefix . $name);
+    $ele['#default_value'] = $dval ? $dval : '0';
+
+    return $ele;
+  }
+
+  private function isShowFitment()
+  {
+    return $this->getValue()
+           && $this->getValue(self::prefix . 'Make')
+           && $this->getValue(self::prefix . 'Model');
+  }
+
+  private function getWhere($vals, $year_range = false)
+  {
+    $where = array();
+    foreach($vals as $key => $val){
+      if($val){
+        $where[] = sprintf('`%s` = "%s"', $key, $val);
+      }
+    }
+
+    if($year_range){
+      $yfrom = $this->getValue('year-from');
+      $yto = $this->getValue('year-to');
+
+      if($yfrom && $yto){
+        $where[] = sprintf('(`Year` BETWEEN "%s" AND "%s")', $yfrom, $yto);
+      }
+      else if($yfrom){
+        $where[] = sprintf('`Year` >= "%s"', $yfrom);
+      }
+      else if($yto){
+        $where[] = sprintf('`Year` <= "%s"', $yto);
+      }
+    }
+
+    if(empty($where)){
+      $where = '';
+    }
+    else{
+      $where = 'WHERE ' . implode($where, ' AND ');
+    }
+    return $where;
+  }
+
+  private function getEleFitment()
+  {
+    $form = array();
+    $form['add-fitment'] = $this->getEleAhah(
+      array(
+           '#weight' => 2,
+           '#type' => 'submit',
+           '#value' => 'Add',
+      )
+    );
+
+    if($this->isShowFitment()){
+      $form['list'] = array(
+        '#weight' => 1,
+        '#type' => 'checkboxes',
+        '#title' => 'Fitment <span class="toggle-all">toggle all</span>',
+        '#prefix' => '<div id="ebapi-fitment-list">',
+        '#suffix' => '</div>',
+      );
+
+    }
+    else{
+      $form['msg'] = array(
+        '#type' => 'markup',
+        '#value' => '<div><em>Select at least Make and Model.</em></div>',
+      );
+
+      $form['add-fitment']['#attributes']['style'] = 'display:none;';
+      return $form;
+    }
+
+    $pars = array_keys($this->getValue());
+    $sql = sprintf(
+      'SELECT ePID, DisplayName, Body FROM {ebapi_fitment} %s ORDER BY DisplayName ASC',
+      $this->getWhere(
+        Fitment::getCri($pars),
+        true
+      )
+    );
+
+    $rs = db_query($sql);
+    $sels = $this->getSelectedValue();
+    $isFoundFitment = false;
+
+    while($data = db_fetch_object($rs)){
+      $isFoundFitment = true;
+      $ePid = $data->ePID;
+      $form['list'][$ePid] = array(
+        '#type' => 'checkbox',
+        '#title' => $data->DisplayName . ' ' . $data->Body,
+        '#return_value' => $ePid,
+      );
+
+      if(isset($sels[$ePid])){
+        $form['list'][$ePid]['#attributes'] = array(
+          'checked' => 'checked',
+          'disabled' => 'disabled',
+        );
+      }
+    }
+
+    if(!$isFoundFitment){
+      $form['list']['#suffix'] = '<div><em>No fitment found.</em></div>';
+      $form['add-fitment']['#attributes']['style'] = 'display:none;';
+    }
+    return $form;
+  }
+
+  private function getEleYearSelect()
+  {
+    $form = array();
+
+    $form['year-from'] = $this->getEleAhah(
+      array(
+           '#title' => 'Year from',
+           '#type' => 'select',
+           '#options' => array('0' => '-SELECT-'),
+           '#default_value' => ($yfrom = $this->getValue('year-from')) ? $yfrom : '0',
+      ),
+      false
+    );
+    $form['year-from']['#attributes']['class'] .= ' year';
+
+    $form['year-to'] = $this->getEleAhah(
+      array(
+           '#title' => '~ to',
+           '#type' => 'select',
+           '#options' => array('0' => '-SELECT-'),
+           '#default_value' => ($yto = $this->getValue('year-to')) ? $yto : '0',
+           '#suffix' => '<div style="clear:both;"></div>',
+           '#attributes' => array('class' => 'year no-year-dep'),
+      ),
+      false
+    );
+    $form['year-to']['#attributes']['class'] .= ' year';
+
+    $pars = array(self::prefix . 'Make');
+
+    $isReady = $this->isParentSelected($pars);
+    if($isReady){
+      $opts = $this->getSelectOptions(
+        'Year', Fitment::getCri(array('Make', 'Model', 'Submodel')));
+
+      $form['year-from']['#options'] = $opts;
+      $form['year-to']['#options'] = $opts;
+    }
+    return $form;
+  }
+
+  private function getFitmentSelectorEles()
+  {
+    $form = array();
+    $form[self::prefix . 'Make'] = $this->getEleSelect('Make', 'Make');
+    $form['year'] = $this->getEleYearSelect();
+
+    $form[self::prefix . 'Model'] =
+        $this->getEleSelect('Model', 'Model', array(self::prefix . 'Make'), true);
+    $form[self::prefix . 'Model']['#attributes']['class'] .= ' no-year-dep';
+
+    $form[self::prefix . 'Submodel'] =
+        $this->getEleSelect('Submodel', 'Submodel', array(self::prefix . 'Make', self::prefix . 'Model'));
+
+    $form[self::prefix . 'Body'] =
+        $this->getEleSelect('Body', 'Body', array(self::prefix . 'Make', self::prefix . 'Model'));
+
+    $form['fitment'] = $this->getEleFitment();
+
+    $form['#prefix'] = '<div id="ebapi-fitment-selector">';
+    $form['#suffix'] = '</div>';
+    return $form;
+  }
+
+  private function getSelectedValue()
+  {
+    $dval = (array)json_decode($this->getValue('selected'));
+    $dval = array_map('trim', $dval);
+    asort($dval);
+    return $dval;
+  }
+
+  private function getListEles()
+  {
+    $form = array();
+
+    $form['selected'] = array(
+      '#type' => 'hidden',
+    );
+
+    $form['list'] = array(
+      '#title' => 'Compatibility List <span class="toggle-all">toggle all</span>',
+      '#type' => 'checkboxes',
+      '#prefix' => '<hr/><div id="ebapi-compatibility-list">',
+      '#suffix' => '</div>',
+    );
+
+    $form['del-fitment'] = $this->getEleAhah(
+      array(
+           '#type' => 'submit',
+           '#value' => 'Remove',
+      )
+    );
+
+    $dval = $this->getSelectedValue();
+
+    if(empty($dval)){
+      $form['selected']['#default_value'] = '{}';
+      $form['list']['#options'] = array();
+      $form['del-fitment']['#attributes']['style'] = 'display: none;';
+      $form['msg-empty'] = array(
+        '#type' => 'markup',
+        '#value' => '<div><em>List is empty.</em></div>',
+      );
+    }
+    else{
+      $form['update-fitment'] = array(
+        '#type' => 'submit',
+        '#value' => 'Update',
+        '#prefix' => '<hr/>',
+        '#suffix' => '<div><em>All fitments in Compatibility List will be submitted. No need to check them on.</em></div>',
+      );
+
+      $form['selected']['#default_value'] = json_encode($dval);
+      $form['list']['#options'] = $dval;
+    }
+    return $form;
+  }
+
+  public function getFormEntry()
+  {
+    $form = array();
+    $form['fitment-selector'] = $this->getFitmentSelectorEles();
+    $form['list'] = $this->getListEles();
+
+    drupal_add_css(drupal_get_path('module', 'ebapi_fitment') . '/ebapi_fitment.css');
+    drupal_add_js(drupal_get_path('module', 'ebapi_fitment') . '/ebapi_fitment.js');
+    return $form;
+  }
+}
+
+class Fitment
+{
+  private $ePID;
+
+  public function __construct($ePID)
+  {
+    $this->ePID = $ePID;
+  }
+
+  public function getData()
+  {
+    $sql = 'SELECT * FROM {ebapi_fitment} WHERE `ePID`="%s" LIMIT 1';
+    $rs = db_query($sql, $this->ePID);
+    return db_fetch_object($rs);
+  }
+}
+
+class FitmentQuery
+{
+  private function dropPrefix($name)
+  {
+    if(!is_string($name))
+      return false;
+
+    preg_match('/^' . self::prefix .'(.*)/', $name, $m);
+    return $m[1];
+  }
+
+  private function hasPrefixPars($pars)
+  {
+    foreach($pars as $par){
+      if(!is_string($par))
+        return true;
+
+      if($this->dropPrefix($par))
+        return true;
+    }
+    return false;
+  }
+
+  private function getCri($pars)
+  {
+    $hasPrefix = $this->hasPrefixPars($pars);
+
+    $cri = array();
+    foreach($pars as $par){
+      if($hasPrefix){
+        if($drop = $this->dropPrefix($par)){
+          $cri[$drop] = $this->getValue($par);
+        }
+        else{
+          continue;
+        }
+      }
+      else{
+        $cri[$par] = $this->getValue(self::prefix . $par);
+      }
+    }
+    return $cri;
+  }
+}

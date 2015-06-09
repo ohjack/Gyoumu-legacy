@@ -1,0 +1,5 @@
+; $Id$
+name = GuLib
+description = A pointer to Gulei's external library collection.
+package = Gulei
+core = 6.x

@@ -1,0 +1,95 @@
+<?php
+
+function oerp_purchase_menu()
+{
+  $item = array();
+
+  $item['oerp/purchase_mngn/purchase_order'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_purchase_PurchaseOrder_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $item['oerp/purchase_mngn/compute_rop'] = array(
+    'page callback' => 'oerp_purchase_computeRop',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  return $item;
+}
+
+function oerp_purchase_block($op = 'list', $delta = 0, $edit = array())
+{
+  switch ($op) {
+    case 'list':
+      $blocks[0]['info'] = t('Purchase Mngn');
+      return $blocks;
+
+    case 'view':
+      $items = array(
+        array(
+          'data' => l('Purchase Orders', 'oerp/purchase_mngn/purchase_order'),
+        ),
+        array(
+          'data' => l(
+            'Exception Procurement',
+            'oerp/view/tree/325',
+            array(
+              'query' => 'cri=[["state"%2C"%3D"%2C"exception"]]'
+            )
+          ),
+        ),
+        array(
+          'data' => l(
+            'Compute Orderpoints',
+            'oerp/purchase_mngn/compute_rop'
+          )
+        )
+      );
+
+      $block['subject'] = t('Purchase Mngn');
+      $block['content'] = theme('item_list', $items, null, 'ul', array('class' => 'menu'));
+      return $block;
+  }
+}
+
+function oerp_purchase_PurchaseOrder_form(&$form_state){
+  return OerpViewController::getCustomTreeForm('oerp_purchase', '/xml/purchase_order.xml');
+}
+
+function oerp_purchase_PurchaseOrder_form_submit($form, &$form_state){
+  return oerp_ViewTree_form_submit($form, &$form_state);
+}
+
+function oerp_purchase_computeRop(){
+  $wid = OerpQuery::_execute(
+    array('mrp.procurement.orderpoint.compute'),
+    'create',
+    'wizard'
+  );
+
+  $resp = OerpQuery::_execute(
+    array(
+         (int)$wid,
+         array(
+           'form' => array(
+             'automatic' => 0,
+           )
+         ),
+         'compute'
+    ),
+    'execute',
+    'wizard'
+  );
+
+  if($resp['state'] == 'end'){
+    drupal_set_message('Orderpoints computed. The result may not show immediately, please check here again later.');
+  }
+  else{
+    drupal_set_message('Orderpoint computation failed.', 'error');
+  }
+
+  drupal_goto('oerp/purchase_mngn/purchase_order');
+}

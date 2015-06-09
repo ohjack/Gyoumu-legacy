@@ -1,0 +1,34 @@
+<?php
+
+module_load_include('inc', 'GuLib', '/include/autoload');
+Gulei\Autoloader::register(__DIR__);
+
+require_once __DIR__ . '/lib/autoload.inc';
+
+function amapi_menu()
+{
+  $items = array();
+
+  $items['amapi/test'] = array(
+    'page callback' => 'amapi_test',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+function amapi_test()
+{
+//  require __DIR__ . '/lib/FBAInventoryServiceMWS/Client.php';
+//  require __DIR__ . '/lib/FBAInventoryServiceMWS/Model/ListInventorySupplyRequest.php';
+//  include __DIR__ . '/lib/FBAInventoryServiceMWS/Samples/ListInventorySupplySample.php';
+
+//  include __DIR__ . '/lib/RequestReportSample.php';
+//  include __DIR__ . '/lib/GetReportRequestListSample.php';
+//  include __DIR__ . '/lib/GetReportListSample.php';
+//  include __DIR__ . '/lib/GetReportSample.php';
+  $ctrl = new Amapi\Provider\ActiveListing();
+  $ctrl->getReport('813320865');
+//  dpr($resp);
+  return '';
+}

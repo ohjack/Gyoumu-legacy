@@ -1,0 +1,34 @@
+<tree>
+  <field name="clabel"/>
+  <field name="menu_lv1"/>
+  <field name="menu_lv2"/>
+  <field name="title"/>
+  <field name="format"/>
+  <field name="qty"/>
+  <field name="start_price"/>
+  <field name="buynow_price"/>
+  <field name="shipping_fee"/>
+  <field name="carrier"/>
+  <field name="shipping_term"/>
+  <field name="relist"/>
+  <field name="featuredAmount"/>
+
+  <translate>
+    <func>
+      <src>
+        return $rec['anchor'] . $rec[$name];
+      </src>
+      <fld>title</fld>
+    </func>
+  </translate>
+
+  <validate>
+    <func>
+      <src name="cmd:isUnique"/>
+      <fld>title</fld>
+      <msg>
+        Duplicate title.
+      </msg>
+    </func>
+  </validate>
+</tree>

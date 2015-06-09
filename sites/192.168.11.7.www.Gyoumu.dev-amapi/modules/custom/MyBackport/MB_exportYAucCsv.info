@@ -1,0 +1,5 @@
+; $Id$
+name = MB_exportYAucCsv
+description = exportYAucCsv backport
+package = Gulei
+core = 6.x

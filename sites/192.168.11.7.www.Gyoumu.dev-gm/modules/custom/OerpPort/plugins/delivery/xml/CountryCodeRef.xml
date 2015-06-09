@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tree>
+  <param name="oerp:model">res.country</param>
+  
+  <field name="code"/>
+  <field name="name"/>
+</tree>

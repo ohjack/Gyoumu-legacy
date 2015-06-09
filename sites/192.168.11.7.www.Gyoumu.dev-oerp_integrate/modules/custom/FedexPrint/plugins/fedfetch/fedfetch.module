@@ -1,0 +1,120 @@
+<?php
+
+include_once 'fedfetch.inc';
+module_load_include('inc', 'GuLib', 'include/GuTable');
+
+function fedfetch_menu(){
+  $items = array();
+
+  $items['fedfetch/%/record/%'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fedfetch_record_form', 1, 3),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  return $items;
+}
+
+function fedfetch_record_form(&$form_state, $custId, $date){
+  if($red = $form_state['storage']['redirect']){
+    header('Location: ' . $red);
+    return;  
+  }
+
+  $f = ExportRecFetcherFactory::getFetcher($custId);
+  $date = explode('-', $date);
+
+  if(!$date[2]){
+    $recs = $f->getMonthRecord(intval($date[0]), intval($date[1]));
+    $monthly = true;  
+  }
+  else{
+    $recs = $f->getDayRecord(intval($date[0]), intval($date[1]), intval($date[2]));
+    $monthly = false;
+  }
+  
+  $recs = $f->parseRecords($recs);
+  
+  $arch = '
+    <tree>
+      <param name="count">1</param>
+      
+      <field name="date" string="日期"/>
+      <field name="pid_tail" string="報單序號"/>
+      <field name="buyer" string="買受人"/>
+      <field name="item" string="貨名"/>
+      <field name="piece" string="數量"/>
+      <field name="func:price" string="金額(NTD)"/>
+      <field name="fob" string="離岸價格(NTD)"/>
+      <field name="sh.fee" string="運費(USD)"/>
+      <field name="insur" string="保額(USD)"/>
+      <field name="curr" string="匯率"/>
+      
+      <translate>
+        <func>
+          <src><![CDATA[
+            $cur = (float)$rec["curr"];
+            return round($rec["fob"] + $rec["sh.fee"] * $cur + $rec["insur"] * $cur);
+          ]]></src>
+          
+          <fld>func:price</fld>
+        </func>
+      </translate>
+      
+      <validate>
+        <function>
+          <source name="func:isUnique"/>          
+          <field>buyer</field>
+        </function>
+      </validate>
+    </tree>
+  ';
+  
+  $t = new \Gulei\Table\Arch($arch, $recs);
+
+  $form = array();
+  $form['download-csv'] = array(
+    '#type' => 'submit',
+    '#value' => 'Download CSV',
+    '#name' => 'download-csv',
+  );
+
+  $form['list'] = array(
+    '#type' => 'markup',
+    '#obj' => $t->save(),
+    '#value' => $monthly ? 'Total: ' . count($recs) . ' record(s).' : $t->theme(),
+  );
+  
+  return $form;
+}
+
+function fedfetch_record_form_submit($form, &$form_state){
+  $obj = $form['list']['#obj']->renew();
+  
+  switch($form_state['clicked_button']['#name']){
+    case 'download-csv':
+      $opt = array('mark_validate' => false, 'mark_translated' => false);
+      $form_state['storage']['redirect'] = $obj->getCsvFile($opt, 'CustomExportReport');
+      break;
+  }
+}
+
+function fedfetch_cron()
+{
+  foreach(ExportRecFetcherFactory::getAllFetchers() as $fetcher){
+    for($c = 2; $c <= 33; $c++){
+      $Date = new DateTime('today -' . $c . ' day');
+      $toks = explode('-', $Date->format('Y-m-d'));
+
+      $resp = $fetcher->saveDailyRaw($toks[0], $toks[1], $toks[2]);
+      if($resp == ExportRecFetcherFedex::REMOTE_DATA_FETCHED){
+        watchdog(
+          'fedfetch',
+          sprintf('Saved record of %s %s.', $fetcher->getCustId(), $Date->format('Y-m-d'))
+        );
+        break;
+      }
+    }
+  }
+}

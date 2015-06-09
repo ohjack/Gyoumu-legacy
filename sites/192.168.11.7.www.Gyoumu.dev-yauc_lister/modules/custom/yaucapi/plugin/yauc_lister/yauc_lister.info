@@ -1,0 +1,4 @@
+name = Lister
+dependencies[] = yaucapi
+package = YahooJp Auction
+core = 6.x

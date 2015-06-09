@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenShipments xmlns="x-schema:OpenShipments.xdr">
+	<OpenShipment ShipmentOption="" ProcessStatus="">
+		<ShipTo>
+			<CompanyOrName>ACI Express, Inc. Los Angeles Br</CompanyOrName>
+			<Attention>ACI Express, Inc. Los Angeles Br</Attention>
+			<Address1>2218 E.Gladwick Street</Address1>
+			<Address2>( #270674194150 )</Address2>
+			<Address3/>
+			<CountryTerritory>US</CountryTerritory>
+			<PostalCode>90220</PostalCode>
+			<CityOrTown>Rancho Dominguez</CityOrTown>
+			<StateProvinceCounty>CA</StateProvinceCounty>
+			<Telephone>00</Telephone>
+		</ShipTo>
+		<ShipmentInformation>
+			<ServiceType/>
+			<PackageType/>
+			<NumberOfPackages>1</NumberOfPackages>
+			<ShipmentActualWeight>1</ShipmentActualWeight>
+			<ShipmentDimensionalWeight>1</ShipmentDimensionalWeight>
+			<DescriptionOfGoods>Car Moulding(1)</DescriptionOfGoods>
+			<Reference1>PACK1717</Reference1>
+			<Reference2>UPS print test00</Reference2>
+			<BillingOption/>
+		</ShipmentInformation>
+		<InternationalDocumentation>
+			<InvoiceReasonForExport>02</InvoiceReasonForExport>
+			<InvoiceCurrencyCode>USD</InvoiceCurrencyCode>
+			<InvoiceLineTotal>1</InvoiceLineTotal>
+		</InternationalDocumentation>
+		<Goods>
+			<PartNumber/>
+			<DescriptionOfGood>Car Moulding(1)</DescriptionOfGood>
+			<Inv-NAFTA-TariffCode/>
+			<Inv-NAFTA-CO-CountryTerritoryOfOrigin>TW</Inv-NAFTA-CO-CountryTerritoryOfOrigin>
+			<InvoiceUnits>1</InvoiceUnits>
+			<InvoiceUnitOfMeasure>EA</InvoiceUnitOfMeasure>
+			<Invoice-SED-UnitPrice>45</Invoice-SED-UnitPrice>
+			<InvoiceCurrencyCode>USD</InvoiceCurrencyCode>
+			<InvoiceNetWeight/>
+		</Goods>
+	</OpenShipment>
+</OpenShipments>

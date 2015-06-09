@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<tree name="view" string="Packaging">
+  <param name="oerp:model">product.product</param>
+
+  <field name="default_code" string="SKU"/>
+  <field name="name" string="Name"/>
+  <field name="packaging">
+    <field name="name" string="Pkg. Type"/>
+    <field name="length" string="Length"/>
+    <field name="width" string="Width"/>
+    <field name="height" string="Height"/>
+    <field name="weight" string="Weight"/>
+  </field>
+</tree>

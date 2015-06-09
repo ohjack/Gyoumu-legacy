@@ -1,0 +1,6 @@
+name = PurM
+description = Customized Purchase management using OpenERP.
+package = OpenERP
+dependencies[] = GuLib
+dependencies[] = oerp
+core = 6.x

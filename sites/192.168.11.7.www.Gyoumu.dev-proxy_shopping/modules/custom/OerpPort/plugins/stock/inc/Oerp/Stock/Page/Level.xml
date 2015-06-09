@@ -1,0 +1,16 @@
+<tree>
+  <param name="oerp:model">product.product</param>
+  <field name="default_code" string="SKU"/>
+  <field name="name" string="Product Name"/>
+  <field name="qty_available" string="Real Stock"/>
+  <field name="virtual_available" string="Virtual Stock"/>
+  <field name="func:safestock" string="Safety Stock"/>
+  <field name="state" string="Status"/>
+
+  <translate>
+    <func>
+      <src name="cmd:Oerp\Stock\Command\SafetyStock"/>
+      <fld>func:safestock</fld>
+    </func>
+  </translate>
+</tree>

@@ -1,0 +1,4 @@
+name = custom
+description = Customization for Gyoumu.
+package = Gulei
+core = 6.x

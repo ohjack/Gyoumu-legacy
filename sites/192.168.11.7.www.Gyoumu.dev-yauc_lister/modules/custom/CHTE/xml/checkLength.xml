@@ -1,0 +1,32 @@
+<tree>
+  <field name="clabel" string="SKU"/>
+  <field name="title" string="Title"/>
+  <field name="func:len" string="Length"/>
+  
+  <translate>
+    <func>
+      <src><![CDATA[
+        preg_match_all('/./u', $rec['title'], $m);
+        $count = 0.0;
+        
+        foreach($m[0] as $char){
+          $count += preg_match('/[[:print:]]/u', $char)
+            ? 0.5 : 1;
+        }
+        return $count;
+      ]]></src>
+  
+      <fld>func:len</fld>
+    </func>
+  </translate>
+  
+  <validate>
+    <func>
+      <src><![CDATA[
+        return (float)$rec[$name] <= 30;
+      ]]></src>
+      
+      <fld>func:len</fld>
+    </func>
+  </validate>
+</tree>

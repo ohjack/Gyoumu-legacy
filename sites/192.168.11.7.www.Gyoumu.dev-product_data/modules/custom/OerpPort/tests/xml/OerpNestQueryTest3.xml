@@ -1,0 +1,116 @@
+<tree name="select:order_id" model="stock.picking" mapped="2">
+
+  <param name="type" mapped="2">select-many</param>
+  <param name="action" mapped="2">select</param>
+  <param name="merge" mapped="2">1</param>
+  <!--
+      <tal:block tal:condition="exists:state/done">
+        <param name="pager">1</param>
+        <param name="items_per_page" tal:content="param/items_per_page"/>
+        <param name="page" tal:content="param/page"/>
+      </tal:block>
+  -->
+
+
+  <param name="oerp:model" mapped="2">stock.picking</param>
+
+
+  <param name="oerp:criteria" mapped="2">[["type", "=", "delivery"],["state","=","assigned"]]</param>
+
+
+  <param name="oerp:ids" mapped="2">null</param>
+
+
+  <field name="x_seller" string="Seller" mapped="2"/>
+  <field name="name" string="Ref." mapped="2"/>
+  <field name="state" string="Status" mapped="2"/>
+
+  <field name="date" string="O.Date" mapped="2"/>
+
+
+  <field name="origin" string="O.ID" mapped="2"/>
+  <field name="move_lines" mapped="2">
+    <field name="product_id" anchor="move_lines" mapped="2">
+      <field name="default_code" string="SKU" anchor="move_lines.product_id" mapped="2"/>
+    </field>
+    <field name="product_qty" string="Qty" anchor="move_lines" mapped="2"/>
+    <field name="note" string="Rmrk" anchor="move_lines" mapped="2"/>
+
+  </field>
+  <field name="address_id" select="1" mapped="2">
+    <field name="name" string="Buyer" anchor="address_id" mapped="2"/>
+
+
+    <field name="state_id" anchor="address_id" mapped="2">
+
+
+      <field name="country_id" string="Country" anchor="address_id.state_id" mapped="2"/>
+    </field>
+  </field>
+
+  <field name="x_cust_val" string="C.Value" mapped="2"/>
+  <field name="carrier_id" string="Carrier" mapped="2">
+    <param name="filter" mapped="2">1</param>
+  </field>
+
+  <field name="x_tnum" string="Track #" mapped="2"/>
+
+
+  <translate mapped="2">
+    <function mapped="2">
+      <source name="cmd:Oerp\Command\getFedexTrack" mapped="2">
+        <arg mapped="2">carrier_id</arg>
+      </source>
+      <src name="func:getUpsTrack" mapped="2"/>
+
+      <field mapped="2">x_tnum</field>
+    </function>
+
+    <function mapped="2">
+      <source name="func:explode" mapped="2">
+        <arg mapped="2"></arg>
+        <arg mapped="2">0</arg>
+      </source>
+
+      <field mapped="2">date_done</field>
+    </function>
+
+    <function mapped="2">
+      <source name="func:appendChkCode" mapped="2"/>
+      <src mapped="2"><![CDATA[
+          return sprintf(
+            '<a href="%s"><span class="gu_value">%s</span></a>',
+            '?q=oerpport/delivery/order/' . $rec['id'] . '/detail', $rec[$name]
+          );
+        ]]></src>
+
+      <field mapped="2">name</field>
+    </function>
+
+    <func mapped="2">
+      <src mapped="2">
+        return preg_replace(
+        array("@Confirmed@", "@Available@"),
+        array("OoS", "Ready"),
+        $rec[$name]
+        );
+      </src>
+
+      <fld mapped="2">state</fld>
+      <fld mapped="2">move_lines.state</fld>
+    </func>
+
+  </translate>
+
+  <validate mapped="2">
+    <func type="sep" mapped="2">
+      <src name="func:beforeCloseTime" mapped="2"/>
+      <fld mapped="2">date</fld>
+      <msg mapped="2">Out of close time</msg>
+    </func>
+  </validate>
+
+  <filter mapped="2">
+
+  </filter>
+</tree>

@@ -1,0 +1,5 @@
+name = Gallery
+description = Gallery Management
+package = OpenERP
+core = 6.x
+dependencies[] = oerp

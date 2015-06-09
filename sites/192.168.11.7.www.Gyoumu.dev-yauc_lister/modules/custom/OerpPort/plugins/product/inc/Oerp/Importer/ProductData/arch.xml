@@ -1,0 +1,78 @@
+<tree string="Import Product Data">
+  <field name="Owner"/>
+  <field name="SKU"/>
+  <field name="Name"/>
+  <field name="Supplier"/>
+  <field name="P/N"/>
+  <field name="Currency"/>
+  <field name="Main Cost"/>
+  <field name="Main Moq"/>
+
+  <translate>
+    <func>
+      <src name="func:trim"/>
+      <fld>Owner</fld>
+      <fld>SKU</fld>
+      <fld>Name</fld>
+      <fld>Supplier</fld>
+      <fld>Currency</fld>
+    </func>
+
+    <func>
+      <src><![CDATA[
+          return strtoupper(substr($rec[$name], 0, 2));
+      ]]></src>
+      <fld>SKU</fld>
+    </func>
+  </translate>
+
+  <validate>
+    <func>
+      <src name="cmd:isAscii"/>
+      <fld>SKU</fld>
+    </func>
+
+    <func>
+      <src name="cmd:Oerp\Command\existValue">
+        <arg>res.users</arg>
+        <arg/>
+        <arg>login</arg>
+      </src>
+      <fld>Owner</fld>
+      <msg>
+        Not found in database.
+      </msg>
+    </func>
+
+    <func>
+      <src name="cmd:Oerp\Command\existValue">
+        <arg>res.partner</arg>
+        <arg/>
+        <arg>name</arg>
+      </src>
+      <fld>Supplier</fld>
+      <msg>
+        Not found in database.
+      </msg>
+    </func>
+
+    <func>
+      <src name="cmd:Oerp\Command\match">
+        <arg>res.partner</arg>
+        <arg>[["name", "=", "${Supplier}"],["supplier", "=", true]]</arg>
+        <arg>["id", "property_product_pricelist_purchase"]</arg>
+        <arg><![CDATA[
+          list($rec, $name) = $ref->vals('rec', 'name');
+          $cur = $rec[$name];
+          $pl_name = $ret[0]['property_product_pricelist_purchase'][1];
+          return strpos($pl_name, $cur) !== false
+            ? true : false;
+        ]]></arg>
+      </src>
+      <fld>Currency</fld>
+      <msg>
+        Currency not matched.
+      </msg>
+    </func>
+  </validate>
+</tree>

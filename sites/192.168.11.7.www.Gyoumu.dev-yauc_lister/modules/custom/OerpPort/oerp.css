@@ -1,0 +1,173 @@
+.hide {
+  display: none; }
+
+div.oerp-button {
+  cursor: pointer;
+  margin: 2px;
+  padding: 2px;
+  float: left; }
+
+span.field-suffix div.oerp-button {
+  padding: 3px; }
+
+span.field-suffix div.oerp-button.ui-state-hover {
+  padding: 2px; }
+
+span.oerp-icon {
+  font-size: 13px;
+  width: 16px;
+  height: 16px; }
+
+table.merge tr.odd, table.merge tr.even {
+  background-color: transparent; }
+
+table.merge td.oerp_odd {
+  background-color: #F5F6F7; }
+
+table.oerp strong {
+  color: #c00; }
+
+div.inline-ele div.form-item {
+  display: inline; }
+
+form.oerp table input {
+  width: 100%; }
+
+div.oerp-view {
+  margin-top: 1em; }
+
+div.oerp-view div.caption {
+  margin: 1.5em 3px 1.5em 0;
+  padding: 0 0 1px 0.5em;
+  border: 0 solid #666;
+  border-bottom-width: 1px;
+  font-size: 116%;
+  font-weight: bold; }
+
+div.oerp-view div.caption.title {
+  font-size: 131%;
+  padding: 0.5em;
+  border-width: 0 0 2px 0;
+  margin-bottom: 2em; }
+
+div.oerp-view table {
+  width: 100%; }
+
+div.oerp-view label {
+  color: #666; }
+
+div.oerp-view div.description {
+  color: #666;
+  /*  display: none; */ }
+
+div.oerp-view div.oerp-widget-content {
+  border-style: none;
+  margin: 1em 0; }
+
+div.oerp-view div.ui-tabs {
+  margin-top: 2em; }
+
+div.oerp-view ul.ui-tabs-nav li {
+  list-style-type: none; }
+
+div.oerp-view.prompt.new input[type="submit"][button_type] {
+  display: none; }
+
+div.oerp-formeditor div.form-item label {
+  white-space: normal; }
+
+.hide_src pre {
+  display: none; }
+
+div.oerp_debug {
+  float: left; }
+
+div.oerp_debug label {
+  cursor: pointer; }
+
+div.oerp_debug pre {
+  position: absolute;
+  background-color: #ffc;
+  border: 1px solid silver;
+  padding: 0.5em;
+  z-index: 100; }
+
+form.oerp-formview table.oerp-treeview {
+  margin: 0 4px 0 0; }
+
+table.oerp-treeview tr td.translated {
+  font-weight: inherit;
+  color: inherit; }
+table.oerp-treeview td[gu_name] a {
+  color: #900; }
+table.oerp-treeview td.oerp-op,
+table.oerp-treeview td.oerp-op-2 {
+  width: 53px; }
+table.oerp-treeview tr.selected.merge-even td {
+  background-color: #e6e6ad; }
+table.oerp-treeview tr.selected.merge-odd td {
+  background-color: #ffffc0; }
+table.oerp-treeview tr.toChange td {
+  background-color: #ffd9b3; }
+table.oerp-treeview tr.toDelete td {
+  background-color: #fcc;
+  text-decoration: line-through; }
+table.oerp-treeview tr.oerp-tpl {
+  display: none; }
+table.oerp-treeview.empty tr.oerp-tpl {
+  display: table-row; }
+  table.oerp-treeview.empty tr.oerp-tpl td * {
+    display: none; }
+table.oerp-treeview tr.oerp-tpl td.oerp-op * {
+  display: none; }
+table.oerp-treeview.select-one tr[oerp_rid] {
+  cursor: pointer; }
+table.oerp-treeview.merge tr.oerp_odd td {
+  background-color: #f6f6f6; }
+table.oerp-treeview.merge tr.oerp_even td {
+  background-color: #eee; }
+
+span.oerp-changed {
+  color: #bf0000;
+  text-decoration: line-through; }
+
+form.oerp-formview div.form-item label sup {
+  color: orange;
+  font-weight: normal; }
+
+form.oerp-formview div.form-item input.with_op + span.field-suffix {
+  float: right;
+  display: block; }
+
+form.oerp-formview div.form-item input[type="submit"] {
+  margin-top: -1px;
+  font-size: 0.9em; }
+
+form.oerp-formview div.form-item input.with_op + span.field-suffix div.ui-state-disabled.ui-state-hover {
+  background: transparent none;
+  border: 1px solid transparent; }
+
+form.oerp-formview div.description {
+  display: none; }
+
+#tooltip {
+  max-width: 300px;
+  white-space: normal;
+  position: absolute;
+  font-size: 0.9em;
+  background-color: #333;
+  padding: 6px;
+  color: white;
+  border: 1px solid #fff;
+  z-index: 2000; }
+
+form.oerp-formview div.searchpanel {
+  border: 0 solid #eee;
+  border-bottom-width: 2px; }
+
+.ui-datepicker {
+  z-index: 9999 !important; }
+
+div.panes div.pane {
+  margin: 5px;
+  float: left; }

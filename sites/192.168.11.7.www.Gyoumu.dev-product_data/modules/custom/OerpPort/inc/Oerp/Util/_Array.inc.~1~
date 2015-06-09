@@ -1,0 +1,46 @@
+<?php
+namespace Oerp\Util;
+
+class _Array extends \Gulei\_Array\Basic
+{
+  public function inherit(&$recs, $prefix = null, &$anchor = null){
+    if(empty($recs)){
+      $recs[] = array();
+      $anchor = &$recs[0];
+    }
+    $rec = array();
+
+    foreach($this as $name => $each){
+      if(is_numeric($name)){
+        $inner = new \Oerp\Util\_Array($each);
+
+        if((int)$name > 0){
+          $recs[] = array();
+          $last_ind = count($recs) - 1;
+          $recs[$last_ind] = $inner->inherit($recs, $prefix, $recs[$last_ind]);
+        }
+        else{
+          $inner_rec = $inner->inherit($recs, $prefix, $anchor);
+          $rec = array_merge($anchor, $inner_rec);
+
+          if(empty($recs[0])){
+            $anchor = array_merge($anchor, $rec);
+          }
+        }
+      }
+      else{
+        $key = empty($prefix) ? $name : $prefix . '.' . $name;
+
+        if(is_array($each)){
+          $inner = new \Oerp\Util\_Array($each);
+          $rec = array_merge($rec, $inner->inherit($recs, $key, $rec));
+        }
+        else{
+          $rec[$key] = $each;
+        }
+      }
+    }
+
+    return $rec;
+  }
+}

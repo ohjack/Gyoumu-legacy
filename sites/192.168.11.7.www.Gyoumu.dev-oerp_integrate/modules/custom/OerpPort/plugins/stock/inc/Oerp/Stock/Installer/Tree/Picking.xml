@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<tree color="red:state=='cancel'" string="Input / Output">
+  <field name="type"/>
+  <field name="name"/>
+  <field name="origin"/>
+  <field name="address_id"/>
+  <field name="backorder_id"/>
+  <field name="date"/>
+  <field name="min_date"/>
+  <field name="state"/>
+</tree>

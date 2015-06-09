@@ -1,0 +1,331 @@
+<?php
+
+module_load_include('inc', 'GuLib', 'autoload');
+\Gulei\Autoloader::register(__DIR__);
+
+require_once 'yaucapi.inc';
+  
+function yaucapi_menu(){
+  $items = array();
+  
+  $items['yaucapi/test'] = array(
+    'page callback' => 'yaucapi_test',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['admin/settings/yaucapi'] = array(
+    'title' => 'YAucAPI',
+    'description' => 'Manage Yahoo Auction account settings.',
+    'page callback' => 'yaucapi_list',
+    'access arguments' => array('administer YAucAPI'),
+    'file' => 'yaucapi.admin.inc',
+  );
+  
+  $items['admin/settings/yaucapi/list'] = array(
+    'title' => 'List',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+  );
+  
+  $items['admin/settings/yaucapi/add/seller'] = array(
+    'title' => 'Add a new seller',
+    'description' => 'Add a new seller with individual AppID and Custom Label list.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('yaucapi_form_seller'),
+    'access arguments' => array('administer YAucAPI'),
+    'type' => MENU_LOCAL_TASK,
+    'parent' => 'admin/settings/yaucapi',
+    'file' => 'yaucapi.admin.inc'
+  );
+  
+  $items['admin/settings/yaucapi/seller/edit/%'] = array(
+    'title' => 'Edit an existing seller',
+    'description' => 'Edit Seller ID, AppID, Custom Label list.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('yaucapi_form_seller', 5),
+    'access arguments' => array('administer YAucAPI'),
+    'file' => 'yaucapi.admin.inc',
+  );
+  
+  $items['admin/settings/yaucapi/seller/delete/%'] = array(
+    'title' => 'Delete a seller.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('yaucapi_seller_confirm_delete', 5),
+    'access arguments' => array('administer YAucAPI'),
+    'file' => 'yaucapi.admin.inc',
+  );
+  
+  $items['yaucapi/sellers/view'] = array(
+    'title' => 'Yahoo Auction Sellers',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('yaucapi_sellers_view_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['yaucapi/seller/%/auctions/view'] = array(
+    'title' => 'Yahoo Auctions',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('yaucapi_sellerAuctionsSold_form', 2, 'sold'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['yaucapi/seller/%/auctions/view/active'] = array(
+    'title' => 'Active',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('yaucapi_sellerAuctionsActive_form', 2),
+    'access callback' => true,
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 1,
+  );
+  
+  $items['yaucapi/seller/%/auctions/view/sold'] = array(
+    'title' => 'Sold',
+    'access callback' => true,
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 2,
+  );
+  
+  $items['yaucapi/seller/%/auctions/view/unsold'] = array(
+    'title' => 'Unsold',
+    'page callback' => 'yaucapi_sellerAuctionsUnsold',
+    'page arguments' => array(2),
+    'access callback' => true,
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 3,
+  );
+
+  $items['yaucapi/seller/%/auctions/view/relist'] = array(
+    'title' => 'Relist',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('yaucapi_sellerAuctionsRelist_form', 2),
+    'access callback' => true,
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 4,
+  );
+
+  $items['yaucapi/seller/%/auctions/offline'] = array(
+    'page callback' => 'yaucapi_sellerAuctionsOffline',
+    'page arguments' => array(2),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['yaucapi/seller/%/authenticate'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('yaucapi_sellerAuthenticate_form', 2),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+
+  $items['yaucapi/ignore/%'] = array(
+    'page callback' => 'yaucapi_ignore',
+    'page arguments' => array(2),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['yaucapi/unignore/%'] = array(
+    'page callback' => 'yaucapi_ignore',
+    'page arguments' => array(2, true),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['yaucapi/kill/%'] = array(
+    'page callback' => 'yaucapi_kill',
+    'page arguments' => array(2),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['yaucapi/unkill/%'] = array(
+    'page callback' => 'yaucapi_kill',
+    'page arguments' => array(2, false),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+function yaucapi_block($op = 'list', $delta = 0, $edit = array())
+{
+  switch($op){
+    case 'list':
+      $blocks[0]['info'] = t('YahooJp Auction');
+      return $blocks;
+
+    case 'view':
+      $items = array();
+      $items['sellers'] = array(
+        'data' => l('Sellers', 'yaucapi/sellers/view'),
+        'children' => array(),
+      );
+
+      foreach(_yaucapi_get_sellers() as $seller){
+        $sellerId = $seller->seller_id;
+        $items['sellers']['children'][] = array(
+          'data' => l($sellerId, "yaucapi/seller/$sellerId/auctions/view")
+        );
+      }
+
+      $block['subject'] = t('YahooJp Auction');
+      $block['content'] = theme('item_list', $items, null, 'ul', array('class' => 'menu'));
+      return $block;
+  }
+}
+
+function yaucapi_perm(){
+  return array('administer YAucAPI');
+}
+
+function yaucapi_sellers_view_form(&$form_state){
+  $p = new \Yauc\Page\SellersView($form_state);
+  return $p->hook_form($form_state);
+}
+
+function yaucapi_sellerAuctionsOffline($sel_id){
+  $a = new GuYauc($sel_id);
+
+  $output = '';
+  $output .= '<h1>Offline SKUs of seller ' . $sel_id . '</h1>';
+  $output .= l('View online auctions', 'yaucapi/seller/' . $sel_id . '/auctions/view');
+  $output .= $a->getOfflineSkus(
+    array('asList' => true, 'sort' => true)
+  );
+
+  return $output;
+}
+
+function yaucapi_sellerAuthenticate_form(&$form_state, $sellerId){
+  $a = new GuYapi($sellerId);
+  return $a->getAuthEles();
+}
+
+function yaucapi_sellerAuthenticate_form_submit($form, &$form_state){
+  $auth = new GuYapi($form_state['values']['sellerId']);
+  $reqTok = unserialize($_POST['requestToken']);
+  $auth->saveAccessToken($reqTok, $form_state['values']['verifier']);
+}
+
+function yaucapi_sellerAuctionsActive_form(&$form_state, $sellerId)
+{
+  $ctrl = new \Yauc\Page\Listings\Active($form_state);
+  return $ctrl->hook_form($form_state, $sellerId);
+}
+
+function yaucapi_sellerAuctionsActive_form_submit($form, &$form_state)
+{
+  $ctrl = new \Yauc\Page\Listings\Active($form_state);
+  $ctrl->hook_form_submit($form, &$form_state);
+}
+
+function yaucapi_sellerAuctionsUnsold($sellerId){
+  $t = new \Yauc\Table\Listings\Unsold($sellerId);
+  return $t->theme(null);
+}
+
+function yaucapi_sellerAuctionsClosed_form_submit($form, &$form_state){
+  $funcSortDownload = create_function(
+    '$a,$b',
+    'return strcmp($a["time_end"], $b["time_end"]);'
+  );
+
+  $t = $form['list']['#obj']->renew();
+
+  $form_state['storage']['redirect'] =
+    $t->getCsvFile(
+      array('sort' => $funcSortDownload),
+      'YahooOrderRaw'
+    );
+}
+
+function yaucapi_sellerAuctionsSold_form(&$form_state, $sellerId)
+{
+  $ctrl = new \Yauc\Page\Listings\Sold($form_state);
+  return $ctrl->hook_form($form_state, $sellerId);
+}
+
+function yaucapi_sellerAuctionsSold_form_submit($form, &$form_state){
+  $ctrl = new \Yauc\Page\Listings\Sold($form_state);
+  return $ctrl->hook_form_submit($form, $form_state);
+}
+
+function yaucapi_cron(){
+  $sellers = _yaucapi_get_sellers();
+  
+  foreach($sellers as $seller){
+    $y = new GuYauc($seller->seller_id);
+    $y->cron();
+  }
+}
+
+function yaucapi_sellerAuctionsRelist_form(&$form_state, $sellerId)
+{
+  $ctrl = new \Yauc\Page\Listings\Relist($form_state);
+  return $ctrl->hook_form($form_state, $sellerId);
+}
+
+function yaucapi_sellerAuctionsRelist_form_submit($form, &$form_state)
+{
+  $ctrl = new \Yauc\Page\Listings\Relist($form_state);
+  return $ctrl->hook_form_submit($form, $form_state);
+}
+
+function yaucapi_ignore($auc_id, $restore = false)
+{
+  $rec = db_fetch_object(
+    db_query('SELECT status, seller_id FROM {yaucapi_auction} WHERE auc_id="%s"', $auc_id));
+
+  $newRec = new stdClass();
+  $newRec->auc_id = $auc_id;
+
+  if ($restore) {
+    switch ($rec->status) {
+      case YAPI_AUC_SOLD_IGNORE:
+        $newRec->status = YAPI_AUC_SOLD;
+        drupal_write_record('yaucapi_auction', $newRec, 'auc_id');
+        break;
+
+      case YAPI_AUC_CLOSE_IGNORE:
+        $newRec->status = YAPI_AUC_CLOSE;
+        drupal_write_record('yaucapi_auction', $newRec, 'auc_id');
+        break;
+    }
+  }
+  else {
+    switch ($rec->status) {
+      case YAPI_AUC_SOLD:
+        $newRec->status = YAPI_AUC_SOLD_IGNORE;
+        drupal_write_record('yaucapi_auction', $newRec, 'auc_id');
+        break;
+
+      case YAPI_AUC_CLOSE:
+        $newRec->status = YAPI_AUC_CLOSE_IGNORE;
+        drupal_write_record('yaucapi_auction', $newRec, 'auc_id');
+        break;
+    }
+  }
+
+  drupal_goto('yaucapi/seller/' . $rec->seller_id . '/auctions/view/relist');
+}
+
+function yaucapi_kill($auc_id, $val = true)
+{
+  $FlagCtrl = new YaucFlagController($auc_id);
+  $FlagCtrl->setFlag('to_kill', $val);
+
+  $Rec = new YaucRecord($auc_id);
+  $val = $Rec->getValue();
+  drupal_goto('yaucapi/seller/' . $val->seller_id . '/auctions/view/relist');
+}
+
+function yaucapi_test(){
+  yaucapi_cron();
+  return '';
+}
+

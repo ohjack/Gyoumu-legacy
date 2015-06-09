@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<form string="Product">
+  <group colspan="4" col="4">
+    <separator string="Product Description" colspan="4"/>
+    <field name="name" select="1" colspan="4"/>
+    <field name="default_code"  string="SKU" select="1" colspan="1"/>
+    <field groups="base.group_extended" name="variants" colspan="3"/>
+  </group>
+
+  <notebook colspan="4">
+    <page string="Information">
+      <group colspan="2" col="2" name="status">
+        <field name="state" select="1"/>
+        <field name="product_manager" select="1"/>
+      </group>
+      <group colspan="2" col="2" name="status">
+        <field name="purchase_ok"/>
+        <field name="sale_ok"/>
+      </group>
+    </page>
+
+    <page string="Prices &amp; Suppliers">
+      <field colspan="4" name="seller_ids" nolabel="1"/>
+    </page>
+
+    <page string="Descriptions">
+      <field colspan="4" name="description"/>
+      <field colspan="4" name="description_sale"/>
+      <field colspan="4" name="description_purchase"/>
+    </page>
+    <page groups="base.group_extended" string="Packaging">
+      <field colspan="4" name="packaging" nolabel="1">
+        <form string="Packaging">
+          <group colspan="2" col="2">
+            <field name="ul"/>
+            <field name="weight"/>
+          </group>
+          <group colspan="2" col="2">
+            <field name="length"/>
+            <field name="width"/>
+            <field name="height"/>
+          </group>
+        </form>
+      </field>
+    </page>
+  </notebook>
+</form>

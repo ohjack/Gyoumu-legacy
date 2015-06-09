@@ -1,0 +1,31 @@
+<?php
+
+function oerp_stock_menu(){
+  $item = array();
+  return $item;
+}
+
+function oerp_stock_block($op = 'list', $delta = 0, $edit = array()){
+  switch($op){
+    case 'list':
+      $blocks[0]['info'] = t('Stock Mngn');
+      return $blocks;
+      
+    case 'view':
+      $items = array(
+        array(
+          'data' => l('Input / Output', 'oerp/view/tree/360')
+        ),
+        array(
+          'data' => l('Periodical Inventory', 'oerp/view/tree/362')
+        ),
+        array(
+          'data' => l('Minimum Stock Rules', 'oerp/view/tree/327')
+        ),
+      );
+      
+      $block['subject'] = t('Stock Mngn');
+      $block['content'] = theme('item_list', $items, null, 'ul', array('class' => 'menu'));
+      return $block;
+  }
+}

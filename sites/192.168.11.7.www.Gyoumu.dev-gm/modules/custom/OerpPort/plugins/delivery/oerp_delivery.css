@@ -1,0 +1,11 @@
+div.item-list ul.oerp-delivery-filter li {
+  list-style: none;
+  /*font-size: 123.1%;*/
+  float: left; }
+  div.item-list ul.oerp-delivery-filter li a {
+    color: #900; }
+
+table.summary {
+  width: auto; }
+  table.summary th, table.summary td {
+    width: 30px; }

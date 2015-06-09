@@ -1,0 +1,110 @@
+<?php
+
+module_load_include('inc', 'GuLib', 'autoload');
+\Gulei\Autoloader::register(__DIR__);
+
+function oerp_product_menu()
+{
+  $item = array();
+
+  $item['oerp/product_mngn/purchase_pricelist/best'] = array(
+    'page callback' => 'oerp_product_PurchasePricelist_best',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $item['oerp/product_mngn/update/product'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('gulib_csv_import_form', 'Oerp\Importer\ProductData'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  return $item;
+}
+
+function oerp_product_block($op = 'list', $delta = 0, $edit = array())
+{
+  switch ($op) {
+    case 'list':
+      $blocks[0]['info'] = t('Product Mngn');
+      return $blocks;
+
+    case 'view':
+      $items = array(
+        array(
+          'data' => \Oerp\Link\Tree::create('Products', 'x_product.product.tree'),
+          'children' => array(
+            array(\Gulei\Link\Page::create('In Development', "Oerp\\Product\\Page\\InDev")),
+            array(\Oerp\Link\Tree::create('Package Type', 'x_product.ul.tree')),
+            array(\Gulei\Link\Page::create('Packaging', "Oerp\\Product\\Page\\Packaging")),
+          ),
+        ),
+        array(
+          'data' => \Gulei\Link\Page::create('Suppliers', "Oerp\\Product\\Page\\Suppliers")
+        ),
+        array(
+          'data' => \Oerp\Link\Tree::create('BoM', 'mrp.bom.tree')
+        ),
+        array(
+          'data' => \Gulei\Link\Page::create('Purchase pricelist', "Oerp\\Product\\Page\\PurchasePricelist"),
+        ),
+      );
+
+      $block['subject'] = t('Product Mngn');
+      $block['content'] = theme('item_list', $items, null, 'ul', array('class' => 'menu'));
+      return $block;
+  }
+}
+
+function oerp_product_oerp_formview_fields(){
+  $hooks = array();
+  $hooks['x_product.product.form'] = array(
+    'state' => array(
+      'default_value' => 'draft',
+      'required' => 1,
+    ),
+    'default_code' => array(
+      'required' => 1,
+      'type' => 'SkuEditor'
+    ),
+    'description' => array(
+      'type' => 'DevNote'
+    ),
+    'product_manager' => array(
+      'required' => 1,
+    ),
+  );
+
+  $hooks['x_res.partner.form'] = array(
+    'customer' => array(
+      'default_value' => 0,
+    ),
+    'supplier' => array(
+      'default_value' => 1,
+    ),
+    'property_product_pricelist' => array(
+      'selectonly' => 1,
+    ),
+    'property_product_pricelist_purchase' => array(
+      'selectonly' => 1,
+    )
+  );
+
+  $hooks['x_res.partner.form']['address']['views']['form']['fields']['country_id'] = array(
+    'selectonly' => 1,
+  );
+
+  return $hooks;
+}
+
+function oerp_product_PurchasePricelist_best()
+{
+  $param = array(
+    'mark_translated' => false,
+  );
+
+  $prov = new Oerp\Product\Provider\SupplierBestPrice();
+  $t = new \Gulei\Table\Arch($prov->getArch(), $prov, $param);
+  return $t->theme();
+}

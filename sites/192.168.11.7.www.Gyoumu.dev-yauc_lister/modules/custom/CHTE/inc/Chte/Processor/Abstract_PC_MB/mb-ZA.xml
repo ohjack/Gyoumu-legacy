@@ -1,0 +1,7 @@
+<tal:block tal:define="arrySrc1 php:explode('&#10;',tmp_Src1); arrySrc2 php:explode('&#10;',tmp_Src2)">
+■商品仕様■&lt;br&gt;&lt;br&gt;
+<tal:block tal:repeat="item arrySrc1">・${item}&lt;br&gt;</tal:block>
+&lt;br&gt;&lt;br&gt;
+■その他■&lt;br&gt;&lt;br&gt;
+<tal:block tal:repeat="item arrySrc2">・${item}&lt;br&gt;</tal:block>
+</tal:block>

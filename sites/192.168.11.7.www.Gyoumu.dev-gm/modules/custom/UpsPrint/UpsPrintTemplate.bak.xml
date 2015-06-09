@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenShipments xmlns="x-schema:OpenShipments.xdr">
+	<OpenShipment ShipmentOption="" ProcessStatus="">
+		<ShipTo>
+			<CompanyOrName>${param/recp_contact}</CompanyOrName>
+			<Attention>${param/recp_contact}</Attention>
+			<Address1>${param/recp_addr1}</Address1>
+			<Address2>${param/recp_addr2}</Address2>
+			<Address3></Address3>
+			<CountryTerritory>${param/recp_country_code}</CountryTerritory>
+			<PostalCode>${param/recp_post_code}</PostalCode>
+			<CityOrTown>${param/recp_city}</CityOrTown>
+			<StateProvinceCounty>${param/recp_state}</StateProvinceCounty>
+			<Telephone>${param/recp_phone}</Telephone>
+		</ShipTo>
+		<ShipFrom>
+			<CustomerID>1</CustomerID>
+			<CompanyOrName>AMEBAWINGS CO.,LTD</CompanyOrName>
+			<Attention>MAOLUNG-LT</Attention>
+			<Address1>NO.10 LN.779 ZHONGFENG RD.,</Address1>
+			<Address2>TAOYUAN 325,TAIWAN R.O.C.</Address2>
+			<CountryTerritory>TW</CountryTerritory>
+			<PostalCode>32550</PostalCode>
+			<CityOrTown>TAOYUAN</CityOrTown>
+			<StateProvinceCounty></StateProvinceCounty>
+			<Telephone>+886 3-480-1776</Telephone>
+			<UpsAccountNumber>95A76A</UpsAccountNumber>
+		</ShipFrom>
+		<ShipmentInformation>
+			<ServiceType>SV</ServiceType>
+			<PackageType>CP</PackageType>
+			<NumberOfPackages>${param/pkg_weight}</NumberOfPackages>
+			<ShipmentActualWeight>${param/pkg_weight}</ShipmentActualWeight>
+			<ShipmentDimensionalWeight>1</ShipmentDimensionalWeight>
+			<DescriptionOfGoods>${param/com_desc1}</DescriptionOfGoods>
+			<Reference1>${param/tid}</Reference1>
+			<Reference2>${param/ref_note}</Reference2>
+			<BillingOption>TP</BillingOption>
+		</ShipmentInformation>
+		<InternationalDocumentation>
+			<InvoiceReasonForExport>02</InvoiceReasonForExport>
+			<InvoiceCurrencyCode>USD</InvoiceCurrencyCode>
+			<InvoiceLineTotal>1</InvoiceLineTotal>
+		</InternationalDocumentation>
+		<Goods>
+			<PartNumber></PartNumber>
+			<DescriptionOfGood>${param/com_desc1}</DescriptionOfGood>
+			<Inv-NAFTA-TariffCode></Inv-NAFTA-TariffCode>
+			<Inv-NAFTA-CO-CountryTerritoryOfOrigin>TW</Inv-NAFTA-CO-CountryTerritoryOfOrigin>
+			<InvoiceUnits>1</InvoiceUnits>
+			<InvoiceUnitOfMeasure>EA</InvoiceUnitOfMeasure>
+			<Invoice-SED-UnitPrice>${param/custom_value}</Invoice-SED-UnitPrice>
+			<InvoiceCurrencyCode>USD</InvoiceCurrencyCode>
+			<InvoiceNetWeight></InvoiceNetWeight>
+		</Goods>
+	</OpenShipment>
+</OpenShipments>

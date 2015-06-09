@@ -1,0 +1,10 @@
+h1, h2, h3, h4{
+  margin-top: 0.3em;
+  margin-bottom: 0.7em;
+}
+
+div.raw_string {
+  font-family: monospace;
+  font-size: small;
+  overflow: auto;
+}

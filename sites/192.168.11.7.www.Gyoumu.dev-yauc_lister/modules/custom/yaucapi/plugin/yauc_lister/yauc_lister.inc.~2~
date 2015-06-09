@@ -1,0 +1,634 @@
+<?php
+namespace Yauc\Lister;
+use Gulei as G;
+
+require_once __DIR__ . '/inc/page.inc';
+require_once __DIR__ . '/../../inc/driver.inc';
+\module_load_include('inc', 'GuLib', 'include/provider');
+
+abstract class AbstractQueues implements G\InterfaceProvider
+{
+  protected $sellerId;
+  protected $status;
+  protected $id;
+
+  const Q_NEW = 1;
+  const Q_DONE = 2;
+  const Q_FAILED = 3;
+  const Q_CANCEL = 4;
+
+  const TABLENAME = 'yaucapi_lister_queue';
+
+  public function getReference()
+  {
+    return array(
+      'sellerId' => $this->sellerId,
+      'status' => $this->status,
+      'rec_id' => $this->id
+    );
+  }
+
+  private function getWhereSellerId()
+  {
+    return is_null($this->sellerId)
+        ? '' : sprintf('sellerId = "%s"', $this->sellerId);
+  }
+
+  private function getWhereStatus()
+  {
+    return is_null($this->status)
+        ? '' : sprintf('status IN (%s)', implode($this->status, ','));
+  }
+
+  private function getWhereRecId()
+  {
+    return is_null($this->id)
+        ? '' : 'id = ' . $this->id;
+  }
+
+  private function getSqlWhere()
+  {
+    $cri = array(
+      $this->getWhereSellerId(),
+      $this->getWhereStatus(),
+      $this->getWhereRecId()
+    );
+
+    $cri = array_filter($cri);
+
+    if(empty($cri)){
+      return '';
+    }
+    else{
+      return 'WHERE ' . implode(' AND ', $cri);
+    }
+  }
+
+  protected function getSqlCount()
+  {
+    $sql = 'SELECT COUNT(*) FROM {' . self::TABLENAME . '} %s';
+    return sprintf($sql, $this->getSqlWhere());
+  }
+
+  protected function getSqlFetch()
+  {
+    $sql = 'SELECT * FROM {yaucapi_lister_queue} %s';
+    return sprintf($sql, $this->getSqlWhere());
+  }
+
+  protected function prepareRecord($rec)
+  {
+    $rec = array_merge($rec, (array)json_decode($rec['src']));
+    unset($rec['src']);
+
+    $gallery = $rec['gallery'];
+
+    if(strpos($gallery, '/home/gulei/SmbGallery/') === 0){
+      $rec['pic_path'] = $gallery;
+    }
+    else{
+      preg_match("/.*(\\\\Publish\\\\.*)/", $gallery, $m);
+      $path = '/home/gulei/SmbGallery' . str_replace("\\", '/', $m[1]);
+      $rec['pic_path'] = $path;
+    }
+
+    $ptrs = array();
+    foreach($rec as $fld_name => $val){
+      if(preg_match('/^(.*)_lv(\d)$/', $fld_name, $m)){
+        $ptrs[$m[2]][$m[1]] = $val;
+      }
+    }
+    $rec['category'] = $ptrs;
+    return $rec;
+  }
+
+  public function getData()
+  {
+    $sql = $this->getSqlFetch();
+    $rs = db_query($sql, $this->sellerId);
+
+    $recs = array();
+    while($data = db_fetch_array($rs)){
+      $recs[] = $this->prepareRecord($data);
+    }
+    return $recs;
+  }
+}
+
+class ProviderQueue extends AbstractQueues
+{
+  public function __construct($sellerId, $status = null)
+  {
+    $this->sellerId = $sellerId;
+
+    if(!is_null($status) && !is_array($status)){
+      $status = array($status);
+    }
+    $this->status = $status;
+  }
+
+  public function count()
+  {
+    $sql = $this->getSqlCount();
+    return db_result(db_query($sql, $this->sellerId));
+  }
+}
+
+class DriverLister extends \AbstractYaucListingDriver
+{
+  private $rec;
+
+  protected function getVarExp($name)
+  {
+    return sprintf('javascript{storedVars["%s"]}', $name);
+  }
+
+  protected function runScript($code)
+  {
+    $this->doCommand('runScript', array(sprintf('javascript{%s}', $code)));
+  }
+
+  protected function typeLongText($loc, $text)
+  {
+    $this->runScript('storedVars["longtext"] = "";');
+    preg_match_all('/[\s\S]{1,1000}>/u', $text, $m);
+
+    foreach($m[0] as $chunk){
+      $cmd = "storedVars['longtext'] = storedVars['longtext'].concat('" . $chunk . "');";
+      $this->runScript($cmd);
+    }
+    $this->doCommand('type', array($loc, $this->getVarExp('longtext')));;
+  }
+
+  private function selectLastOption($xpSel)
+  {
+    $valOpt = $this->getString('getValue', array("$xpSel/option[last()]"));
+    $this->doCommand('select', array($xpSel, 'value=' . $valOpt));
+  }
+
+  private function enterTitle()
+  {
+    $title = trim($this->rec['title']);
+    $this->doCommand('type', array('id=auc_title', $title));
+  }
+
+  private function enterDesc()
+  {
+    $this->doCommand('click', array("link=HTMLタグ入力"));
+    $this->typeLongText("name=Description_plain_work", $this->rec['HTML']);
+  }
+
+  private function enterFormat()
+  {
+    $this->doCommand('click', array("id=" . $this->rec['format']));
+  }
+
+  private function enterPrice()
+  {
+    $this->doCommand('type', array("id=auc_StartPrice", $this->rec['start_price']));
+    $this->doCommand('type', array("id=auc_BidOrBuyPrice", $this->rec['buynow_price']));
+  }
+
+  private function enterClosetime()
+  {
+    $this->selectLastOption("xpath=//select[@id='ClosingDate']");
+    $this->selectLastOption("xpath=//select[@id='ClosingTime']");
+  }
+
+  private function enterShipFrom()
+  {
+    if($loc = $this->rec['location']){
+      $this->doCommand('select', array("id=auc_loc_cd", "value=" . $loc));
+    }
+    else{
+      $this->doCommand('select', array("id=auc_loc_cd", "label=海外"));
+    }
+
+    if($city = $this->rec['city']){
+      $this->doCommand('type', array('name=city', $city));
+    }
+    else{
+      $this->doCommand('type', array('name=city', ''));
+    }
+  }
+
+  private function enterShippingFeePayer()
+  {
+    $this->doCommand('click', array($this->rec['shipping_term']));
+  }
+
+  private function enterPaymentStrategy()
+  {
+    $this->doCommand('click', array('id=auc_shiptime_payment'));
+  }
+
+  private function enterBankName()
+  {
+    $this->doCommand('type', array("id=auc_bkname1", "ジャパンネットバンク"));
+    $this->doCommand('type', array("id=auc_bkname2", ""));
+    $this->doCommand('type', array("id=auc_bkname3", ""));
+  }
+
+  private function enterItemStatus()
+  {
+    $this->doCommand('click', array("id=istatus_new"));
+  }
+
+  private function enterReturnPolicy()
+  {
+    $this->doCommand('click', array("id=retpolicy_no"));
+    $this->doCommand('type', array("id=auc_retpolicy_comment", "ただし、初期不良の場合は写真判断後の返品を行います"));
+  }
+
+  private function enterShippingParam()
+  {
+    if($this->rec['intlOK']){
+      $this->doCommand('check', array("id=auc_intlOK"));
+    }
+    else{
+      $this->doCommand('uncheck', array("id=auc_intlOK"));
+    }
+
+    $locShipname = "id=auc_shipname1";
+    $this->doCommand('type', array($locShipname, $this->rec['carrier']));
+    $this->doCommand('keyUp', array($locShipname, '1'));
+    $this->doCommand('click', array("id=auc_uniform_fee_set1_a"));
+    $this->doCommand('type', array("id=auc_uniform_fee", $this->rec['shipping_fee']));
+    $this->doCommand('keyUp', array("id=auc_uniform_fee", 'a'));
+    $this->doCommand('click', array("id=uniform_fee_okbtn"));
+    
+    if($this->isTextPresent('（税込み）［編集｜削除］')){
+      return true;
+    }
+    else{
+      return false;
+    }
+  }
+
+  private function enterResubmit()
+  {
+    $this->doCommand('select', array('name=numResubmit', 'value=' . $this->rec['relist']));
+  }
+
+  private function enterPicture()
+  {
+    $this->doCommand('clickAndWait', array('xpath=//input[@value="画像登録画面へ"]'));
+
+    $locFile = "name=ImageFile1";
+    $this->doCommand('type', array($locFile, $this->rec['pic_path']));
+    $this->doCommand('clickAndWait', array("id=cnfm_btn"));
+    $this->doCommand('clickAndWait', array("id=back_btn"));
+    $this->doCommand('clickAndWait', array("xpath=//input[@value='商品情報入力に戻る']"));
+  }
+
+  private function confirmForm()
+  {
+    $this->doCommand('clickAndWait', array("id=auc_submit2"));
+  }
+
+  private function checkConfirm(){
+    if($this->isElementPresent('id=auc_preview_submit')){
+      return true;
+    }
+
+    $msg = $this->getString('getText', array('xpath=//div[@class="decErrorBox"]'));
+    return array('msg' => $msg);
+  }
+
+  public function gotoCategory($anchor)
+  {
+    $this->open('http://auctions.yahoo.co.jp/jp/0-submit.html');
+
+    foreach($anchor as $ptr){
+      if(strtoupper($ptr['menu']) == 'ON' || strtoupper($ptr['menu']) == 'OFF'){
+        break;
+      }
+
+      $xp = sprintf('xpath=(//a[text()="%s"])[%s]', $ptr['menu'], $ptr['POS']);
+
+      if($this->isTextPresent($ptr['menu'])){
+        $this->doCommand('clickAndWait', array($xp));
+      }
+      else{
+        return false;
+      }
+    }
+
+    if($this->isTextPresent('以下のカテゴリに出品します。')){
+      return $this->getLocation();
+    }
+  }
+
+  private function enterPromotion()
+  {
+    if($featuredAmount = $this->rec['featuredAmount']){
+      $this->doCommand('type', array('name=featuredAmount', $featuredAmount));
+    }
+    else{
+      $this->doCommand('type', array('name=featuredAmount', ''));
+    }
+  }
+
+  private function confirmSubmit()
+  {
+    $this->doCommand('clickAndWait', array('id=auc_preview_submit'));
+  }
+
+  public function submit($rec, $break = false)
+  {
+    $this->rec = $rec;
+
+    if($this->gotoCategory($this->rec['category']) === false){
+      return array('msg' => 'Failed to find category');
+    }
+
+    $this->initForm();
+
+    $this->enterTitle();
+    $this->enterDesc();
+    $this->enterFormat();
+    $this->enterPrice();
+    $this->enterClosetime();
+    $this->enterShipFrom();
+    $this->enterShippingFeePayer();
+    $this->enterPaymentStrategy();
+    $this->enterBankName();
+    $this->enterItemStatus();
+    $this->enterReturnPolicy();
+
+    $isShippingFeeEntered = false;
+    for($c = 1; $c <= 3; $c++){
+      if($isShippingFeeEntered = $this->enterShippingParam()){
+        break;
+      }
+    }
+
+    if(!$isShippingFeeEntered){
+      return array('msg' => 'Failed to set shipping fee.');
+    }
+
+    $this->enterResubmit();
+    $this->enterPromotion();
+    $this->enterPicture();
+
+    $this->confirmForm();
+
+    if($break){
+      return true;
+    }
+
+    $resp = $this->checkConfirm();
+    if($resp !== true){
+      return $resp;
+    }
+
+    $this->confirmSubmit();
+    return $this->isSubmitSuccess() ? true : false;
+  }
+}
+
+class QueueRecordController extends AbstractQueues
+{
+  public function __construct($id)
+  {
+    $this->id = $id;
+  }
+
+  public function count()
+  {
+    return 1;
+  }
+  
+  private function setStatus($status, $msg = null)
+  {
+    $newRec = new \stdClass();
+    $newRec->id = $this->id;
+    $newRec->status = $status;
+
+    if(!is_null($msg)){
+      $newRec->msg = $msg;
+    }
+    \drupal_write_record(self::TABLENAME, $newRec, 'id');
+  }
+
+  public function setFailed($msg)
+  {
+    $this->setStatus(AbstractQueues::Q_FAILED, ($msg) ? $msg : 'Unkown error.');
+  }
+
+  public function setDone()
+  {
+    $this->setStatus(AbstractQueues::Q_DONE, '');
+  }
+
+  public function setCancel()
+  {
+    $this->setStatus(AbstractQueues::Q_CANCEL);
+  }
+
+  public function getData()
+  {
+    $recs = parent::getData();
+    return $recs[0];
+  }
+
+  public function checkCategory()
+  {
+    $rec = $this->getData();
+    $ctrl = new ListingController($rec['sellerId']);
+
+    return $ctrl->checkCategory($rec['category']);
+  }
+}
+
+class QueueSelTable extends \GuSelectTable
+{
+  protected function getSelectionValue($rec, $ind)
+  {
+    return $rec['id'];
+  }
+}
+
+class PageQueue extends \FormPageController
+{
+  private function isStageQueue($status)
+  {
+    return !in_array(AbstractQueues::Q_DONE, $status)
+        && !in_array(AbstractQueues::Q_CANCEL, $status);
+  }
+
+  public function hook_form(&$form_state, $sellerId, $status)
+  {
+    $arch = \GuFile::getPathContent('module', 'yauc_lister', '/xml/viewQueue.xml');
+    $prov = new ProviderQueue($sellerId, $status);
+
+    $form = array();
+    $form['sel_id'] = array(
+      '#type' => 'value',
+      '#value' => $sellerId,
+    );
+
+    $form['title'] = array(
+      '#type' => 'markup',
+      '#value' => "<h1><em>$sellerId</em></h1>",
+    );
+
+    if($this->isStageQueue($status)){
+      $t = new QueueSelTable($arch, $prov->getData());
+      $form['view'] = $t->getFormEles();
+      $form['sub:cancel'] = array(
+        '#type' => 'submit',
+        '#value' => 'Mark as CANCEL',
+      );
+
+      $form['sub:trial'] = array(
+        '#type' => 'submit',
+        '#value' => 'Trial Upload'
+      );
+
+      $form['sub:upload'] = array(
+        '#type' => 'submit',
+        '#value' => 'Upload',
+      );
+    }
+    else{
+      $t = new \GuArchTable($arch, $prov);
+      $form['view'] = array(
+        '#type' => 'markup',
+        '#value' => $t->theme(),
+      );
+    }
+
+    drupal_add_css(drupal_get_path('module', 'yauc_lister') . '/yauc_lister.css');
+    return $form;
+  }
+
+  protected function proc_sub_cancel($form, &$form_state)
+  {
+    $sels = $this->getSelection();
+
+    foreach($sels as $id){
+      $c = new QueueRecordController($id);
+      $c->setCancel();
+    }
+    drupal_set_message('Canceled ' . count($sels) . ' queued record(s).');
+  }
+
+  protected function proc_sub_trial($form, &$form_state)
+  {
+    $uploader = new ListingController($form['sel_id']['#value']);
+    $uploader->upload(true);
+  }
+
+  protected function proc_sub_upload($form, &$form_state)
+  {
+    $uploader = new ListingController($form['sel_id']['#value']);
+    $uploader->upload(false);
+  }
+}
+
+class CategoryController
+{
+  const KEY = 'id';
+  const TABLENAME = 'yaucapi_lister_category';
+
+  const STATUS_VALID = 1;
+  const STATUS_BROKEN = 2;
+
+  private function fetchByAnchor($anchor)
+  {
+    $sql = 'SELECT * FROM {%s} WHERE anchor="%s" LIMIT 1';
+    $rs = db_query($sql, self::TABLENAME, $anchor);
+    return db_fetch_object($rs);
+  }
+
+  public function updateRecord($name, $link, $anchor)
+  {
+    $rec = new \stdClass();
+    $rec->name = $name;
+    $rec->link = $link;
+    $rec->anchor = json_encode($anchor);
+    $rec->status = self::STATUS_VALID;
+    $rec->validate_time = time();
+
+    if($cate = $this->fetchByAnchor($rec->anchor)){
+      $rec->id = $cate->id;
+      drupal_write_record(self::TABLENAME, $rec, self::KEY);
+    }
+    else{
+      drupal_write_record(self::TABLENAME, $rec);
+    }
+  }
+
+  public function markAsBroken($anchor)
+  {
+    $rec = new \stdClass();
+    $rec->anchor = json_encode($anchor);
+    $rec->validate_time = time();
+
+    if($cate = $this->fetchByAnchor($rec->anchor)){
+      $rec->id = $cate->id;
+      $rec->status = self::STATUS_BROKEN;
+      drupal_write_record(self::TABLENAME, $rec, self::KEY);
+    }
+  }
+}
+
+class ListingController extends \AbstractYaucDriverController
+{
+  protected function createDriver()
+  {
+    return new DriverLister($this->sel_id, $this->pwd);
+  }
+
+  function checkCategory($anchor)
+  {
+    if(!$this->checkDriverReady(true, true)){
+      return false;
+    }
+
+    $ctrl = new CategoryController();
+    $link = $this->driver->gotoCategory($anchor);
+    
+    if($link){
+      $src = $this->driver->getSource('id=modCfmBox');
+      preg_match('/以下のカテゴリに出品します。([\s\S]*)/', $src, $m);
+      $name = trim($m[1]);
+
+      $ctrl->updateRecord($name, $link, $anchor);
+      return true;
+    }
+
+    $ctrl->markAsBroken($anchor);
+    return false;
+  }
+
+  public function upload($isTrial)
+  {
+    if(!$this->checkDriverReady(true, true)){
+      return false;
+    }
+
+    $prov = new ProviderQueue(
+      $this->sel_id, array(AbstractQueues::Q_NEW, AbstractQueues::Q_FAILED)
+    );
+
+    foreach($prov->getData() as $rec){
+      if($isTrial){
+        $this->driver->submit($rec, true);
+        break;
+      }
+      else{
+        $resp = $this->driver->submit($rec);
+        $ctrl = new QueueRecordController($rec['id']);
+
+        if($resp === true){
+          $ctrl->setDone();
+        }
+        else{
+          $ctrl->setFailed($resp['msg']);
+        }
+      }
+    }
+  }
+}

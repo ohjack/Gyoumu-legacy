@@ -1,0 +1,216 @@
+<?php
+use Oerp as O;
+
+require_once __DIR__ . '/inc/provider.inc';
+require_once __DIR__ . '/inc/importer.inc';
+require_once __DIR__ . '/inc/command.inc';
+require_once 'oerp_product.inc';
+
+function oerp_product_menu()
+{
+  $item = array();
+
+  $item['oerp/tree/product'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_product_TreeProduct_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $item['oerp/form/product/%'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_product_FormProduct_form', 3),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $item['oerp/overview/supplier'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_product_OverviewSupplier_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $item['oerp/product_mngn/purchase_pricelist'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_product_PurchasePricelist_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $item['oerp/product_mngn/purchase_pricelist/best'] = array(
+    'page callback' => 'oerp_product_PurchasePricelist_best',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $item['oerp/product_mngn/packaging'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_product_packaging_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $item['oerp/product_mngn/in_development'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_product_in_development_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $item['oerp/product_mngn/update/product'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('gulib_csv_import_form', 'Oerp\Importer\UpdateProduct'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  return $item;
+}
+
+function oerp_product_block($op = 'list', $delta = 0, $edit = array())
+{
+  switch ($op) {
+    case 'list':
+      $blocks[0]['info'] = t('Product Mngn');
+      return $blocks;
+
+    case 'view':
+      $items = array(
+        array(
+          'data' => l('Products', 'oerp/view/tree/363'),
+          'children' => array(
+            'data' => l('Packaging', 'oerp/product_mngn/packaging')
+          )
+        ),
+        array(
+          'data' => l('Suppliers', 'oerp/overview/supplier'),
+        ),
+        array(
+          'data' => l('BoM', 'oerp/view/tree/313'),
+        ),
+        array(
+          'data' => l('Purchase pricelist', 'oerp/product_mngn/purchase_pricelist'),
+        ),
+      );
+
+      $block['subject'] = t('Product Mngn');
+      $block['content'] = theme('item_list', $items, null, 'ul', array('class' => 'menu'));
+      return $block;
+  }
+}
+
+function oerp_product_PurchasePricelist_form(&$form_state)
+{
+  $arch = file_get_contents(
+    drupal_get_path('module', 'oerp_product') . '/xml/purchase_pricelist.xml');
+
+  $form = oerp_ViewTree_form($form_state, 0, array('arch' => $arch));
+  return $form;
+}
+
+function oerp_product_PurchasePricelist_form_submit($form, &$form_state)
+{
+  return oerp_ViewTree_form_submit($form, $form_state);
+}
+
+function oerp_product_TreeProduct_form(&$form_state)
+{
+  $arch = GuFile::getPathContent('module', 'oerp_product', '/xml/OverviewProduct.xml');
+  $p = new OerpViewTreePageController($form_state);
+  return $p->hook_form($form_state, 0, array('arch' => $arch));
+}
+
+function oerp_product_TreeProduct_form_submit($form, &$form_state)
+{
+  return oerp_ViewTree_form_submit($form, $form_state);
+}
+
+function oerp_product_FormProduct_form(&$form_state, $rid)
+{
+  $p = new OerpViewFormPageController($form_state);
+  return $p->hook_form($form_state, 'product.product', 356, $rid, array());
+}
+
+function oerp_product_FormProduct_form_submit($form, &$form_state)
+{
+  return oerp_ViewForm_form_submit($form, $form_state);
+}
+
+function oerp_product_OverviewSupplier_form(&$form_state)
+{
+  $arch = file_get_contents(drupal_get_path('module', 'oerp_product') . '/xml/OverviewSupplier.xml');
+  $form = oerp_ViewTree_form($form_state, 0, array('arch' => $arch));
+  return $form;
+}
+
+function oerp_product_OverviewSupplier_form_submit($form, &$form_state)
+{
+  return oerp_ViewTree_form_submit($form, $form_state);
+}
+
+function oerp_product_packaging_form(&$form_state)
+{
+  $arch = GuFile::getPathContent('module', 'oerp_product', '/xml/packaging.xml');
+
+  $p = new OerpViewTreePageController($form_state);
+  return $p->hook_form($form_state, 0, array('arch' => $arch));
+}
+
+function oerp_product_packaging_form_submit($form, &$form_state)
+{
+  $p = new OerpViewTreePageController($form_state);
+  $p->hook_form_submit($form, $form_state);
+}
+
+function oerp_product_oerp_formview_fields(){
+  $hooks = array();
+  $hooks['x_product.form'] = array(
+    'state' => array(
+      'default_value' => 'draft',
+      'required' => 1,
+    ),
+    'default_code' => array(
+      'required' => 1,
+      'type' => 'skuEditor'
+    )
+  );
+
+  $hooks['x_res.partner.form'] = array(
+    'customer' => array(
+      'default_value' => 0,
+    ),
+    'supplier' => array(
+      'default_value' => 1,
+    ),
+    'property_product_pricelist' => array(
+      'selectonly' => 1,
+    ),
+    'property_product_pricelist_purchase' => array(
+      'selectonly' => 1,
+    )
+  );
+
+  $hooks['x_res.partner.form']['address']['views']['form']['fields']['country_id'] = array(
+    'selectonly' => 1,
+  );
+
+  return $hooks;
+}
+
+function oerp_product_in_development_form(&$form_state)
+{
+  $ctrl = new O\ProductInDevelopmentPageController($form_state);
+  return $ctrl->hook_form($form_state);
+}
+
+function oerp_product_PurchasePricelist_best()
+{
+  $param = array(
+    'mark_translated' => false,
+  );
+
+  $prov = new O\ProviderSupplierBestPrice();
+  $t = new GuArchTable($prov->getArch(), $prov, $param);
+  return $t->theme();
+}

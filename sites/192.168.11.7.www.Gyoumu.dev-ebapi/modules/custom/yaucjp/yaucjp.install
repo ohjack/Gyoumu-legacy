@@ -1,0 +1,32 @@
+<?php 
+
+function yaucjp_schema(){
+  $schema = array();
+  $schema['yaucjp_order'] = array(
+    'fields' => array(
+      'oid' => array(
+        'type' => 'serial',
+        'unsigned' => true,
+        'not null' => true,
+        'description' => 'Order ID',
+      ),
+      'body' => array(
+        'type' => 'text',
+        'not null' => true,
+      ),
+    ),
+    'primary key' => array('oid'),
+  );
+  
+  return $schema;
+}
+
+function yaucjp_install(){
+  drupal_install_schema('yaucjp');
+}
+
+function yaucjp_uninstall(){
+  drupal_uninstall_schema('yaucjp');
+}
+
+?>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tree name="view" string="Supplier List">
+  <param name="oerp:model">res.partner</param>
+  <param name="oerp:criteria">[["supplier","=",1]]</param>
+
+  <field name="name" select="1" string="Partner Name"/>
+  <field name="address">
+    <field name="name" string="Contact Name"/>
+    <field name="phone" string="Phone"/>
+    <field name="fax" string="Fax"/>
+    <field name="city" string="City"/>
+    <field name="email" string="E-mail"/>
+  </field>
+</tree>

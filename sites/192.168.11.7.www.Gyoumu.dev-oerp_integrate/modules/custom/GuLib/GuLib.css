@@ -1,0 +1,152 @@
+form.oerp table input {
+  width: 100%;
+}
+
+table.gu-arch {
+  width: 100%;
+}
+
+table.gu-arch,
+table.gu-arch > tbody,
+table.gu-arch > tbody > tr,
+table.gu-arch > tbody > tr > td
+{
+  background-color: transparent;
+  vertical-align: top;
+  margin: 0;
+  padding: 0;
+  border-style: none;
+}
+
+table.gu-arch div.inner {
+  margin-right: 0;
+}
+
+table.gu-arch td.single-col > div.inner {
+  margin-right: 0;
+}
+
+/* table.gu-arch div.nolabel > div.field > div.form-item label { */
+table.gu-arch div.nolabel div.field > div > div.form-item label {
+  display: none;
+}
+
+table.gu-arch div.field {
+  padding: 0 10px 0.5em 5px;
+}
+
+table.gu-arch div.field input[type="text"],
+table.gu-arch div.field input[type="submit"],
+table.gu-arch div.field select,
+table.gu-arch div.field textarea,
+table.gu-arch div.field div.resizable-textarea {
+  width: 100%;
+}
+
+table.gu-arch div.field[gu_type="date"] select {
+  width: auto;
+}
+
+table.gu-arch div.field div.form-checkboxes,
+table.gu-arch div.field input.form-checkbox {
+  margin: 1.2em 0 0;
+}
+
+table.gu-arch div.field table.gu-seltable td.selector input{
+  margin: 0;
+}
+
+table.gu-arch .ui-tabs-panel {
+  padding: 1em;
+}
+
+table.gu-arch div.group.toolbar div.field {
+  padding: 2px;
+}
+
+table.gu-arch div.group.toolbar div.field input {
+  width: 100%;
+}
+
+table.gu-arch div.group.toolbar div.field input[type="text"] {
+  width: 95%;
+}
+
+div.gu-view {
+  margin-top: 1em;
+}
+
+div.gu-view div.caption {
+  margin: 1.5em 0 0.5em;
+  border: 1px solid #666;
+  border-width: 0 0 1px 0;
+  background-color: #f3f3f3;
+  font-size: 116%;
+  font-weight: bold;
+}
+
+div.gu-view div.caption.title {
+  font-size: 131%;
+  padding: 0.5em;
+  border-width: 0 0 2px 0;
+  margin-bottom: 2em;
+}
+
+div.gu-view table {
+  width: 100%;
+}
+
+div.gu-view label {
+  color: #666;
+}
+
+div.gu-view div.description {
+/* display: none; */
+}
+
+div.gu-view div.gu-widget-content {
+  border-style: none;
+  margin: 1em 0;
+}
+
+div.gu-view div.ui-tabs {
+  margin-top: 2em;
+}
+
+div.gu-view ul.ui-tabs-nav li {
+  list-style-type: none;
+}
+
+div.gu-view span.show-tooltip-anchor {
+  float: right;
+  color: orange;
+}
+
+div.gu-view span.show-tooltip-text {  
+  display: none;
+  position: absolute;
+  font-size: 0.9em;
+  background-color: #333;
+  padding: 6px;
+  color: white;
+  border: 1px solid #fff;
+}
+
+div.gu-view div.toolbar div.prompt {
+  position: absolute;
+  padding: 0.3em;
+}
+
+div.gu-view div.toolbar div.prompt span.count {
+  padding: 0 0.5em;
+  color: #333;
+  font-weight: bold;
+}
+
+div.gu-view div.toolbar div.prompt a {
+  color: #f66;
+}
+
+div.gu-block-large {
+  width: 800px;
+}

@@ -1,0 +1,9 @@
+<phpunit>
+  <testsuites>
+    <testsuite name="TableRelatedTest">
+      <file>sites/all/modules/custom/GuLib/tests/GuModsTest.php</file>
+      <file>sites/all/modules/custom/GuLib/tests/ThemerTableTest.php</file>
+      <file>sites/all/modules/custom/GuLib/tests/GuArchTableTest.php</file>
+    </testsuite>
+  </testsuites>
+</phpunit>

@@ -1,0 +1,5 @@
+name = ERM
+description = Electronic Resource Management 
+package = OpenERP
+core = 6.x
+dependencies[] = oerp

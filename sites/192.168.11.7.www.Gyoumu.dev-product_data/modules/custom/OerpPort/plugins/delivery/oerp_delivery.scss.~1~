@@ -1,0 +1,17 @@
+div.oerp-delivery-filter-wrapper {
+  div.form-item {
+    float: left;
+  }
+}
+
+div.item-list ul.oerp-delivery-filter {
+  li {
+    list-style: none;
+    /*font-size: 123.1%;*/
+    float: left;
+    
+    a {
+      color: #900;
+    }
+  }
+}

@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<form string="Partners">
+  <field name="name" select="1" colspan="3"/>
+  <field name="customer" select="1" colspan="1"/>
+  <field name="ref" select="1" colspan="3"/>
+  <field name="supplier" select="1" colspan="1"/>
+  <field name="comment" colspan="4"/>
+
+  <notebook colspan="4">
+    <page string="Contacts">
+      <field colspan="4" mode="form,tree" name="address" nolabel="1"
+             select="1">
+        <form string="Partner Contacts">
+          <field name="name" select="2"/>
+          <field name="x_title"/>
+
+          <separator string="Address"/>
+          <field name="street" select="2"/>
+          <field name="street2"/>
+          <field name="zip" select="2"/>
+          <field name="city" select="2"/>
+          <field completion="1" name="country_id" select="2"/>
+          <field name="x_state"/>
+
+          <separator string="Contact Information"/>
+          <field name="phone"/>
+          <field name="fax"/>
+          <field name="mobile"/>
+          <field name="email" select="2" widget="email"/>
+          <field name="x_im"/>
+        </form>
+        <tree string="Partner Contacts">
+          <field name="name"/>
+          <field name="zip"/>
+          <field name="city"/>
+          <field name="country_id"/>
+          <field name="phone"/>
+          <field name="email"/>
+        </tree>
+      </field>
+    </page>
+
+    <page string="Financial">
+      <group colspan="2" col="2">
+        <field name="property_product_pricelist_purchase"/>
+        <field name="property_product_pricelist"/>
+      </group>
+      <group colspan="2" col="2">
+        <field name="x_regnum"/>
+        <field name="x_payment_note" colspan="4"/>
+      </group>
+    </page>
+  </notebook>
+</form>

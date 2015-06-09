@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenShipments xmlns="x-schema:OpenShipments.xdr">
+	<OpenShipment ShipmentOption="" ProcessStatus="">
+		<ShipTo>
+			<CompanyOrName>SP Test Company</CompanyOrName>
+			<Attention>John</Attention>
+			<Address1>9200 Airport Road</Address1>
+			<Address2>.</Address2>
+			<Address3>.</Address3>
+			<CountryTerritory>CA</CountryTerritory>
+			<PostalCode>L6S 6G6</PostalCode>
+			<CityOrTown>Brampton</CityOrTown>
+			<StateProvinceCounty>ON</StateProvinceCounty>
+			<Telephone>12121212</Telephone>
+		</ShipTo>
+		<ShipFrom>
+			<CustomerID>1</CustomerID>
+			<CompanyOrName>UPS TAIWAN BRANCH</CompanyOrName>
+			<Attention>USER</Attention>
+			<Address1>2F NO 361 TA NAN RD</Address1>
+			<Address2></Address2>
+			<Address3></Address3>
+			<CountryTerritory>TW</CountryTerritory>
+			<PostalCode>11100</PostalCode>
+			<CityOrTown>TAIPEI</CityOrTown>
+			<StateProvinceCounty></StateProvinceCounty>
+			<Telephone>0228809380</Telephone>
+			<UpsAccountNumber>569875</UpsAccountNumber>
+		</ShipFrom>
+		<Importer>
+			<CompanyOrName>SP Importer Company</CompanyOrName>
+			<Attention>Mary</Attention>
+			<Address1>601 McCarthy Boulevard</Address1>
+			<Address2></Address2>
+			<Address3></Address3>
+			<CountryTerritory>CA</CountryTerritory>
+			<PostalCode>V5K9Z9</PostalCode>
+			<CityOrTown>Vancouver</CityOrTown>
+			<StateProvinceCounty>BC</StateProvinceCounty>
+			<Telephone>22222222</Telephone>
+			<TaxIDNumber></TaxIDNumber>
+			<UpsAccountNumber>101F1V</UpsAccountNumber>
+		</Importer>
+		<ThirdParty>
+			<CustomerID></CustomerID>
+			<CompanyOrName>SP Third Party</CompanyOrName>
+			<Attention>NANCY</Attention>
+			<Address1>601 McCarthy Boulevard</Address1>
+			<Address2></Address2>
+			<Address3></Address3>
+			<CityOrTown>Milpitas</CityOrTown>
+			<CountryTerritory>US</CountryTerritory>
+			<PostalCode>95035</PostalCode>
+			<StateProvinceCounty>CA</StateProvinceCounty>
+			<ResidentialIndicator>0</ResidentialIndicator>
+			<Telephone>8088011000</Telephone>
+			<TaxIDNumber></TaxIDNumber>
+			<UpsAccountNumber>88880E</UpsAccountNumber>
+		</ThirdParty>
+		<ShipmentInformation>
+			<ServiceType>SV</ServiceType>
+			<PackageType>CP</PackageType>
+			<NumberOfPackages>2</NumberOfPackages>
+			<ShipmentActualWeight>2.5</ShipmentActualWeight>
+			<ShipmentDimensionalWeight>2.52</ShipmentDimensionalWeight>
+			<DescriptionOfGoods>PC Spare Parts</DescriptionOfGoods>
+			<Reference1>S577758</Reference1>
+			<Reference2>53309019</Reference2>
+			<ShipperNumber>569875</ShipperNumber>
+			<BillingOption>TP</BillingOption>
+		</ShipmentInformation>
+		<InternationalDocumentation>
+			<InvoiceReasonForExport>02</InvoiceReasonForExport>
+			<InvoiceCurrencyCode>USD</InvoiceCurrencyCode>
+			<InvoiceLineTotal>1</InvoiceLineTotal>
+		</InternationalDocumentation>
+		<Goods>
+			<PartNumber>SDCZ6-4096-A10</PartNumber>
+			<DescriptionOfGood>AC Power Supply</DescriptionOfGood>
+			<Inv-NAFTA-TariffCode></Inv-NAFTA-TariffCode>
+			<Inv-NAFTA-CO-CountryTerritoryOfOrigin>TW</Inv-NAFTA-CO-CountryTerritoryOfOrigin>
+			<InvoiceUnits>40</InvoiceUnits>
+			<InvoiceUnitOfMeasure>EA</InvoiceUnitOfMeasure>
+			<Invoice-SED-UnitPrice>10.83</Invoice-SED-UnitPrice>
+			<InvoiceCurrencyCode>USD</InvoiceCurrencyCode>
+			<InvoiceNetWeight></InvoiceNetWeight>
+		</Goods>
+		<Goods>
+			<PartNumber>SDCZ6-4096-A10</PartNumber>
+			<DescriptionOfGood>Motherboard chip</DescriptionOfGood>
+			<Inv-NAFTA-TariffCode></Inv-NAFTA-TariffCode>
+			<Inv-NAFTA-CO-CountryTerritoryOfOrigin>TW</Inv-NAFTA-CO-CountryTerritoryOfOrigin>
+		 	<InvoiceUnits>40</InvoiceUnits>
+			<InvoiceUnitOfMeasure>EA</InvoiceUnitOfMeasure>
+			<Invoice-SED-UnitPrice>5.50</Invoice-SED-UnitPrice>
+			<InvoiceCurrencyCode>USD</InvoiceCurrencyCode>
+		</Goods>
+	</OpenShipment>
+</OpenShipments>

@@ -1,0 +1,325 @@
+<?php
+
+function yaucapi_schema(){
+  $schema['yaucapi_sellers'] = array(
+    'description' => 'Stores Yahoo Auction account settings.',
+    'fields' => array(
+      'seller_id' => array(
+        'type' => 'varchar',
+        'length' => 25,
+        'not null' => TRUE,
+        'description' => 'The seller id.',
+      ),
+      'password' => array(
+        'type' => 'varchar',
+        'length' => 25,
+        'description' => 'Account password.',
+      ),
+      'appid' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Application ID for query.'
+      ),
+      'consumer_key' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'description' => 'Consumber Key for OAuth-required API',
+      ),
+      'consumer_secret' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'description' => 'Consumer Secret for OAuth-required API',
+      ),
+      'accessToken' => array(
+        'type' => 'text',
+        'description' => 'accessToken for OAuth-required API',
+      ),
+      'relistAnchor' => array(
+        'type' => 'char',
+        'length' => 1,
+        'description' => 'Anchor character for relisting',
+      )
+    ),
+    'primary key' => array('seller_id'),
+  );
+  
+  $schema['yaucapi_auction'] = array(
+    'description' => 'Stores auction information.',
+    'fields' => array(
+      'auc_id' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => true,
+      ),
+      'status' => array(
+        'type' => 'int',
+        'unsigned' => true,
+        'size' => 'tiny',
+      ),
+      'seller_id' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => true,
+      ),
+      'title' => array(
+        'type' => 'char',
+        'length' => 64,
+        'not null' => true,
+      ),
+      'auc_url' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => true,
+      ),
+      'item_url' => array(
+        'type' => 'varchar',
+        'length' => 255,
+      ),
+      'img_url' => array(
+        'type' => 'varchar',
+        'length' => 255,
+      ),
+      'qty' => array(
+        'type' => 'int',
+        'unsigned' => true,
+        'size' => 'small',
+      ),
+      'init_price' => array(
+        'type' => 'float',
+        'unsigned' => true,
+      ),
+      'cur_price' => array(
+        'type' => 'float',
+        'unsigned' => true,
+      ),
+      'bidorbuy' => array(
+        'type' => 'float',
+        'unsigned' => true,
+      ),
+      'shipping_fee' => array(
+        'type' => 'float',
+        'unsigned' => false,
+      ),
+      'bids' => array(
+        'type' => 'int',
+        'unsigned' => true,
+        'size' => 'small',
+      ),
+      'time_start' => array(
+        'type' => 'char',
+        'length' => 26,
+      ),
+      'time_end' => array(
+        'type' => 'char',
+        'length' => 26,
+      ),
+      'category_id' => array(
+        'type' => 'varchar',
+        'length' => 16,
+      ),
+      'category_path' => array(
+        'type' => 'varchar',
+        'length' => 64,
+      ),
+      'item_status' => array(
+        'type' => 'varchar',
+        'length' => 16,
+      ),
+      'description' => array(
+        'type' => 'text',
+      ),
+      'src' => array(
+        'type' => 'text',
+        'description' => 'Serialized auction details.'
+      ),
+      'sku' => array(
+        'type' => 'varchar',
+        'length' => 16,
+      ),
+      'winner' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'description' => 'Auction winner.',
+      ),
+    ),
+    'primary key' => array('auc_id'),
+  );
+
+  $schema['yaucapi_flag'] = array(
+    'description' => 'Flags of auctions for internal usage.',
+    'fields' => array(
+      'auc_id' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => true,
+      ),
+      'to_end' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+      ),
+      'to_kill' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+      ),
+      'relisted' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+      ),
+    ),
+    'primary key' => array('auc_id'),
+  );
+  
+  return $schema;
+}
+
+function yaucapi_install(){
+  drupal_install_schema('yaucapi');
+}
+
+function yaucapi_uninstall(){
+  drupal_uninstall_schema('yaucapi');
+}
+
+function yaucapi_update_6000(){
+  $ret = array();
+  $spec = array();
+  
+  $spec['consumer_key'] = array(
+    'type' => 'varchar',
+    'length' => 255,
+    'description' => 'Consumber Key for OAuth-required API',
+  );
+
+  db_add_field($ret, 'yaucapi_sellers', 'consumer_key', $spec['consumer_key']);
+  return $ret;
+}
+
+function yaucapi_update_6001(){
+  $ret = array();
+  $spec = array();
+  
+  $spec['consumer_secret'] = array(
+    'type' => 'varchar',
+    'length' => 255,
+    'description' => 'Consumer Secret for OAuth-required API',
+  );
+
+  db_add_field($ret, 'yaucapi_sellers', 'consumer_secret', $spec['consumer_secret']);
+  return $ret;
+}
+
+function yaucapi_update_6002(){
+  $ret = array();
+  $spec = array();
+  
+  $spec['accessToken'] = array(
+    'type' => 'text',
+    'description' => 'accessToken for OAuth-required API',
+  );
+  
+  db_add_field($ret, 'yaucapi_sellers', 'accessToken', $spec['accessToken']);
+  return $ret;
+}
+
+function yaucapi_update_6003(){
+  $ret = array();
+  $spec = array(
+    'type' => 'varchar',
+    'length' => 32,
+    'description' => 'Auction winner.',
+  );
+  
+  db_add_field($ret, 'yaucapi_auction', 'winner', $spec);
+  return $ret;
+}
+
+function yaucapi_update_6004(){
+  $ret = array();
+  $spec = array(
+    'shipping_fee' => array(
+      'type' => 'float',
+      'unsigned' => false,
+    ),
+  );
+
+  db_change_field(
+    $ret, 'yaucapi_auction', 'shipping_fee', 'shipping_fee', $spec['shipping_fee']);
+  
+  return $ret;
+}
+
+function yaucapi_update_6005(){
+  $ret = array();
+  $spec = array(
+    'bidorbuy' => array(
+      'type' => 'float',
+      'unsigned' => true,
+    ),
+  );
+  
+  db_add_field($ret, 'yaucapi_auction', 'bidorbuy', $spec['bidorbuy']);
+  return $ret;
+}
+
+function yaucapi_update_6006(){
+  $ret = array();
+  $spec = array(
+    'sku' => array(
+      'type' => 'varchar',
+      'length' => 16,
+    ),
+  );
+
+  db_add_field($ret, 'yaucapi_auction', 'sku', $spec['sku']);
+  return $ret;
+}
+
+function yaucapi_update_6007(){
+  $ret = array();
+  $name = 'yaucapi_flag';
+  $schema = yaucapi_schema();
+
+  db_create_table($ret, $name, $schema[$name]);
+  return $ret;
+}
+
+function yaucapi_update_6008(){
+  $ret = array();
+  $spec = array(
+    'relisted' => array(
+      'type' => 'int',
+      'size' => 'tiny',
+    ),
+  );
+
+  db_add_field($ret, 'yaucapi_flag', 'relisted', $spec['relisted']);
+  return $ret;
+}
+
+function yaucapi_update_6009(){
+  $ret = array();
+  $spec = array(
+    'to_kill' => array(
+      'type' => 'int',
+      'size' => 'tiny',
+    ),
+  );
+
+  db_add_field($ret, 'yaucapi_flag', 'to_kill', $spec['to_kill']);
+  return $ret;
+}
+
+function yaucapi_update_6010(){
+  $ret = array();
+  $spec = array(
+    'relistAnchor' => array(
+      'type' => 'char',
+      'length' => 1,
+      'description' => 'Anchor character for relisting',
+    )
+  );
+
+  db_add_field($ret, 'yaucapi_sellers', 'relistAnchor', $spec['relistAnchor']);
+  return $ret;
+}

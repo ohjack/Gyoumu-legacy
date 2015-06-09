@@ -1,0 +1,59 @@
+<tree name="sels" model="stock.picking">
+  <param name="type">select-many</param>
+  <param name="action">select</param>
+  <param name="merge">1</param>
+
+  <param name="oerp:model" model="stock.picking"/>
+  <param name="oerp:criteria">[["type", "=", "delivery"],["state","=","draft"]]</param>
+
+  <field name="id">
+    <param name="hide">1</param>
+  </field>
+
+  <field name="x_seller" string="Seller"/>
+  <field name="name" string="Ref."/>
+
+  <field name="date" string="O.Date"/>
+
+  <field name="origin" string="O.ID"/>
+  <field name="move_lines">
+    <field name="product_id">
+      <field name="default_code" string="SKU">
+        <param name="nl2br">1</param>
+      </field>
+    </field>
+    <field name="product_qty" string="Qty">
+      <param name="nl2br">1</param>
+    </field>
+    <field name="note" string="Rmrk">
+      <param name="nl2br">1</param>
+    </field>
+
+  </field>
+  <field name="address_id" select="1">
+    <field name="name" string="Buyer"/>
+
+    <field name="state_id">
+      <field name="country_id" string="Country"/>
+    </field>
+  </field>
+
+  <field name="x_cust_val" string="C.Value"/>
+  <field name="carrier_id" string="Carrier"/>
+
+  <translate>
+    <function>
+      <source name="cmd:Gulei\Command\explode">
+        <arg> </arg>
+        <arg>0</arg>
+      </source>
+
+      <field>date</field>
+    </function>
+
+    <function>
+      <source name="cmd:Oerp\Command\appendChkCode"/>
+      <field>name</field>
+    </function>
+  </translate>
+</tree>

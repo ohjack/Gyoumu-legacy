@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title></title>
+</head>
+<body>
+<center>
+  <div id="main-wrapper" style="width:800px;">
+    ﻿<table width="700" bgcolor="#111111" cellspacing="3" border="0">
+    <tr align="right">
+      <td colspan="2"><font size="6" color="#FFFFFF">商品説明</font></td>
+    </tr>
+    <tr>
+      <td width="600" bgcolor="#89c997" align="center">
+        <font color="#000">
+          <ul>
+            <li>商品番号: ${clabel}</li>
+            <li tal:repeat="mod_line model_LINES">
+              ${mod_line}
+            </li>
+          </ul>
+        </font>
+      </td><td></td>
+    </tr>
+    <tr align="right">
+      <td colspan="2"><font size="6" color="#FFFFFF">その他説明</font></td>
+    </tr>
+    <tr>
+      <td width="600px" bgcolor="fff799" align="center">
+        <font color="#000">
+          <ul>
+            <li tal:repeat="desc_line desc_LINES">
+              ${desc_line}
+            </li>
+          </ul>
+        </font>
+      </td><td></td>
+    </tr>
+    <tr align="right">
+      <td colspan="2"><font size="6" color="#FFFFFF">ご落札の前に</font></td>
+    </tr>
+    <tr>
+        <td width="600px" bgcolor="7ecef4" align="center">
+            <img src="http://www.picturemaster.info/TemplateUse/goodsbay/terms.jpg" />
+        </td>
+        <td></td>
+    </tr>
+  </table>
+    <div>
+      <p><img
+          src="http://www.picturemaster.info/ProductPics/YahooAuc_umihiko0724/${clabel_UPPERCASE}-1.jpg"
+          alt="&nbsp;" /></p>
+    </div>
+    <div>
+      <p><img
+          src="http://www.picturemaster.info/ProductPics/YahooAuc_umihiko0724/${clabel_UPPERCASE}-2.jpg"
+          alt="&nbsp;" /></p>
+    </div>
+    <div>
+      <p><img
+          src="http://www.picturemaster.info/ProductPics/YahooAuc_umihiko0724/${clabel_UPPERCASE}-3.jpg"
+          alt="&nbsp;" /></p>
+    </div>
+  </div>
+</center>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<tree string="Orderlines">
+  <param name="oerp:op-type">CUX</param>
+
+  <field name="date_planned" string="Planned"/>
+  <field name="product_id">
+    <field name="default_code" string="SKU" class="font-mono"/>
+    <field name="name" string="Name" alt_name="name"/>
+    <field name="qty_available" string="Real Stk."/>
+    <field name="virtual_available" string="Virtual Stk."/>
+  </field>
+  <field name="func:safety_stock" string="Safety Stk."/>
+  <field name="product_qty" class="col-sep" string="Qty."/>
+  <field name="func:picked" string="Picked"/>
+  <field name="price_unit"/>
+  <field name="price_subtotal"/>
+
+  <translate>
+    <func>
+      <src name="cmd:explode">
+        <arg> </arg>
+        <arg>0</arg>
+      </src>
+      <fld>date_planned</fld>
+    </func>
+
+    <func>
+      <src name="cmd:Oerp\Purchase\Command\PoPickingStatusInForm"/>
+      <fld>func:picked</fld>
+    </func>
+
+    <func>
+      <src name="cmd:Oerp\Purchase\Command\SafetyStockInForm"/>
+      <!--<fld>func:safety_stock</fld>-->
+    </func>
+  </translate>
+
+  <reorder>
+    <func>
+      <src><![CDATA[
+        $pat = '/..-(.*)/';
+        $key_sku = 'product_id.default_code';
+        preg_match($pat, $rec1[$key_sku], $m1);
+        preg_match($pat, $rec2[$key_sku], $m2);
+        return $m1[1] > $m2[1];
+      ]]></src>
+    </func>
+  </reorder>
+
+  <validate>
+    <func>
+      <src><![CDATA[
+        preg_match('@/ (.*)@', $rec['func:picked'], $m);
+        $picked = $m[1];
+
+        if ($picked >= $rec['product_qty']) {
+          return TRUE;
+        }
+
+        $date = date('Y-m-d');
+        return strcmp($date, $rec[$name]) < 0;
+      ]]></src>
+      <fld>date_planned</fld>
+      <msg>Due date.</msg>
+    </func>
+
+    <func>
+      <src><![CDATA[
+        preg_match('@/ (.*)@', $rec[$name], $m);
+        $picked = $m[1];
+        return $picked <= $rec['product_qty'];
+      ]]></src>
+      <fld>func:picked</fld>
+      <msg>Over-picked.</msg>
+    </func>
+
+    <func>
+      <src><![CDATA[
+        return $rec[$name] > 0 || $rec[$root_name . 'product_qty'] < 1;
+      ]]></src>
+      <fld>price_unit</fld>
+      <msg>Unusual unit price.</msg>
+    </func>
+  </validate>
+</tree>

@@ -1,0 +1,110 @@
+<?php
+namespace Oerp\Purchase\Page;
+
+class InputNote extends \Gulei\Page\Form\_Abstract {
+  protected $param;
+
+  protected function getClassname() {
+    return __CLASS__;
+  }
+
+  protected function getProvider() {
+    $param = $this->form_state['values'];
+    return new \Oerp\Purchase\Provider\MoveHistoryByDay($param);
+  }
+
+  public function getTableObj() {
+    $param = array(
+      'mark_translated' => FALSE,
+    );
+
+    $vals = $this->form_state['values'];
+
+    if ($vals['sum']) {
+      $tree_arch_path = __DIR__ . '/InputNote/InputNote-sum.xml';
+    }
+    else {
+      $tree_arch_path = __DIR__ . '/InputNote/InputNote.xml';
+    }
+    $tree_arch = file_get_contents($tree_arch_path);
+    return new \Gulei\Table\Arch($tree_arch, $this->getProvider(), $param);
+  }
+
+  protected function hook_form_internal() {
+    _erp_connect(NULL, 'maolung');
+    $StateCtrl = new \Gulei\Form\State($this->form_state);
+    $vals = $StateCtrl->getVals();
+    $prov = $this->getProvider();
+
+    if (!$vals['date-from']) {
+      $src = '';
+      $this->param['hide'][] = 'toolbar-bottom';
+    }
+    else {
+      $src = $this->getTableObj()->theme();
+    }
+
+    $form = array();
+
+    $search = array(
+      '#prefix' => '<h1>Input Note</h1><div id="search-panel">',
+      '#suffix' => '</div>',
+    );
+
+    $search['date-from'] = array(
+      '#title' => 'Date',
+      '#type' => 'textfield',
+      '#size' => '',
+      '#default_value' => ($dval = $vals['date-from']) ? $dval : date('Y-m-d'),
+      '#attributes' => array(
+        'widget' => 'datepicker',
+      ),
+    );
+
+    $search['date-to'] = array(
+      '#title' => 'To',
+      '#type' => 'textfield',
+      '#size' => '',
+      '#default_value' => $vals['date-to'],
+      '#attributes' => array(
+        'widget' => 'datepicker',
+      ),
+    );
+
+    $search['supp'] = array(
+      '#title' => 'Supplier',
+      '#type' => 'textfield',
+      '#default_value' => $vals['supp'],
+      '#size' => '',
+    );
+
+    $search['sum'] = array(
+      '#title' => 'Show as accounting summary',
+      '#type' => 'checkbox',
+      '#default_value' => $vals['sum'],
+    );
+
+    $search['search'] = $this->getLocalCalleeEle('Search');
+
+    $form['searchpanel'] = $search;
+
+    $form['src'] = array(
+      '#type' => 'markup',
+      '#value' => $src,
+      '#prefix' => '<h1>' . $prov->getDateStr() . '</h1>',
+    );
+
+    \Gulei\Includer\JS\Datepicker::inc();
+    \Gulei\Util\Path::add_js(__DIR__ . '/InputNote/InputNote.js');
+    \Gulei\Util\Path::add_css(__DIR__ . '/InputNote/InputNote.css');
+    return $form;
+  }
+
+  protected function getToolbarBottom() {
+    return $this->getLocalCalleeEle(array('Download_CSV'));
+  }
+
+  public function getParam() {
+    return $this->param;
+  }
+}

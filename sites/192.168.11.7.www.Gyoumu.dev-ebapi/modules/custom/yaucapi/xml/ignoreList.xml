@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tree>
+  <param name="type">select-many</param>
+
+  <field name="auc_id" string="A.ID"/>
+  <field name="eval:status" string="Status">
+    <param name="filter">1</param>
+  </field>
+  <field name="sku" string="SKU"/>
+  <field name="title" string="Title"/>
+
+  <translate>
+    <func>
+      <src name="func:getSku"/>
+      <fld>sku</fld>
+    </func>
+    
+    <func>
+      <src><![CDATA[
+        return sprintf('<a href="%s" target="_blank">%s</a>',
+          $rec['auc_url'], $rec[$name]);
+      ]]></src>
+      <fld>auc_id</fld>
+    </func>
+  </translate>
+</tree>

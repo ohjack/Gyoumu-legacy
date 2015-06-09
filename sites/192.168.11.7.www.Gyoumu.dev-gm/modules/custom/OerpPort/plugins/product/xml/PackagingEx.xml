@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<tree name="view" string="Packaging">
+  <field name="default_code" string="SKU"/>
+  <field name="name" string="Name"/>
+  <field name="state" string="Status"/>
+
+  <field name="pkg-0-name" string="Fedex"/>
+  <field name="pkg-0-length" string="L"/>
+  <field name="pkg-0-width" string="W"/>
+  <field name="pkg-0-height" string="H"/>
+  <field name="pkg-0-weight" string="Wt"/>
+
+  <field name="pkg-1-name" string="Others"/>
+  <field name="pkg-1-length" string="L"/>
+  <field name="pkg-1-width" string="W"/>
+  <field name="pkg-1-height" string="H"/>
+  <field name="pkg-1-weight" string="Wt"/>
+</tree>

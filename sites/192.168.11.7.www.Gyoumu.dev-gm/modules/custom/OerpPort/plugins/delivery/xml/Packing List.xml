@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tree name="packing_list" model="stock.picking"
+  string="Packing list" criteria='[["state", "=", "assigned"]]'>
+
+  <param name="class">print</param>
+  <param name="merge">1</param>  
+  <param name="copy_method">ditto</param>
+  <param name="count">1</param>
+
+  <field name="date">
+    <param name="hide">1</param>
+  </field>
+  
+  <field name="name" string="Ref."/>
+  <field name="x_tnum" string="Track #"/>
+  <field name="origin" string="O.ID"/>
+  <field name="move_lines">
+    <field name="product_id">
+      <field name="default_code" string="SKU"/>
+    </field>
+    <field name="product_qty" string="Qty"/>
+    <field name="note" string="Remark"/>
+  </field>
+  <field name="carrier_id" string="Carrier"/>
+  
+  <translate>
+    <func>
+      <src name="cmd:Oerp\Command\getFedexTrack"/>
+      <fld>x_tnum</fld>
+    </func>
+    
+    <function>
+      <source name="cmd:Oerp\Command\appendChkCode"/>
+      
+      <field>name</field>
+    </function>
+  </translate>
+  
+  <filter>
+    <func>
+      <src name="func:pregMatch">
+        <arg tal:content="param/regex"/>
+      </src>
+      
+      <fld>carrier_id</fld>
+    </func>
+
+    <func>
+      <src name="func:beforeCloseTime" tal:attributes="not param/after"/>
+      <fld>date</fld>
+    </func>
+  </filter>
+</tree>
+

@@ -1,0 +1,4 @@
+name = Fitment Helper
+package = Maolung
+core = 6.x
+dependencies[] = ebapi

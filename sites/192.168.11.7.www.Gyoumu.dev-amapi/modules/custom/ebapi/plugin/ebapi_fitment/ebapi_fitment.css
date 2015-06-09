@@ -1,0 +1,66 @@
+div#ebapi-compatibility-wrapper {
+  width: 240px;
+  float: left;
+  margin-right: 10px;
+  padding: 0 15px 15px;
+  border: 1px solid silver;
+}
+
+div#ebapi-compatibility-wrapper select.form-select {
+  width: 220px;
+}
+
+div#ebapi-compatibility-wrapper input.form-submit {
+  width: 8em;
+}
+
+div#ebapi-compatibility-wrapper em {
+  color: red;
+}
+
+div#ebapi-listings-list table.gu-table td[gu_name="ItemID"] span.gu_value {
+  cursor: pointer;
+  text-decoration: underline;
+  color: #8b0000;
+  font-size: 10px;
+}
+
+div#ebapi-listings-list table.gu-table td[gu_name="Title"] span.gu_value {
+  font-size: 11px;
+}
+
+div#ebapi-fitment-selector div.form-item {
+  margin: 1em 0 0;
+}
+
+div#edit-year-from-wrapper,
+div#edit-year-to-wrapper {
+  width: 50%;
+  float: left;
+}
+
+div#edit-year-from-wrapper select.form-select,
+div#edit-year-to-wrapper select.form-select {
+  width: 100px;
+}
+
+
+div#ebapi-fitment-list div.form-checkboxes {
+  max-height: 300px;
+  overflow: auto;
+}
+
+div.form-item label span.toggle-all {
+  font-size: smaller;
+  color: #ff8c00;
+  cursor: pointer;
+}
+
+div#exc_warning {
+  border: 2px solid red;
+  margin: 5px 20px;
+  padding: 10px;
+  color: red;
+  font-weight: bold;
+  text-align: center;
+}

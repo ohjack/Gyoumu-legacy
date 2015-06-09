@@ -1,0 +1,117 @@
+div.gu-legend {
+  margin: 2em 0.5em 0.5em 0.5em;
+  padding: 0.5em 0.5em 0.5em 1em;
+  border: 1px solid #ccc;
+}
+
+div.gu-legend div {
+  margin: 0.3em 0;
+}
+
+.translated {
+  font-weight: bold;
+  color: #090;
+}
+
+.invalid {
+  color: #f00;
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+.notice {
+  font-weight: bold;
+  color: chocolate;
+  text-decoration: underline;
+}
+
+table.gu-table {
+  width: 100%;
+
+  &, thead, th, tbody, tr, td {
+    border: 0 dotted silver;
+  }
+
+  th, td {
+    &.col-sep {
+      border-left-style: double;
+      border-left-color: silver;
+      border-left-width: 3px;
+      padding-left: 1em;
+    }
+  }
+
+  td {
+    border-width: 1px 0;
+
+    &.font-mono {
+      font-family: monospace;
+    }
+  }
+}
+
+table.gu-table tr.odd td {
+  background-color: #f6f6f6;
+}
+
+table.gu-table tr.even td {
+  background-color: #eee;
+}
+
+table.gu-table tr.merge-odd td {
+  background-color: #f6f6f6;
+}
+
+table.gu-table tr.merge-even td {
+  background-color: #eee;
+}
+
+table.gu-table tr.sep-after td {
+  background-color: #ccc;
+}
+
+table.gu-table td span.show-tooltip-text {
+  display: none;
+  position: absolute;
+  font-size: 0.9em;
+  background-color: #333;
+  padding: 6px;
+  color: white;
+  border: 1px solid #fff;
+}
+
+table.gu-table.hidetip span.translated {
+  font-weight: inherit;
+  color: inherit;
+}
+
+table.gu-table.hidetip span.invalid {
+  font-weight: inherit;
+  color: inherit;
+  text-decoration: inherit;
+}
+
+table.gu-table.print th,
+table.gu-table.print td {
+  color: #000;
+  border: 1px solid #000;
+  background-color: white !important;
+  font-family: monospace;
+}
+
+table.gu-seltable tr.selected td {
+  background-color: #ffffc0;
+}
+
+div.caption {
+  margin: 1.5em 3px 1.5em 0;
+  padding: 0 0 1px 0.5em;
+  border: 0 solid #666;
+  border-bottom-width: 1px;
+  font-size: 116%;
+  font-weight: bold;
+}
+
+select.GuSelectTable.filter {
+  width: 100%;
+}

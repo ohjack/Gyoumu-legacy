@@ -1,0 +1,5 @@
+; $Id$
+name = YAucAPI
+description = Implement YahooJp Auction API query function.
+core = 6.x
+package = Gulei

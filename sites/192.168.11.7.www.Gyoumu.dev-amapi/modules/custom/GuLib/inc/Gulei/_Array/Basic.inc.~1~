@@ -1,0 +1,25 @@
+<?php
+namespace Gulei\_Array;
+
+class Basic extends \ArrayObject
+{
+  private function fixClassname($name)
+  {
+    if(strpos($name, "\\") === false){
+      return __NAMESPACE__ . "\\Command\\" . $name;
+    }
+    return $name;
+  }
+
+  public function exe($name, $args = null)
+  {
+    $name = $this->fixClassname($name);
+    $cmd = new $name($this);
+    return $cmd->execute($args);
+  }
+
+  public function __call($name, $args)
+  {
+    return $this->exe($this->fixClassname($name), $args);
+  }
+}

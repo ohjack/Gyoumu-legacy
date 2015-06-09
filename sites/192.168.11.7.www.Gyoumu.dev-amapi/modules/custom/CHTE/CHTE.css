@@ -1,0 +1,13 @@
+div.chte.csv_view,
+pre.chte.theme_view {
+  overflow: auto;
+}
+
+pre.chte.theme_view {
+  border: 1px solid silver;
+  padding: 1em;
+}
+
+#content-area .chte.teaser {
+  max-height: 300px;
+}

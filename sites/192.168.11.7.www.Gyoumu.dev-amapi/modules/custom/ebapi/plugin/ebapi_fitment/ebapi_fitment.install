@@ -1,0 +1,104 @@
+<?php
+
+function ebapi_fitment_schema(){
+  $schema['ebapi_fitment'] = array (
+    'fields' => array(
+      'ePID' => array(
+        'type' => 'varchar',
+        'length' => 64,
+      ),
+      'AAIA_Base_Vehicle_ID' => array(
+        'type' => 'varchar',
+        'length' => 64,
+      ),
+      'Aspiration' => array(
+        'type' => 'varchar',
+        'length' => 64,
+      ),
+      'Body' => array(
+        'type' => 'varchar',
+        'length' => 64,
+      ),
+      'Cylinder_Type_Name' => array(
+        'type' => 'varchar',
+        'length' => 12,
+      ),
+      'DisplayName' => array(
+        'type' => 'varchar',
+        'length' => 128,
+      ),
+      'Drive_Type' => array(
+        'type' => 'varchar',
+        'length' => 12,
+      ),
+      'Engine' => array(
+        'type' => 'varchar',
+        'length' => 128,
+      ),
+      'Engine___Block_Type' => array(
+        'type' => 'varchar',
+        'length' => 12
+      ),
+      'Engine___CC' => array(
+        'type' => 'varchar',
+        'length' => 12,
+      ),
+      'Engine___CID' => array(
+        'type' => 'varchar',
+        'length' => 12,
+      ),
+      'Engine___Cylinders' => array(
+        'type' => 'varchar',
+        'length' => 12,
+      ),
+      'Engine___Liter_Display' => array(
+        'type' => 'varchar',
+        'length' => 12,
+      ),
+      'Fuel_Type_Name' => array(
+        'type' => 'varchar',
+        'length' => 32,
+      ),
+      'Make' => array(
+        'type' => 'varchar',
+        'length' => 64,
+      ),
+      'Model' => array(
+        'type' => 'varchar',
+        'length' => 64,
+      ),
+      'NumDoors' => array(
+        'type' => 'varchar',
+        'length' => 12,
+      ),
+      'Parts_Model' => array(
+        'type' => 'varchar',
+        'length' => 64,
+      ),
+      'Submodel' => array(
+        'type' => 'varchar',
+        'length' => 64,
+      ),
+      'Trim' => array(
+        'type' => 'varchar',
+        'length' => 64,
+      ),
+      'Year' => array(
+        'type' => 'varchar',
+        'length' => 12,
+      ),
+    ),
+    'primary key' => array('ePID'),
+  );
+
+  return $schema;
+}
+
+
+function ebapi_fitment_install(){
+  drupal_install_schema('ebapi_fitment');
+}
+
+function ebapi_fitment_uninstall(){
+  drupal_uninstall_schema('ebapi_fitment');
+}

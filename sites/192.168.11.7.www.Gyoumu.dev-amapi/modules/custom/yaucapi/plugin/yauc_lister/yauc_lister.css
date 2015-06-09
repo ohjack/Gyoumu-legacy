@@ -1,0 +1,4 @@
+table tr th[gu_name="msg"],
+table tr td[gu_name="msg"] {
+  max-width: 200px;
+}

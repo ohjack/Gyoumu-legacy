@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tree name="csv_file">
+  <field name="seller"/>
+  <field name="tid"/>
+  <field name="value"/>
+  <field name="email"/>
+  <field name="sku"/>
+  <field name="qty"/>
+  <field name="buyer"/>
+  <field name="phone"/>
+  <field name="addr1"/>
+  <field name="addr2"/>
+  <field name="city"/>
+  <field name="state"/>
+  <field name="zip"/>
+  <field name="country"/>
+  <field name="carrier"/>
+  <field name="remark"/>
+
+  <translate>
+    <function>
+      <source><![CDATA[
+        return (!$rec[$name])
+          ? "00" : false;
+      ]]></source>
+
+      <field>phone</field>
+    </function>
+
+    <function>
+      <source name="trim"/>
+      <source name="func:unaccent"/>
+      <source name="func:fixSpainAddr"/>
+
+      <field>buyer</field>
+      <field>addr1</field>
+      <field>addr2</field>
+      <field>city</field>
+      <field>state</field>
+    </function>
+
+    <func>
+      <src name="trim"/>
+      <fld>tid</fld>
+      <fld>sku</fld>
+    </func>
+
+    <func>
+      <src name="strtoupper"/>
+      <fld>sku</fld>
+    </func>
+  </translate>
+
+  <validate>
+    <func>
+      <src name="cmd:isEmptyString" not="1"/>
+      <fld>seller</fld>
+      <fld>tid</fld>
+      <fld>sku</fld>
+      <fld>buyer</fld>
+      <fld>addr1</fld>
+      <fld>country</fld>
+      <fld>carrier</fld>
+
+      <msg>
+        Missing value
+      </msg>
+    </func>
+
+    <func>
+      <src name="func:isCarrierFedex" not="1" or="1">
+        <arg name="name">carrier</arg>
+      </src>
+      <src name="cmd:isEmptyString" not="1"/>
+
+      <fld>phone</fld>
+      <fld>city</fld>
+      <fld>zip</fld>
+
+      <msg>
+        Missing value
+      </msg>
+    </func>
+
+    <function>
+      <src name="func:isCarrierFedex" not="1" or="1">
+        <arg name="name">carrier</arg>
+      </src>
+
+      <src name="func:cmpStrLength">
+        <arg>LE</arg>
+        <arg>35</arg>
+      </src>
+
+      <fld>buyer</fld>
+      <field>addr1</field>
+      <field>addr2</field>
+
+      <message>
+        Exceeds length limit: 35
+      </message>
+    </function>
+
+    <function>
+      <src name="func:cmpStrLength">
+        <arg>LE</arg>
+        <arg>15</arg>
+      </src>
+
+      <field>phone</field>
+
+      <message>
+        Exceeds length limit: 15
+      </message>
+    </function>
+
+    <function>
+      <src name="func:isCarrierFedex" or="1" not="1">
+        <arg name="name">carrier</arg>
+      </src>
+
+      <src name="func:isAscii"/>
+
+      <msg>
+        Invalid character exists
+      </msg>
+
+      <field>buyer</field>
+      <field>addr1</field>
+      <field>addr2</field>
+      <field>city</field>
+      <field>state</field>
+      <field>zip</field>
+    </function>
+
+    <function>
+      <source name="func:isUnique"/>
+      <message>
+        Duplicate T.ID
+      </message>
+
+      <field>tid</field>
+    </function>
+
+    <function>
+      <src name="func:existValue">
+        <arg>res.country</arg>
+        <arg/>
+        <arg>code</arg>
+      </src>
+
+      <message>
+        Unknown Country Code.
+      </message>
+
+      <field>country</field>
+    </function>
+
+    <func>
+      <src name="func:isValidSku"/>
+      <msg>
+        Invalid SKU format.
+      </msg>
+      <fld>sku</fld>
+    </func>
+  </validate>
+</tree>

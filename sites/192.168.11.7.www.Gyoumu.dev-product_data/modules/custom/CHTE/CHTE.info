@@ -1,0 +1,7 @@
+; $Id$
+name = CHTE
+description = Custom HTML Template Engine
+package = Gulei
+core = 6.x
+dependencies[] = GuLib
+dependencies[] = content

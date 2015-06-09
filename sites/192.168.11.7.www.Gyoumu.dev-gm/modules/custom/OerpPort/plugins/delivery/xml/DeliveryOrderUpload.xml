@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tree name="csv_file">
+  <field name="seller"/>
+  <field name="tid"/>
+  <field name="value"/>
+  <field name="email"/>
+  <field name="sku"/>
+  <field name="qty"/>
+  <field name="buyer"/>
+  <field name="phone"/>
+  <field name="addr1"/>
+  <field name="addr2"/>
+  <field name="city"/>
+  <field name="state"/>
+  <field name="zip"/>
+  <field name="country"/>
+  <field name="carrier"/>
+  <field name="remark"/>
+  
+  <translate>
+    <function>
+      <source><![CDATA[
+        return (!$rec[$name])
+          ? "00" : false;
+      ]]></source>
+      
+      <field>phone</field>
+    </function>
+    
+    <function>
+      <source name="trim"/>
+      <source name="cmd:unaccent"/>
+      <source name="cmd:fixSpainAddr"/>
+
+      <field>seller</field>
+      <field>buyer</field>
+      <field>addr1</field>
+      <field>addr2</field>
+      <field>city</field>
+      <field>state</field>
+    </function>
+    
+    <func>
+      <src name="trim"/>
+      <fld>tid</fld>
+      <fld>sku</fld>
+    </func>
+    
+    <func>
+      <src name="strtoupper"/>
+      <fld>sku</fld>
+    </func>
+  </translate>
+  
+  <validate>
+    <func>
+      <src name="cmd:isEmptyString" not="1"/>
+      <fld>seller</fld>
+      <fld>tid</fld>
+      <fld>sku</fld>
+      <fld>buyer</fld>
+      <fld>addr1</fld>
+      <fld>country</fld>
+      <fld>carrier</fld>
+      
+      <msg>
+        Missing value
+      </msg>
+    </func>
+    
+    <func>
+      <src name="cmd:Oerp\Command\isCarrierFedex" not="1" or="1">
+        <arg name="name">carrier</arg>
+      </src>
+      <src name="cmd:isEmptyString" not="1"/>
+      
+      <fld>phone</fld>
+      <fld>city</fld>
+      <fld>zip</fld>
+      
+      <msg>
+        Missing value
+      </msg>
+    </func>
+    
+    <function>
+      <src name="cmd:Oerp\Command\isCarrierFedex" not="1" or="1">
+        <arg name="name">carrier</arg>
+      </src>
+      
+      <src name="cmd:cmpStrLength">
+        <arg>LE</arg>
+        <arg>35</arg>
+      </src>
+
+      <fld>buyer</fld>
+      <field>addr1</field>
+      <field>addr2</field>
+      
+      <message>
+        Exceeds length limit: 35
+      </message>
+    </function>
+    
+    <function>
+      <src name="cmd:cmpStrLength">
+        <arg>LE</arg>
+        <arg>15</arg>
+      </src>
+      
+      <field>phone</field>
+      
+      <message>
+        Exceeds length limit: 15
+      </message>
+    </function>
+
+    <function>
+      <src name="cmd:Oerp\Command\isCarrierFedex" or="1" not="1">
+        <arg name="name">carrier</arg>
+      </src>
+
+      <src name="cmd:isAscii"/>
+
+      <msg>
+        Invalid character exists for Fedex records.
+      </msg>
+      
+      <field>buyer</field>
+      <field>phone</field>
+      <field>addr1</field>
+      <field>addr2</field>
+      <field>city</field>
+      <field>state</field>
+      <field>zip</field>
+    </function>
+
+    <function>
+      <src name="cmd:Oerp\Command\isCarrierUps" or="1" not="1">
+        <arg name="name">carrier</arg>
+      </src>
+
+      <src name="cmd:isAscii"/>
+
+      <msg>
+        Invalid character exists for UPS records.
+      </msg>
+
+      <field>buyer</field>
+      <field>phone</field>
+      <field>addr1</field>
+      <field>addr2</field>
+      <field>city</field>
+      <field>state</field>
+      <field>zip</field>
+    </function>
+
+    <func>
+      <src name="cmd:Oerp\Command\isCarrierUps" not="1" or="1">
+        <arg name="name">carrier</arg>
+      </src>
+      <src name="cmd:isEmptyString" not="1"/>
+
+      <fld>city</fld>
+
+      <msg>
+        Missing value
+      </msg>
+    </func>
+
+    <function>
+      <src name="cmd:Oerp\Command\isCarrierUps" or="1" not="1">
+        <arg name="name">carrier</arg>
+      </src>
+
+      <src>
+        return (int)$rec[$name] > 0;
+      </src>
+
+      <msg>
+        Value cannot be 0 via UPS.
+      </msg>
+
+      <field>value</field>
+    </function>
+
+    <function>
+      <source name="cmd:isUnique"/>
+      <message>
+        Duplicate T.ID
+      </message>
+      
+      <field>tid</field>
+    </function>
+    
+    <function>
+      <src name="cmd:Oerp\Command\existValue">
+        <arg>res.country</arg>
+        <arg/>
+        <arg>code</arg>
+      </src>
+      
+      <message>
+        Unknown Country Code.
+      </message>
+      
+      <field>country</field>
+    </function>
+    
+    <function>
+      <src name="cmd:Oerp\Command\existValue" not="1">
+        <arg>stock.picking</arg>
+        <arg>[["state", "&lt;&gt;", "cancel"]]</arg>
+        <arg>origin</arg>
+      </src>
+      
+      <message>
+        T.ID exists in database
+      </message>
+      
+      <field>tid</field>
+    </function>
+
+    <func>
+      <src name="cmd:Oerp\Command\isValidSku"/>
+      <msg>
+        Invalid SKU format.
+      </msg>
+      <fld>sku</fld>
+    </func>
+
+    <function>
+      <src name="cmd:Oerp\Command\existValue">
+        <arg>delivery.carrier</arg>
+        <arg/>
+        <arg>name</arg>
+      </src>
+      
+      <field>carrier</field>
+      <message>
+        Unkown carrier
+      </message>
+    </function>
+  </validate>
+</tree>

@@ -1,0 +1,115 @@
+<?php
+use Ebapi as E;
+require_once __DIR__ . '/inc/ebapi.inc';
+
+function ebapi_menu()
+{
+  $items = array();
+
+  $items['ebapi/test'] = array(
+    'page callback' => 'ebapi_test',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['ebapi/myebay/selling'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('ebapi_myebaySelling_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['ebapi/myebay/selling/js'] = array(
+    'page callback' => 'ebapi_myebaySelling_js',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['ebapi/listing/%'] = array(
+    'page callback' => 'ebapi_listing',
+    'page arguments' => array(2),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+function ebapi_myebaySelling_form(&$form_state)
+{
+  $p = new E\PageMySelling($form_state);
+  return $p->hook_form($form_state);
+}
+
+function ebapi_myebaySelling_form_submit($form, &$form_state)
+{
+  $p = new E\PageMySelling($form_state);
+  $p->hook_form_submit($form, $form_state);
+}
+
+function ebapi_myebaySelling_js()
+{
+  $form_id = 'ebapi_myebaySelling_form';
+  $form_state = array('values' => $_POST);
+
+  if($form_state['values']['submit'] == 'Clear'){
+    $form_state = array();
+  }
+
+  $form = ebapi_myebaySelling_form($form_state);
+  drupal_process_form($form_id, $form, $form_state);
+
+  $output = theme('status_messages') . drupal_render($form);
+  drupal_json(array('status' => TRUE, 'data' => $output));
+}
+
+function ebapi_listing($ItemID)
+{
+  include __DIR__ . '/inc/Services_Ebay/examples/config.php';
+
+  $listing = new E\Listing($ItemID);
+//  $resp = $listing->getDetails();
+  $resp = $listing->getCompList();
+  $output = '<pre>' . print_r($resp, true) . '</pre>';
+  return $output;
+}
+
+function ebapi_test()
+{
+  $ids = array(
+//    '110092839463',
+    '110092893615'
+  );
+
+  foreach($ids as $ItemID){
+    $item = Services_Ebay::loadModel('Item', $ItemID, E\ApiController::getSession());
+    $item->Get();
+    $item->SKU = 'TEST-00002';
+    /*
+    $item->Title = 'Test Title Changed 3';
+
+    $item->ItemCompatibilityList = array(
+      'Compatibility' => array(
+        'NameValueList' => array(
+          array(
+            'Name' => 'Year',
+            'Value' => '2006',
+          ),
+          array(
+            'Name' => 'Make',
+            'Value' => 'Acura'
+          ),
+          array(
+            'Name' => 'Model',
+            'Value' => 'TL'
+          )
+        )
+      )
+    );
+    */
+
+    $item->Revise();
+    break;
+  }
+  return '';
+}

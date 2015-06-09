@@ -1,0 +1,6 @@
+; $Id$
+name = Core
+description = Accessing OpenERP via XML-RPC
+package = OpenERP
+core = 6.x
+dependencies[] = GuLib

@@ -1,0 +1,72 @@
+<?php 
+
+module_load_include('module', 'oerp');
+\Gulei\Autoloader::register(__DIR__);
+
+function oerp_gallery_menu(){
+  $item = array();
+  
+  $item['oerpport/image/check_publish/%'] = array(
+    'page callback' => 'oerp_gallery_imageCheckPublish',
+    'page arguments' => array(3),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $item['oerp/gallery/approve/fixed'] = array(
+    'title' => 'Approve Fixed Pictures',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_gallery_approve_fixed_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $item['oerp/gallery/mapping/%'] = array(
+    'title' => 'Mapping Pictures for Publishing',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('oerp_gallery_mapping_form', 3),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  return $item;
+}
+
+function oerp_gallery_imageCheckPublish($dir){
+  $output = '';
+  
+  $ih = new OerpImageHandler($dir);
+  $output .= $ih->processNewFixed();  
+  
+  return $output;
+}
+
+function oerp_gallery_approve_fixed_form(&$form_state)
+{
+  $p = new \Oerp\Gallery\Page\ApproveFixed($form_state);
+  return $p->hook_form(func_get_args());
+}
+
+function oerp_gallery_approve_fixed_form_submit($form, &$form_state)
+{
+  $p = new \Oerp\Gallery\Page\ApproveFixed($form_state);
+  return $p->hook_form_submit($form, $form_state);
+}
+
+function oerp_gallery_mapping_form(&$form_state)
+{
+  $ctrl = new \Oerp\Gallery\Page\MappingPublish($form_state);
+  return $ctrl->hook_form(func_get_args());
+}
+
+function oerp_gallery_mapping_form_validate($form, &$form_state)
+{
+  $ctrl = new \Oerp\Gallery\Page\MappingPublish($form_state);
+  return $ctrl->hook_validate($form, $form_state);
+}
+
+function oerp_gallery_mapping_form_submit($form, &$form_state)
+{
+  $ctrl = new \Oerp\Gallery\Page\MappingPublish($form_state);
+  return $ctrl->hook_form_submit($form, $form_state);
+}

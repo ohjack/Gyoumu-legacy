@@ -1,0 +1,14 @@
+div.ui-datepicker a.ui-state-active {
+  border: 1px solid red; }
+
+div#search-panel {
+  border: 0 dashed gray;
+  border-width: 0 0 1px; }
+  div#search-panel div.form-item {
+    float: left;
+    margin-right: 10px; }
+    div#search-panel div.form-item#edit-sum-wrapper {
+      padding-top: 16px; }
+  div#search-panel input.form-submit {
+    clear: both;
+    display: block; }

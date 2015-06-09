@@ -1,0 +1,10 @@
+<tree>
+  <field name="sku" string="SKU"/>
+  <field name="pn" string="P/N"/>
+  <field name="name" string="品名"/>
+  <field name="qty" string="銷售數量"/>
+  <field name="list_price" string="台灣建議售價"/>
+  <field name="discount" string="折數"/>
+  <field name="standard_price" string="單價"/>
+  <field name="subtotal" string="小計"/>
+</tree>

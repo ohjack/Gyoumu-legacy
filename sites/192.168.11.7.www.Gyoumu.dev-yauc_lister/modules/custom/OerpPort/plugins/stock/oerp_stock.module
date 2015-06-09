@@ -1,0 +1,52 @@
+<?php
+
+module_load_include('inc', 'GuLib', 'autoload');
+\Gulei\Autoloader::register(__DIR__);
+
+function oerp_stock_menu(){
+  $item = array();
+
+  $item['oerp/stock/level'] = \Gulei\Page\Helper::createEntry(
+    "Oerp\\Stock\\Page\\Level"
+  );
+
+  $item['oerp/stock/revise_rop'] = \Gulei\Page\Helper::createEntry(
+    "Oerp\\Stock\\Page\\ReviseRop"
+  );
+  return $item;
+}
+
+function oerp_stock_block($op = 'list', $delta = 0, $edit = array()){
+  switch($op){
+    case 'list':
+      $blocks[0]['info'] = t('Stock Mngn');
+      return $blocks;
+      
+    case 'view':
+      $items = array(
+        array(
+          'data' => Gulei\Link\Page::create('Input / Output', "Oerp\\Stock\\Page\\IO"),
+          'children' => array(
+            array('data' => Gulei\Link\Page::create(
+              'Incoming PO', "Oerp\\Stock\\Page\\IO", array('cri' => '[["type","=","in"],["origin","ilike","PO"],["state","=","assigned"]]')))
+          )
+        ),
+        array(
+          'data' => l('Stock Level', 'oerp/stock/level')
+        ),
+        array(
+          'data' => Oerp\Link\Tree::create('Periodical Inventory', 'x_stock.inventory.tree')
+        ),
+        array(
+          'data' => Oerp\Link\Tree::create('Minimum Stock Rules', 'stock.warehouse.orderpoint.tree')
+        ),
+        array(
+          'data' => l('Revise MSR', 'oerp/stock/revise_rop'),
+        ),
+      );
+      
+      $block['subject'] = t('Stock Mngn');
+      $block['content'] = theme('item_list', $items, null, 'ul', array('class' => 'menu'));
+      return $block;
+  }
+}

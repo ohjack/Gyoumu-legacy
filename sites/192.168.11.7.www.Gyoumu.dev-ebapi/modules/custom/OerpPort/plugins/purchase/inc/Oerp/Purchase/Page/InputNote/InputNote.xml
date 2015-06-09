@@ -1,0 +1,47 @@
+<tree>
+  <param name="oerp:model">purchase.order</param>
+
+  <field name="id">
+    <param name="hide">1</param>
+  </field>
+  <field name="name" string="Ref."/>
+  <field name="partner_id.name" string="Supplier"/>
+  <field name="state" string="PO.Status"/>
+  <field name="order_line.product_id.name" string="P.Name"/>
+  <field name="order_line.product_id.func:pcode" string="P/N"/>
+  <field name="order_line.product_id.product_manager" string="Mgr"/>
+  <field name="order_line.product_id.default_code" string="SKU" class="font-mono"/>
+  <field name="order_line.product_id.func:real_state" string="P.Status"/>
+  <field name="order_line.product_qty" string="Ordered"/>
+  <field name="order_line.func:picked" string="Picked"/>
+  <field name="order_line.move_ids.product_qty" string="Input"/>
+  <field name="order_line.move_ids.date_planned" string="Pick Date"/>
+  <field name="order_line.move_ids.date" string="Input Date">
+    <param name="hide">1</param>
+  </field>
+  <field name="order_line.move_ids.note" string='Note'/>
+
+  <translate>
+    <func>
+      <src name="cmd:Oerp\Command\LinkToFormView"/>
+      <fld>name</fld>
+    </func>
+
+    <func>
+      <src name="cmd:Oerp\Product\Command\toRealState"/>
+      <fld>order_line.product_id.func:real_state</fld>
+    </func>
+  </translate>
+
+  <validate>
+    <func type="notice">
+      <src>
+        <![CDATA[
+            return $rec[$name] == 'Done';
+        ]]>
+      </src>
+      <fld>state</fld>
+      <msg>Has not fully received yet.</msg>
+    </func>
+  </validate>
+</tree>

@@ -1,0 +1,444 @@
+<?php
+use Gulei as G;
+
+module_load_include('inc', 'GuLib', 'include/GuTable');
+module_load_include('inc', 'GuLib', 'include/GuFileFinder');
+module_load_include('inc', 'GuLib', 'include/\Gulei\Csv\Model');
+module_load_include('inc', 'GuLib', 'lib/yubin');
+module_load_include('inc', 'yaucapi', 'lib/YahooOAuth');
+
+require_once('custom.inc');
+
+function custom_menu(){
+  $item = array();
+
+  $item['custom/check/length'] = array(
+    'title' => 'Check Text length',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('custom_checkLength_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $item['custom/japan_zip'] = array(
+    'title' => 'Japan Zip',
+    'page callback' => 'custom_japanZip',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $item['custom/japan_zip/query'] = array(
+    'title' => 'Query Japan Zip Code',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('custom_JapanZipQuery_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $item['custom/terapeak/extract/%'] = array(
+    'title' => 'Terapeak HTML extracter',
+    'page callback' => 'custom_terapeakExtract',
+    'page arguments' => array(3),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $item['custom/testForm'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('custom_testForm_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  
+  $item['custom/test'] = array(
+    'page callback' => 'custom_customTest',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+  return $item;
+}
+
+function custom_JapanZipQuery_form($form_state){
+  $form = array();
+  $vals = $form_state['values'];
+
+  if($zip = $vals['zip']){
+    $db = new mysqli('localhost', 'jpzip', 'jpzip', 'jpzip');
+    $db->query('SET NAMES "utf8"');
+    $rs = $db->query('SELECT * FROM zip WHERE zip="' . $zip . '"');
+    
+    $recs = array();
+    while($rec = $rs->fetch_assoc()){
+      $recs[] = $rec;
+    }
+
+    $t = new \Gulei\Table\Arch('
+      <tree>
+        <param name="mark_translated">0</param>
+        
+        <field name="zip" string="郵便番号"/>
+        <field name="kanji1" string="都道府県名"/>
+        <field name="kanji2" string="市区郡町村名"/>
+        <field name="kanji3" string="町域名"/>
+        <field name="kana1" string="仮名"/>
+        <field name="roman1" string="ローマ字"/>
+        <field name="roman2" string="--"/>
+        
+        <translate>
+          <func>
+            <src><![CDATA[
+              $addr = array($rec["kana1"], $rec["kana2"], $rec["kana3"]);
+              return implode(" ", $addr);
+            ]]></src>
+            <fld>kana1</fld>
+          </func>
+
+          <func>
+            <src><![CDATA[
+              return $rec["roman3"] . "," . $rec["roman2"];
+            ]]></src>
+            <fld>roman2</fld>
+          </func>
+        </translate>
+      </tree>
+    ', $recs);
+    
+    $form['result'] = array(
+      '#type' => 'markup',
+      '#value' => $t->theme($t->getHeaders(), $t->getRows($t->getRecords())),
+    );  
+  }
+  
+  $form['zip'] = array(
+    '#title' => 'Zip',
+    '#type' => 'textfield',
+    '#default_value' => $vals['zip'] ? $vals['zip'] : '',
+  );
+  
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Query',
+  );
+  
+  return $form;
+}
+
+function custom_japanZipQuery_form_validate($form, &$form_state){
+  $zip = &$form_state['values']['zip'];
+  $zip = preg_replace('/[- ー－　（）]/u', '', $zip);
+  $zip = mb_strtr($zip,
+  array(
+    '０' => '0',
+    '１' => '1',
+    '２' => '2',
+    '３' => '3',
+    '４' => '4',
+    '５' => '5',
+    '６' => '6',
+    '７' => '7',
+    '８' => '8',
+    '９' => '9',
+  ), 'utf8');
+
+  $form_state['rebuild'] = true;
+}
+
+function custom_japanZip_import(){
+  /*
+  module_load_include('inc', 'GuLib', 'lib/JapaneseUtil');
+  $fh = fopen('sites/default/files/KEN_ALL.csv', 'r');
+  $roma = new kana2roma();
+  
+  $db = new mysqli('localhost', 'jpzip', 'jpzip', 'jpzip');
+  $db->query('SET NAMES "utf8"');
+  
+  $from = 110001;
+  $length = 30000;
+  
+  for($ind = 1; $ind - $from < $length && $line = fgets($fh); $ind++){
+    if($ind < $from){continue;}
+    
+    preg_match_all('/(".*",?)+/U', $line, $m);
+    $m = $m[0];
+    
+    foreach($m as &$tok){
+      $tok = trim($tok, "\"");
+    }
+    
+    $m[1] = mb_convert_kana($m[1]);
+    $m[2] = mb_convert_kana($m[2]);
+    $m[3] = mb_convert_kana($m[3]);
+
+    $m[] = $roma->conv($m[1]);
+    $m[] = $roma->conv($m[2]);
+    $m[] = $roma->conv($m[3]);
+    
+    $q = sprintf('
+      INSERT INTO zip
+        (rid, zip, kana1, kana2, kana3, kanji1, kanji2, kanji3, roman1, roman2, roman3)
+      VALUES
+        ("%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s")
+    ', $ind, $m[0], $m[1], $m[2], $m[3], $m[4], $m[5], $m[6], $m[7], $m[8], $m[9]);
+
+    $db->query($q);
+  }*/
+  return '';
+}
+
+function mb_strtr($str,$map,$enc){
+$out="";
+$strLn=mb_strlen($str,$enc);
+$maxKeyLn=1;
+foreach($map as $key=>$val){
+    $keyLn=mb_strlen($key,$enc);
+    if($keyLn>$maxKeyLn){
+        $maxKeyLn=$keyLn;
+    }
+}
+for($offset=0; $offset<$strLn; ){
+    for($ln=$maxKeyLn; $ln>=1; $ln--){
+        $cmp=mb_substr($str,$offset,$ln,$enc);
+        if(isset($map[$cmp])){
+            $out.=$map[$cmp];
+            $offset+=$ln;
+            continue 2;
+        }
+    }
+    $out.=mb_substr($str,$offset,1,$enc);
+    $offset++;
+}
+return $out;
+}
+
+/*
+function custom_customTest(){
+  global $xmlrpc_internalencoding;
+  $xmlrpc_internalencoding = 'UTF-8';
+  
+  $rpc = new YubinXMLRPC_Client(false);
+  //バージョンの取得
+  $result = $rpc->GetVersion();
+  if ($result) echo "<h2>GetVersion 全国郵便番号一覧 ver. $result</h2>";
+  else {
+    echo sprintf('GetVersion error. %s %s',$rpc->error_code,$rpc->error_string);
+  }
+  //住所の取得
+  echo "<h2>FetchAddress</h2>";
+  $code = '1100001';
+  $result = $rpc->FetchAddress($code);
+  dpr($result);
+
+  if ($result) {
+    echo "郵便番号 '" .$code . "'が見つかりました。" . count($result) . "件ありました。";
+    echo "<table>";
+    foreach($result AS $addr) {
+      echo $addr->AsHTML(false);
+    }
+    echo "</table>";
+  } else {
+    if ($rpc->error_code) {
+      echo "呼び出しエラー発生: " .$rpc->error_code .":". $rpc->error_string;
+    } else echo "郵便番号 '" . $code . "'は見つかりませんでした。";
+  }
+  return '';
+}*/
+
+function custom_customTest()
+{
+  $csv = new \Gulei\Csv\Model(array('filepath' => 'sites/all/modules/custom/custom/amazon_input.csv'));
+  $recs = $csv->connect();
+
+  foreach($recs as &$rec)
+  {
+    $points = explode("\n", $rec['bullet-point0']);
+    if(count($points) <= 5){
+      $points = array_values(array_map('trim', $points));
+
+      foreach($points as $seq => $point){
+        $ind = $seq + 1;
+        $rec['bullet-point' . $ind] = $point;
+      }
+    }
+
+    $rec['description'] = trim(nl2br($rec['description']));
+  }
+
+  $csv = array();
+  $csv[] = array_keys($recs[0]);
+  $csv = array_merge($csv, $recs);
+
+  foreach($csv as &$row){
+    foreach($row as &$cell){
+      if(preg_match('/[",\n]/', $cell)){
+        $cell = '"' . str_replace('"', '""', $cell) . '"';
+      }
+    }
+    $row = implode($row, ",");
+  }
+  $csv = implode($csv, "\n");
+  dpr($csv);
+}
+
+function custom_checkLength_form(&$form_state){
+  $arch = file_get_contents(
+    drupal_get_path('module', 'custom') . '/xml/checkLength.xml');
+    
+  $buf = new \Gulei\Csv\Buffer($arch, $form_state);
+  
+  $form = array();
+  $form = $buf->getFormEntry($form_state);
+  return $form;
+}
+
+function custom_checkLength_form_validate($form, &$form_state){
+  $buf = $form['csv_file']['#obj']->renew();
+  $buf->validateForm($form_state);
+}
+
+function custom_terapeakExtract($base){
+  $output = '';
+  $root = '/home/jeremy/TerapeakExtract/';
+  
+  $ffFolder = new \Gulei\File\Finder\Local($root);
+  $output .= '<div>';
+  foreach($ffFolder->getList('*', false, GLOB_ONLYDIR) as $folder){
+    $name = explode('/', $folder);
+    $name = $name[count($name) - 1];
+    
+    $output .= l($name, 'custom/terapeak/extract/' . $name) . ' ';  
+  }
+  $output .= '</div>';
+  
+  if($base){
+    $ffSrc = new \Gulei\File\Finder\Local($root . $base);
+    $src = $ffSrc->getList('*.htm');
+    natsort($src);
+  
+    $recs = array();
+    foreach($src as $each){
+      $html = file_get_contents($each);
+      preg_match('@<table class="terapeak_table">[\s\S]*</table>@U', $html, $m_table);
+      preg_match_all('@<tr[\s\S]*</tr>@U', $m_table[0], $m_tr);
+      array_shift($m_tr[0]);
+      
+      foreach($m_tr[0] as $tr){
+        $tr_fixed = preg_replace('@<img (.*)>@U', '<img $1/>', $tr);
+        $Tr = new \Gulei\Arch\Element($tr_fixed);
+  
+        $eleTitle = $Tr->xp('/tr/td[2]/div/a[1]')->item(0);
+        $title = $eleTitle->nodeValue;
+        
+        $rec['title'] = $Tr->dump($eleTitle);      
+        $rec['start_price'] = $Tr->xp('/tr/td[5]')->item(0)->nodeValue;
+//        $rec['sold'] = $Tr->xp('/tr/td[3]/font[1]')->item(0)->nodeValue;
+        $rec['sold'] = 1;
+  
+        if($Tr->xp('/tr/td[3]/font[1]')->item(0)->nodeValue == 'Yes'){
+          if(isset($recs[$title])){
+            $recs[$title]['sold']++;
+          }
+          else{
+            $recs[$title] = $rec;
+          }
+        }
+      }
+      
+      uasort($recs, create_function('$a,$b', '
+        return $b["sold"] - $a["sold"];
+      '));
+  
+      $arch = '
+        <tree>
+          <param name="count">1</param>
+          
+          <field name="title" string="Title"/>
+          <field name="start_price" string="Start Price"/>
+          <field name="sold" string="Sold"/>
+        </tree>
+      ';
+      $t = new \Gulei\Table\Arch($arch, $recs);
+    }
+    
+    $output .= $t->theme();
+  }
+   
+  return $output;
+}
+
+function custom_testForm_form(&$form_state)
+{
+  $csv = new \Gulei\Csv\Model(array('filepath' => 'sites/all/modules/custom/custom/ocs_raw.csv'));
+
+  $chks = array();
+  foreach($csv->connect() as $each){
+    $tnum = trim($each['track_num']);
+    $chks[$tnum] = $each;
+  }
+
+  $csv = new \Gulei\Csv\Model(array('filepath' => 'sites/all/modules/custom/custom/ocs_ref.csv'));
+  $raws = $csv->connect();
+  foreach($raws as &$each){
+    if(preg_match('/a(.*)a/i', $each['tnum'], $m)){
+        $tnum = $m[1];
+     }
+     else{
+       $tnum = $each['tnum'];
+     }
+    $each['tnum'] = $tnum;
+  }
+
+  $raws = new \Gulei\_Array\Basic($raws);
+  $ref = $raws->promote('tnum');
+
+  $q = new \Oerp\Query\Basic('stock.picking', array(array('carrier_id', 'ilike', 'OCS')));
+
+  $c = 0;
+  $pickings = $q->raw();
+
+  foreach($pickings as $each){
+    if(preg_match('/a(.*)a/i', $each['x_tnum'], $m)){
+       $tnum = $m[1];
+    }
+    else{
+      $tnum = $each['x_tnum'];
+    }
+
+    if(isset($chks[$tnum])){
+      $c++;
+      $rec = array(
+        'address' => $each['address_id'][1],
+        'cust_val' => $each['x_cust_val'],
+      );
+
+      $chks[$tnum] = array_merge($chks[$tnum], $rec);
+    }
+  }
+
+  foreach($ref as $each){
+    $tnum = $each['tnum'];
+    if(isset($chks[$tnum])){
+      $c++;
+      $chks[$tnum]['address'] = $ref[$tnum]['address'];
+    }
+  }
+
+  $q = new \Oerp\Query\Basic('stock.picking', array(array('carrier_id', 'ilike', 'S.Pack')), array('address_id'));
+  $supp = $q->query(array('limit' => 400, 'offset' => 1));
+
+  $anchor = 0;
+  foreach($chks as &$chk){
+    if(empty($chk['address'])){
+      $chk['address'] = $supp[$anchor]['address_id'][1];
+      $anchor += 2;
+    }
+  }
+
+  $Csv = new CsvController(
+    array(
+      'track_num', 'date', 'dest', 'buyer', 'qty', 'weight', 'vweight', 'price', 'insur', 'address', 'cust_val'
+    )
+  );
+
+  dpr($Csv->convArray2Csv($chks));
+  return array();
+}

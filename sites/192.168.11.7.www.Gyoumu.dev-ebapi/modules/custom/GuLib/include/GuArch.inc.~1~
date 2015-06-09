@@ -1,0 +1,339 @@
+<?php
+
+//include_once 'GuXml.inc';
+//drupal_add_css(drupal_get_path('module', 'GuLib') . '/GuLib.css');
+
+class GuWrapper
+{
+  protected  $col;
+  protected  $rows = array(array());
+  protected  $suffix = '';
+  
+  function __construct($col){
+    $this->col = $col;
+  }
+  
+  private function c(){
+    return count($this->rows);
+  }
+  
+  public function getSpanned(){
+    $spanned = 0;
+    
+    foreach($this->rows[$this->c() - 1] as $cell){
+      $spanned += (int)$cell['colspan'];
+    }
+    return $spanned;
+  }
+  
+  public function addSuffix($src){
+    $this->suffix .= $src;
+  }
+  
+  public function addBreak(){
+    $spanned = $this->getSpanned();
+    
+    if($spanned > 0 && $spanned < $this->col){
+      $this->rows[$this->c() - 1][] = array(
+        'data' => '',
+        'colspan' => $this->col - $this->getSpanned(),
+        'class' => 'gu-break',
+      );
+    }
+    $this->rows[] = array();
+  }
+  
+  public function addItem($val, $opts = null){
+    if(is_null($opts)){
+      $opts = array('colspan' => 1);
+    }
+    
+    if($opts['colspan'] > $this->col) return false;
+    
+    $spanned = $this->getSpanned();
+    
+    if($opts['colspan'] > $this->col - $spanned){
+      $this->addBreak();
+    }
+    
+    $this->rows[$this->c() - 1][] = array(
+      'data' => sprintf('<div class="inner %s">%s</div>',
+                        $opts['class'], $val),
+      'colspan' => $opts['colspan'],
+    );
+    return true;
+  }
+    
+  public function render(){
+    $this->addBreak();
+    
+    foreach($this->rows as &$row){
+      foreach($row as &$cell){
+        $width = (float)$cell['colspan'] / $this->col * 100;
+        $cell['style'] = 'width: ' . $width . '%;';
+        
+        if($width == '100'){
+          $cell['class'] = 'single-col';
+        }
+      }
+    }
+    
+    $src = theme_table(null, $this->rows, array(
+      'class' => 'gu-arch',
+    ));
+    
+    return $src . $this->suffix;
+  }
+}
+
+//class GuArch extends \Gulei\Arch\Element
+//{
+//  function __construct($arch){
+//    parent::__construct($arch);
+//
+//    if(!$this->attr('col')){
+//      switch($this->getTag()){
+//        case 'group':
+//          if($this->attr('type') == 'toolbar'){
+//            $this->attr['col'] = 6;
+//          }
+//          else{
+//            $this->attr['col'] = 4;
+//          }
+//          break;
+//
+//        default:
+//          $this->attr['col'] = 4;
+//      }
+//    }
+//  }
+//
+//  private function getOpts(){
+//    $arch = $this->getArch();
+//    $tag = $this->getTag();
+//    $opts = array();
+//
+////  get colspan
+//    $colspan = $arch->getAttribute('colspan');
+//
+//    if($colspan){
+////    TODO fixed over spanned
+//      $opts['colspan'] = $colspan;
+////      $opts['colspan'] = ($colspan > $this->attr('col'))
+////        ? $this->attr('col')
+////        : $colspan;
+//    }
+//    else{
+//      switch($tag){
+//        case 'form':
+//        case 'tree':
+//        case 'page':
+//        case 'separator':
+//        case 'notebook':
+//          $opts['colspan'] = $this->attr('col');
+//          break;
+//
+//        case 'group':
+//          $opts['colspan'] = 1;
+//          break;
+//
+//        case 'field':
+//          $opts['colspan'] = 2;
+//          break;
+//      }
+//    }
+//    return $opts;
+//  }
+//
+//  public function renderForm($arch_src){
+//    $arch = $this->getArch();
+//    $tag = $this->getTag();
+//    $WrapperLayout = new GuWrapper($this->attr('col'));
+//
+//    if($tag != 'tree'){
+//      foreach($this->xp('./*', $this->getArch()) as $fld){
+//        if($fld instanceof DOMElement){
+//          $ftag = $fld->nodeName;
+//
+//          switch($ftag){
+//            case 'newline':
+//              $WrapperLayout->addBreak();
+//              break;
+//
+//            case 'tree':
+//            case 'form':
+//            case 'field':
+//            case 'group':
+//            case 'notebook':
+//            case 'page':
+//            case 'separator':
+//              if($fld->getAttribute('type') == 'hidden'){
+//                continue;
+//              }
+//
+//              $InnerArch = new GuArch($fld, $this->attr('col'));
+//              $opts = $InnerArch->getOpts($this->attr('col'));
+//
+//              if($fld->getAttribute('nolabel')){
+//                $opts['class'] .= ' nolabel';
+//              }
+//
+//              $WrapperLayout->addItem($InnerArch->renderForm($arch_src), $opts);
+//              break;
+//          }
+//        }
+//      }
+//    }
+//
+//    switch($tag){
+//      case 'separator':
+//        return sprintf('<div class="separator caption">%s</div>',
+//          $this->attr('string'));
+//
+//      case 'tree':
+//        $ele = $arch_src->xp(sprintf('/root/div[@gu_name="%s"]',
+//          $this->attr('name')))
+//          ->item(0);
+//
+//        if(!$ele){
+//          dpr($this->dump($this->getArch()));
+//          echo '<hr/>';
+//          dpr($arch_src->dump());
+//          die;
+//        }
+//
+//        $ele = $arch_src->dump($ele);
+//
+//        return sprintf(
+//          '<div class="field" gu_type="%s">%s</div>',
+//          $this->attr('type'), $ele);
+//
+//      case 'field':
+//        if($this->xp('.//field', $this->getArch())->length){
+//          return $WrapperLayout->render();
+//        }
+//
+//        $ele = $arch_src->xp(sprintf('/root/div[@gu_name="%s" and @anchor="%s"]',
+//          $this->attr('name'), $this->attr('anchor')));
+//
+//        if(!$ele->length){
+//          dpr($this->dump($this->getArch()));
+//          echo '<hr/>';
+//          dpr($arch_src->dump());
+//          echo '<pre>';
+//          throw new Exception('Snippet not found.');
+//        }
+//
+//        $ele = $ele->item(0);
+//
+//        if($this->attr('readonly')){
+//          switch($ele->getAttribute('gu_type')){
+//            case 'select':
+//              $ele->setAttribute('disabled', 'dispabled');
+//              break;
+//
+//            default:
+//              $ele->setAttribute('readonly', 'readonly');
+//          }
+//        }
+//
+//        if($ele->getAttribute('gu_type') == 'textarea'){
+//          $ta = $arch_src->xp('./div/textarea', $ele)->item(0);
+//          if(!$ta->nodeValue){
+//            $ta->nodeValue = '_DUMMY_';
+//          }
+//          unset($ta);
+//        }
+//
+//        $ele = $arch_src->dump($ele);
+//        $ele = str_replace('_DUMMY_', '', $ele);
+//
+//        return sprintf(
+//          '<div class="field" gu_type="%s">%s</div>',
+//          $this->attr('type'), $ele);
+//
+//      case 'notebook':
+//        $index = '';
+//
+//        foreach($this->xp('./page', $this->getArch()) as $page){
+//          $cap = $page->getAttribute('string');
+//          $index .= sprintf('<li><a href="#%s">%s</a></li>',
+//            'gu-tab-' . $page->getAttribute('ele_id'), $cap);
+//        }
+//
+//        $output = sprintf('
+//          <div class="notebook" id="gu-tabs-%s">
+//            <ul>%s</ul>
+//            %s
+//          </div>
+//          ', $this->attr('ele_id'), $index, $WrapperLayout->render());
+//
+//        return $output;
+//
+//      case 'page':
+//        return sprintf('<div class="page" id="%s">%s</div>',
+//          'gu-tab-' . $this->attr('ele_id'), $WrapperLayout->render());
+//
+//      case 'group':
+//        return sprintf('
+//          <div class="group %s">%s</div>
+//          ', $this->attr('type'), $WrapperLayout->render());
+//
+//      default:
+//        return $WrapperLayout->render();
+//    }
+//  }
+//}
+
+  //class GuParamArch extends \Gulei\Arch\Element
+  //{
+  //  protected $param;
+  //
+  //  function __construct($arch, $param = array()){
+  //    parent::__construct($arch);
+  //    $this->param = $param;
+  //  }
+  //
+  //  protected function getDefaultParam(){
+  //    return array();
+  //  }
+  //
+  //  public function getParam($name = null, $override = null){
+  //    $param = array_merge(
+  //      $this->getDefaultParam(),
+  //      $this->getNodeValues('./param[@name]')
+  //    );
+  //
+  //    $param = array_merge($param, $this->param);
+  //
+  //    if(is_array($override)){
+  //      $param = array_merge($param, $override);
+  //    }
+  //
+  //    if(is_null($name)){
+  //      return $param;
+  //    }
+  //    else{
+  //      return $param[$name];
+  //    }
+  //  }
+  //
+  //  public function xp($query, $context = null, $attr_map = null){
+  //    $xp = new DOMXPath($this->getDoc());
+  //
+  ////  register Namespaces
+  //    if($this->param['ns']){
+  //      foreach($this->param['ns'] as $prefix => $uri){
+  //        $xp->registerNamespace($prefix, $uri);
+  //      }
+  //    }
+  //
+  //    return parent::xp($query, $context, $attr_map, $xp);
+  //  }
+  //}
+
+interface InterfaceArchImporter
+{
+  public function getArch();
+  public function submit($form, &$form_state);
+}

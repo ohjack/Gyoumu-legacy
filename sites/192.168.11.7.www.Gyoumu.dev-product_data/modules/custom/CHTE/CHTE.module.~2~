@@ -1,0 +1,416 @@
+<?php
+
+module_load_include('inc', 'GuLib', 'autoload');
+\Gulei\Autoloader::register(__DIR__);
+
+function CHTE_menu()
+{
+  $items = array();
+  $items['node/upload/csv'] = array(
+    'title' => 'Upload CSV',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('CHTE_csv_upload_form'),
+    'access arguments' => array('upload CSV'),
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['CHTE/csv/export'] = array(
+    'title' => 'Export CSV',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('CHTE_CsvExport_form'),
+    'access arguments' => array('export CSV'),
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['chte/theme/list'] = array(
+    'title' => 'XHTML Themes',
+    'page callback' => 'CHTE_NodeList',
+    'page arguments' => array('chte_theme'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['chte/csv/list'] = array(
+    'title' => 'CSV Templates',
+    'page callback' => 'CHTE_NodeList',
+    'page arguments' => array('chte_csv'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['chte/rakuten'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('CHTE_rakuten_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['chte/check_length'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('CHTE_checkLength_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['CHTE/test'] = array(
+    'page callback' => '_CHTE_test',
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['chte/testform'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('CHTE_testForm_form'),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+function CHTE_perm()
+{
+  return array(
+    'create CHTE Theme',
+    'edit own CHTE Theme',
+    'edit any CHTE Theme',
+    'delete own CHTE Theme',
+    'delete any CHTE Theme',
+    'create CHTE CSV',
+    'edit own CHTE CSV',
+    'edit any CHTE CSV',
+    'delete own CHTE CSV',
+    'delete any CHTE CSV',
+    'export CSV',
+  );
+}
+
+function CHTE_access($op, $node, $account)
+{
+  $is_author = $account->uid == $node->uid;
+  $type = \Chte\Template\ById::getTypeName($node->type);
+
+  switch ($op) {
+    case 'create':
+      return user_access('create ' . $type, $account);
+
+    case 'update':
+      return user_access('edit own ' . $type, $account) && $is_author ||
+             user_access('edit any ' . $type, $account);
+
+    case 'delete':
+      return user_access('delete own ' . $type, $account) && $is_author ||
+             user_access('delete any ' . $type, $account);
+  }
+}
+
+function CHTE_node_info()
+{
+  return array(
+    'chte_theme' => array(
+      'name' => t('CHTE Theme'),
+      'module' => 'CHTE',
+      'description' => 'XHTML themes.',
+    ),
+    'chte_csv' => array(
+      'name' => t('CHTE CSV'),
+      'module' => 'CHTE',
+      'description' => 'CSV Templates.',
+    ),
+  );
+}
+
+function chte_form(&$node, $form_state)
+{
+  $type = node_get_types('type', $node);
+
+  $form['title'] = array(
+    '#type' => 'textfield',
+    '#title' => check_plain($type->title_label),
+    '#required' => TRUE,
+    '#default_value' => $node->title,
+    '#weight' => -5
+  );
+
+  $form['body'] = array(
+    '#type' => 'textarea',
+    '#title' => check_plain($type->body_label),
+    '#default_value' => $node->body,
+    '#required' => FALSE
+  );
+
+  switch($node->type){
+    case 'chte_theme':
+      $form['body']['#description'] = 'Only accept valid XHTML files.';
+      break;
+
+    case 'chte_csv':
+      $form['body']['#description'] = 'Open the source CSV file using a text editor and paste the text here.';
+      break;
+  }
+
+  return $form;
+}
+
+function CHTE_block($op = 'list', $delta = 0, $edit = array())
+{
+  switch ($op) {
+    case 'list':
+      $blocks['main']['info'] = t('CHTE Main Block');
+      return $blocks;
+
+    case 'view':
+      switch ($delta) {
+        case 'main':
+          $items = array(
+            array(
+              'data' => l('XHTML Themes', 'chte/theme/list'),
+            ),
+            array(
+              'data' => l('CSV Templates', 'chte/csv/list'),
+            ),
+            array(
+              'data' => l('Export CSV', 'chte/csv/export'),
+            ),
+            array(
+              'data' => l('Get Rakuten CSV', 'chte/rakuten'),
+            ),
+            array(
+              'data' => l('Check title length', 'chte/check_length'),
+            )
+          );
+          $block['subject'] = t('Template');
+          $block['content'] = theme('item_list', $items, null, 'ul', array('class' => 'menu'));
+          return $block;
+      }
+
+  }
+}
+
+function CHTE_view($node, $teaser = false, $page = false){
+  drupal_add_css(drupal_get_path('module', 'CHTE') . '/CHTE.css');
+  $node = node_prepare($node, $teaser);
+
+  switch($node->type){
+    case 'chte_csv' :
+      $csv = new \Gulei\Csv\Template(
+        array(
+             'input' => array(
+               'source' => $node->body
+             ),
+             'escape' => true,
+        )
+      );
+
+      $node->content['body']['#value'] = sprintf(
+          '<div class="chte csv_view %s">%s</div>',
+          $teaser ? 'teaser' : '', $csv->theme(null)
+        );
+      break;
+
+    case 'chte_theme':
+      if($teaser){
+        $node->content['body']['#value'] =
+            '<pre class="chte theme_view teaser">' . htmlspecialchars($node->body) . '</pre>';
+      }
+      else{
+        $node->content['body']['#value'] =
+            '<pre class="chte theme_view">' . htmlspecialchars($node->body) . '</pre>';
+      }
+      break;
+  }
+  return $node;
+}
+
+function CHTE_CsvExport_form(&$form_state)
+{
+  if ($fp = $form_state['storage']['download_path']) {
+    header('Location: ' . $fp);
+    return;
+  }
+
+  $vals = $form_state['values'];
+
+  $form = array();
+  $form['#attributes']['enctype'] = 'multipart/form-data';
+
+  $form['theme_id'] = array(
+    '#type' => 'select',
+    '#title' => 'XHTML Theme',
+    '#options' => \Chte\Template\ById::getThemeOpts(),
+    '#default_value' => $vals['theme_id'] ? $vals['theme_id'] : null,
+  );
+
+  $form['csv_id'] = array(
+    '#type' => 'select',
+    '#title' => 'CSV Template',
+    '#options' => \Chte\Template\ById::getTemplateOpts(),
+    '#default_value' => $vals['csv_id'] ? $vals['csv_id'] : null,
+  );
+
+  $form['upload'] = array(
+    '#type' => 'file',
+    '#title' => 'Source CSV',
+    '#size' => '',
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Export',
+  );
+
+  return $form;
+}
+
+function CHTE_CsvExport_form_validate($form, &$form_state){
+  \Gulei\Csv\Model::validateFileUpload($form_state, 'upload');
+}
+
+function CHTE_CsvExport_form_submit($form, &$form_state)
+{
+  $values = $form_state['values'];
+
+  $m = new \Chte\Template\ById(
+    $values['theme_id'],
+    $values['csv_id'],
+    $values['upload']->filepath
+  );
+
+  $download = file_save_data($m->getAppliedCsv(), '/tmp/output-' . date('Y-m-d') . '.csv');
+  $form_state['storage']['download_path'] = '.' . $download;
+}
+
+function CHTE_rakuten_form(&$form_state)
+{
+  if ($fp = $form_state['storage']['redirect']) {
+    header('Location: ' . $fp);
+    return;
+  }
+
+  $form = \Gulei\Csv\Model::getUploadEle();
+  $form['category'] = array(
+    '#type' => 'select',
+    '#title' => 'Select category',
+    '#options' => array(
+      'CA' => 'CA',
+      'ZA' => 'ZA',
+    ),
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Download',
+  );
+
+  return $form;
+}
+
+function CHTE_rakuten_form_validate($form, &$form_state)
+{
+  \Gulei\Csv\Model::validateFileUpload($form_state);
+}
+
+function CHTE_rakuten_form_submit($form, &$form_state)
+{
+  $xml_pc = sprintf(
+    '%s/xml/rt-pc-%s.xml',
+    drupal_get_path('module', 'CHTE'), $form_state['values']['category']
+  );
+
+  $xml_mb = sprintf(
+    '%s/xml/rt-mb-%s.xml',
+    drupal_get_path('module', 'CHTE'), $form_state['values']['category']
+  );
+
+  $trans_src = \Gulei\File\Helper::getPathContent('module', 'CHTE', '/xml/rt-translate.xml');
+  $trans_src = str_replace(
+    array('%XML_PC%', '%XML_MB%'),
+    array($xml_pc, $xml_mb),
+    $trans_src
+  );
+
+  $param = array(
+    'input' => array(
+      'filepath' => $form_state['values']['csv_file']->filepath,
+    ),
+    'translate' => $trans_src
+  );
+
+  $tpl = new \Gulei\Csv\Template($param);
+
+  $recs = $tpl->getRecordsAltered();
+  $hds = array_keys($recs[0]);
+  $hds = array_combine($hds, $hds);
+  unset($hds['Src1'], $hds['Src2'], $hds['%count']);
+
+  $send = \Gulei\_Array::lambda($recs, 'Connect', $hds);
+  array_unshift($send, $hds);
+  $Send = new \Gulei\_Array\Basic($send);
+
+  $form_state['storage']['redirect']
+      = $Send->getCsvFile('rakuten_upload', 'SJIS');
+}
+
+function _CHTE_test()
+{
+
+}
+
+function CHTE_NodeList($type)
+{
+  $rs = db_query('SELECT * FROM {node} WHERE type="%s" ORDER BY title', $type);
+
+  $nodes = array();
+  while ($data = db_fetch_array($rs)) {
+    $nodes[] = $data;
+  }
+
+  $arch = '
+  <arch>
+    <field name="title" string="Name"/>
+
+    <translate>
+      <func>
+        <src><![CDATA[
+          return sprintf(
+            "<span class=\"gu_value\">%s</span>",
+            l($rec[$name], "node/" . $rec["nid"])
+          );
+        ]]></src>
+        <fld>title</fld>
+      </func>
+    </translate>
+  </arch>
+  ';
+
+  $t = new \Gulei\Table\Arch($arch, new \Gulei\Provider\Lambda($nodes));
+  $output = $t->theme();
+  if(user_access('create ' . \Chte\Template\ById::getTypeName($type))){
+    $output .= l('Add a new one', 'node/add/' . str_replace('_', '-', $type));
+  }
+  return $output;
+}
+
+function _CHTE_simple_replace($haystack, $needle = array())
+{
+  if (!is_string($haystack) || !is_array($needle) || empty($needle)) {
+    return '';
+  }
+  foreach ($needle as $key => $val) {
+    $haystack = str_replace('{$' . $key . '}', $val, $haystack);
+  }
+
+  return $haystack;
+}
+
+
+function CHTE_checkLength_form(&$form_state){
+  $arch = \Gulei\File\Helper::getPathContent('module', 'CHTE', '/xml/checkLength.xml');
+  $buf = new \Gulei\Csv\Buffer($arch, $form_state);
+  return $buf->getFormEntry($form_state);
+}
+
+function CHTE_checkLength_form_validate($form, &$form_state){
+  $buf = $form['csv_file']['#obj']->renew();
+  $buf->validateForm($form_state);
+}
